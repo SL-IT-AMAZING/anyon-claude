@@ -1,0 +1,451 @@
+﻿2025-12-05T17:59:34.3219210Z Current runner version: '2.329.0'
+2025-12-05T17:59:34.3234150Z ##[group]Runner Image Provisioner
+2025-12-05T17:59:34.3234640Z Hosted Compute Agent
+2025-12-05T17:59:34.3235000Z Version: 20251202.455
+2025-12-05T17:59:34.3235400Z Commit: 6c10caca4910e198df60de23adf20ad317c474e3
+2025-12-05T17:59:34.3235840Z Build Date: 2025-12-02T15:56:59Z
+2025-12-05T17:59:34.3236240Z Worker ID: {aeea9f3b-e419-46b2-ba40-cbb6c8d2d49a}
+2025-12-05T17:59:34.3236730Z ##[endgroup]
+2025-12-05T17:59:34.3237060Z ##[group]Operating System
+2025-12-05T17:59:34.3237390Z macOS
+2025-12-05T17:59:34.3237680Z 14.8.2
+2025-12-05T17:59:34.3237960Z 23J126
+2025-12-05T17:59:34.3238280Z ##[endgroup]
+2025-12-05T17:59:34.3238600Z ##[group]Runner Image
+2025-12-05T17:59:34.3238940Z Image: macos-14-arm64
+2025-12-05T17:59:34.3239260Z Version: 20251126.0029
+2025-12-05T17:59:34.3239940Z Included Software: https://github.com/actions/runner-images/blob/macos-14-arm64/20251126.0029/images/macos/macos-14-arm64-Readme.md
+2025-12-05T17:59:34.3241100Z Image Release: https://github.com/actions/runner-images/releases/tag/macos-14-arm64%2F20251126.0029
+2025-12-05T17:59:34.3241760Z ##[endgroup]
+2025-12-05T17:59:34.3242430Z ##[group]GITHUB_TOKEN Permissions
+2025-12-05T17:59:34.3243480Z Contents: write
+2025-12-05T17:59:34.3243820Z Metadata: read
+2025-12-05T17:59:34.3244140Z ##[endgroup]
+2025-12-05T17:59:34.3245720Z Secret source: Actions
+2025-12-05T17:59:34.3246120Z Prepare workflow directory
+2025-12-05T17:59:34.3455990Z Prepare all required actions
+2025-12-05T17:59:34.3483560Z Getting action download info
+2025-12-05T17:59:34.6120710Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+2025-12-05T17:59:36.1428220Z Download action repository 'dtolnay/rust-toolchain@stable' (SHA:6d9817901c499d6b02debbb57edb38d33daa680b)
+2025-12-05T17:59:37.1699930Z Download action repository 'Swatinem/rust-cache@v2' (SHA:779680da715d629ac1d338a641029a2f4372abb5)
+2025-12-05T17:59:38.6595710Z Download action repository 'oven-sh/setup-bun@v2' (SHA:735343b667d3e6f658f44d0eca948eb6282f2b76)
+2025-12-05T17:59:39.9612120Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2025-12-05T17:59:40.1076550Z Uses: SL-IT-AMAZING/anyon-claude/.github/workflows/build-macos.yml@refs/tags/v0.2.2 (9cb07f25d5816d34174efcfaddff71c08fc7224d)
+2025-12-05T17:59:40.1079050Z Complete job name: build-macos / Build macOS aarch64-apple-darwin
+2025-12-05T17:59:40.1395780Z ##[group]Run actions/checkout@v4
+2025-12-05T17:59:40.1396170Z with:
+2025-12-05T17:59:40.1396340Z   repository: SL-IT-AMAZING/anyon-claude
+2025-12-05T17:59:40.1396660Z   token: ***
+2025-12-05T17:59:40.1396820Z   ssh-strict: true
+2025-12-05T17:59:40.1396960Z   ssh-user: git
+2025-12-05T17:59:40.1407070Z   persist-credentials: true
+2025-12-05T17:59:40.1407260Z   clean: true
+2025-12-05T17:59:40.1407410Z   sparse-checkout-cone-mode: true
+2025-12-05T17:59:40.1407590Z   fetch-depth: 1
+2025-12-05T17:59:40.1407730Z   fetch-tags: false
+2025-12-05T17:59:40.1407860Z   show-progress: true
+2025-12-05T17:59:40.1408040Z   lfs: false
+2025-12-05T17:59:40.1408160Z   submodules: false
+2025-12-05T17:59:40.1408290Z   set-safe-directory: true
+2025-12-05T17:59:40.1408600Z ##[endgroup]
+2025-12-05T17:59:40.4049350Z Syncing repository: SL-IT-AMAZING/anyon-claude
+2025-12-05T17:59:40.4051800Z ##[group]Getting Git version info
+2025-12-05T17:59:40.4052210Z Working directory is '/Users/runner/work/anyon-claude/anyon-claude'
+2025-12-05T17:59:40.4052690Z [command]/opt/homebrew/bin/git version
+2025-12-05T17:59:40.4271200Z git version 2.50.1
+2025-12-05T17:59:40.4374800Z ##[endgroup]
+2025-12-05T17:59:40.4384150Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/61ee5208-74a8-4941-8722-8b96caa46dc7/.gitconfig'
+2025-12-05T17:59:40.4385010Z Temporarily overriding HOME='/Users/runner/work/_temp/61ee5208-74a8-4941-8722-8b96caa46dc7' before making global git config changes
+2025-12-05T17:59:40.4386430Z Adding repository directory to the temporary git global config as a safe directory
+2025-12-05T17:59:40.4387740Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/anyon-claude/anyon-claude
+2025-12-05T17:59:40.4415290Z Deleting the contents of '/Users/runner/work/anyon-claude/anyon-claude'
+2025-12-05T17:59:40.4417870Z ##[group]Initializing the repository
+2025-12-05T17:59:40.4421670Z [command]/opt/homebrew/bin/git init /Users/runner/work/anyon-claude/anyon-claude
+2025-12-05T17:59:40.4589000Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-12-05T17:59:40.4589730Z hint: is subject to change. To configure the initial branch name to use in all
+2025-12-05T17:59:40.4590220Z hint: of your new repositories, which will suppress this warning, call:
+2025-12-05T17:59:40.4590570Z hint:
+2025-12-05T17:59:40.4590890Z hint: 	git config --global init.defaultBranch <name>
+2025-12-05T17:59:40.4591130Z hint:
+2025-12-05T17:59:40.4591390Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-12-05T17:59:40.4591780Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-12-05T17:59:40.4592080Z hint:
+2025-12-05T17:59:40.4592240Z hint: 	git branch -m <name>
+2025-12-05T17:59:40.4592410Z hint:
+2025-12-05T17:59:40.4592660Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2025-12-05T17:59:40.4593120Z Initialized empty Git repository in /Users/runner/work/anyon-claude/anyon-claude/.git/
+2025-12-05T17:59:40.4597380Z [command]/opt/homebrew/bin/git remote add origin https://github.com/SL-IT-AMAZING/anyon-claude
+2025-12-05T17:59:40.4646660Z ##[endgroup]
+2025-12-05T17:59:40.4649120Z ##[group]Disabling automatic garbage collection
+2025-12-05T17:59:40.4649450Z [command]/opt/homebrew/bin/git config --local gc.auto 0
+2025-12-05T17:59:40.4682710Z ##[endgroup]
+2025-12-05T17:59:40.4682980Z ##[group]Setting up auth
+2025-12-05T17:59:40.4687310Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-12-05T17:59:40.4721840Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-12-05T17:59:40.5275900Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-12-05T17:59:40.5317470Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-12-05T17:59:40.5808740Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2025-12-05T17:59:40.5847000Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2025-12-05T17:59:40.6710020Z [command]/opt/homebrew/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-12-05T17:59:40.6767950Z ##[endgroup]
+2025-12-05T17:59:40.6768580Z ##[group]Fetching the repository
+2025-12-05T17:59:40.6771780Z [command]/opt/homebrew/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +9cb07f25d5816d34174efcfaddff71c08fc7224d:refs/tags/v0.2.2
+2025-12-05T17:59:42.0243200Z From https://github.com/SL-IT-AMAZING/anyon-claude
+2025-12-05T17:59:42.0243760Z  * [new ref]         9cb07f25d5816d34174efcfaddff71c08fc7224d -> v0.2.2
+2025-12-05T17:59:42.0299520Z ##[endgroup]
+2025-12-05T17:59:42.0299970Z ##[group]Determining the checkout info
+2025-12-05T17:59:42.0300420Z ##[endgroup]
+2025-12-05T17:59:42.0303270Z [command]/opt/homebrew/bin/git sparse-checkout disable
+2025-12-05T17:59:42.0368280Z [command]/opt/homebrew/bin/git config --local --unset-all extensions.worktreeConfig
+2025-12-05T17:59:42.0415780Z ##[group]Checking out the ref
+2025-12-05T17:59:42.0421440Z [command]/opt/homebrew/bin/git checkout --progress --force refs/tags/v0.2.2
+2025-12-05T17:59:42.1360340Z HEAD is now at 9cb07f2 feat: Disable login requirement for standalone app
+2025-12-05T17:59:42.1371100Z ##[endgroup]
+2025-12-05T17:59:42.1437960Z [command]/opt/homebrew/bin/git log -1 --format=%H
+2025-12-05T17:59:42.1481300Z 9cb07f25d5816d34174efcfaddff71c08fc7224d
+2025-12-05T17:59:42.1657830Z ##[group]Run dtolnay/rust-toolchain@stable
+2025-12-05T17:59:42.1658120Z with:
+2025-12-05T17:59:42.1658270Z   toolchain: stable
+2025-12-05T17:59:42.1658410Z ##[endgroup]
+2025-12-05T17:59:42.1754510Z ##[group]Run : parse toolchain version
+2025-12-05T17:59:42.1754760Z [36;1m: parse toolchain version[0m
+2025-12-05T17:59:42.1754950Z [36;1mif [[ -z $toolchain ]]; then[0m
+2025-12-05T17:59:42.1755320Z [36;1m  # GitHub does not enforce `required: true` inputs itself. https://github.com/actions/runner/issues/1070[0m
+2025-12-05T17:59:42.1755700Z [36;1m  echo "'toolchain' is a required input" >&2[0m
+2025-12-05T17:59:42.1755900Z [36;1m  exit 1[0m
+2025-12-05T17:59:42.1756130Z [36;1melif [[ $toolchain =~ ^stable' '[0-9]+' '(year|month|week|day)s?' 'ago$ ]]; then[0m
+2025-12-05T17:59:42.1756510Z [36;1m  if [[ macOS == macOS ]]; then[0m
+2025-12-05T17:59:42.1756960Z [36;1m    echo "toolchain=1.$((($(date -v-$(sed 's/stable \([0-9]*\) \(.\).*/\1\2/' <<< $toolchain) +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:42.1757300Z [36;1m  else[0m
+2025-12-05T17:59:42.1757570Z [36;1m    echo "toolchain=1.$((($(date --date "${toolchain#stable }" +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:42.1757870Z [36;1m  fi[0m
+2025-12-05T17:59:42.1758090Z [36;1melif [[ $toolchain =~ ^stable' 'minus' '[0-9]+' 'releases?$ ]]; then[0m
+2025-12-05T17:59:42.1758490Z [36;1m  echo "toolchain=1.$((($(date +%s)/60/60/24-16569)/7/6-${toolchain//[^0-9]/}))" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:42.1758810Z [36;1melif [[ $toolchain =~ ^1\.[0-9]+$ ]]; then[0m
+2025-12-05T17:59:42.1759170Z [36;1m  echo "toolchain=1.$((i=${toolchain#1.}, c=($(date +%s)/60/60/24-16569)/7/6, i+9*i*(10*i<=c)+90*i*(100*i<=c)))" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:42.1759500Z [36;1melse[0m
+2025-12-05T17:59:42.1759670Z [36;1m  echo "toolchain=$toolchain" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:42.1759870Z [36;1mfi[0m
+2025-12-05T17:59:42.1812370Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:42.1812610Z env:
+2025-12-05T17:59:42.1812740Z   toolchain: stable
+2025-12-05T17:59:42.1812890Z ##[endgroup]
+2025-12-05T17:59:42.2255120Z ##[group]Run : construct rustup command line
+2025-12-05T17:59:42.2255450Z [36;1m: construct rustup command line[0m
+2025-12-05T17:59:42.2255840Z [36;1mecho "targets=$(for t in ${targets//,/ }; do echo -n ' --target' $t; done)" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:42.2256270Z [36;1mecho "components=$(for c in ${components//,/ }; do echo -n ' --component' $c; done)" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:42.2256630Z [36;1mecho "downgrade=" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:42.2302510Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:42.2302790Z env:
+2025-12-05T17:59:42.2302930Z   targets: 
+2025-12-05T17:59:42.2303110Z   components: 
+2025-12-05T17:59:42.2303270Z ##[endgroup]
+2025-12-05T17:59:42.2538710Z ##[group]Run : set $CARGO_HOME
+2025-12-05T17:59:42.2538930Z [36;1m: set $CARGO_HOME[0m
+2025-12-05T17:59:42.2539190Z [36;1mecho CARGO_HOME=${CARGO_HOME:-"$HOME/.cargo"} >> $GITHUB_ENV[0m
+2025-12-05T17:59:42.2582620Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:42.2582860Z ##[endgroup]
+2025-12-05T17:59:42.2784160Z ##[group]Run : install rustup if needed
+2025-12-05T17:59:42.2784420Z [36;1m: install rustup if needed[0m
+2025-12-05T17:59:42.2784630Z [36;1mif ! command -v rustup &>/dev/null; then[0m
+2025-12-05T17:59:42.2785160Z [36;1m  curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused --location --silent --show-error --fail https://sh.rustup.rs | sh -s -- --default-toolchain none -y[0m
+2025-12-05T17:59:42.2785660Z [36;1m  echo "$CARGO_HOME/bin" >> $GITHUB_PATH[0m
+2025-12-05T17:59:42.2785860Z [36;1mfi[0m
+2025-12-05T17:59:42.2828180Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:42.2828620Z env:
+2025-12-05T17:59:42.2828760Z   CARGO_HOME: /Users/runner/.cargo
+2025-12-05T17:59:42.2828950Z ##[endgroup]
+2025-12-05T17:59:42.3099110Z ##[group]Run rustup toolchain install stable --profile minimal --no-self-update
+2025-12-05T17:59:42.3099550Z [36;1mrustup toolchain install stable --profile minimal --no-self-update[0m
+2025-12-05T17:59:42.3145030Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:42.3145270Z env:
+2025-12-05T17:59:42.3145530Z   CARGO_HOME: /Users/runner/.cargo
+2025-12-05T17:59:42.3145720Z ##[endgroup]
+2025-12-05T17:59:42.6029660Z info: syncing channel updates for 'stable-aarch64-apple-darwin'
+2025-12-05T17:59:42.6662380Z 
+2025-12-05T17:59:42.6728300Z info: self-update is disabled for this build of rustup
+2025-12-05T17:59:42.6728810Z info: any updates to rustup will need to be fetched with your system package manager
+2025-12-05T17:59:42.6729310Z   stable-aarch64-apple-darwin unchanged - rustc 1.91.1 (ed61e7d7e 2025-11-07)
+2025-12-05T17:59:42.6729640Z 
+2025-12-05T17:59:42.6754080Z ##[group]Run rustup default stable
+2025-12-05T17:59:42.6754310Z [36;1mrustup default stable[0m
+2025-12-05T17:59:42.6798850Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:42.6799080Z env:
+2025-12-05T17:59:42.6799220Z   CARGO_HOME: /Users/runner/.cargo
+2025-12-05T17:59:42.6799400Z ##[endgroup]
+2025-12-05T17:59:42.7129440Z info: using existing install for 'stable-aarch64-apple-darwin'
+2025-12-05T17:59:42.7402830Z info: default toolchain set to 'stable-aarch64-apple-darwin'
+2025-12-05T17:59:42.7403080Z 
+2025-12-05T17:59:42.7469360Z   stable-aarch64-apple-darwin unchanged - rustc 1.91.1 (ed61e7d7e 2025-11-07)
+2025-12-05T17:59:42.7469640Z 
+2025-12-05T17:59:42.7497610Z ##[group]Run : create cachekey
+2025-12-05T17:59:42.7497810Z [36;1m: create cachekey[0m
+2025-12-05T17:59:42.7498160Z [36;1mDATE=$(rustc +stable --version --verbose | sed -ne 's/^commit-date: \(20[0-9][0-9]\)-\([01][0-9]\)-\([0-3][0-9]\)$/\1\2\3/p')[0m
+2025-12-05T17:59:42.7498640Z [36;1mHASH=$(rustc +stable --version --verbose | sed -ne 's/^commit-hash: //p')[0m
+2025-12-05T17:59:42.7499080Z [36;1mecho "cachekey=$(echo $DATE$HASH | head -c12)" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:42.7545850Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:42.7546100Z env:
+2025-12-05T17:59:42.7546240Z   CARGO_HOME: /Users/runner/.cargo
+2025-12-05T17:59:42.7546490Z ##[endgroup]
+2025-12-05T17:59:42.8165120Z ##[group]Run : disable incremental compilation
+2025-12-05T17:59:42.8165410Z [36;1m: disable incremental compilation[0m
+2025-12-05T17:59:42.8165660Z [36;1mif [ -z "${CARGO_INCREMENTAL+set}" ]; then[0m
+2025-12-05T17:59:42.8165920Z [36;1m  echo CARGO_INCREMENTAL=0 >> $GITHUB_ENV[0m
+2025-12-05T17:59:42.8166120Z [36;1mfi[0m
+2025-12-05T17:59:42.8211010Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:42.8211230Z env:
+2025-12-05T17:59:42.8211370Z   CARGO_HOME: /Users/runner/.cargo
+2025-12-05T17:59:42.8211550Z ##[endgroup]
+2025-12-05T17:59:42.8411310Z ##[group]Run : enable colors in Cargo output
+2025-12-05T17:59:42.8411570Z [36;1m: enable colors in Cargo output[0m
+2025-12-05T17:59:42.8411800Z [36;1mif [ -z "${CARGO_TERM_COLOR+set}" ]; then[0m
+2025-12-05T17:59:42.8412040Z [36;1m  echo CARGO_TERM_COLOR=always >> $GITHUB_ENV[0m
+2025-12-05T17:59:42.8412240Z [36;1mfi[0m
+2025-12-05T17:59:42.8454700Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:42.8454920Z env:
+2025-12-05T17:59:42.8455050Z   CARGO_HOME: /Users/runner/.cargo
+2025-12-05T17:59:42.8455240Z   CARGO_INCREMENTAL: 0
+2025-12-05T17:59:42.8455390Z ##[endgroup]
+2025-12-05T17:59:42.8636120Z ##[group]Run : enable Cargo sparse registry
+2025-12-05T17:59:42.8636460Z [36;1m: enable Cargo sparse registry[0m
+2025-12-05T17:59:42.8636740Z [36;1m# implemented in 1.66, stabilized in 1.68, made default in 1.70[0m
+2025-12-05T17:59:42.8637250Z [36;1mif [ -z "${CARGO_REGISTRIES_CRATES_IO_PROTOCOL+set}" -o -f "/Users/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol ]; then[0m
+2025-12-05T17:59:42.8637970Z [36;1m  if rustc +stable --version --verbose | grep -q '^release: 1\.6[89]\.'; then[0m
+2025-12-05T17:59:42.8638590Z [36;1m    touch "/Users/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol || true[0m
+2025-12-05T17:59:42.8639090Z [36;1m    echo CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse >> $GITHUB_ENV[0m
+2025-12-05T17:59:42.8639460Z [36;1m  elif rustc +stable --version --verbose | grep -q '^release: 1\.6[67]\.'; then[0m
+2025-12-05T17:59:42.8639880Z [36;1m    touch "/Users/runner/work/_temp"/.implicit_cargo_registries_crates_io_protocol || true[0m
+2025-12-05T17:59:42.8640270Z [36;1m    echo CARGO_REGISTRIES_CRATES_IO_PROTOCOL=git >> $GITHUB_ENV[0m
+2025-12-05T17:59:42.8640600Z [36;1m  fi[0m
+2025-12-05T17:59:42.8640730Z [36;1mfi[0m
+2025-12-05T17:59:42.8683920Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:42.8684160Z env:
+2025-12-05T17:59:42.8684300Z   CARGO_HOME: /Users/runner/.cargo
+2025-12-05T17:59:42.8684490Z   CARGO_INCREMENTAL: 0
+2025-12-05T17:59:42.8684670Z   CARGO_TERM_COLOR: always
+2025-12-05T17:59:42.8684820Z ##[endgroup]
+2025-12-05T17:59:42.9124080Z ##[group]Run : work around spurious network errors in curl 8.0
+2025-12-05T17:59:42.9124440Z [36;1m: work around spurious network errors in curl 8.0[0m
+2025-12-05T17:59:42.9124830Z [36;1m# https://rust-lang.zulipchat.com/#narrow/stream/246057-t-cargo/topic/timeout.20investigation[0m
+2025-12-05T17:59:42.9125260Z [36;1mif rustc +stable --version --verbose | grep -q '^release: 1\.7[01]\.'; then[0m
+2025-12-05T17:59:42.9125680Z [36;1m  echo CARGO_HTTP_MULTIPLEXING=false >> $GITHUB_ENV[0m
+2025-12-05T17:59:42.9125900Z [36;1mfi[0m
+2025-12-05T17:59:42.9168840Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:42.9169060Z env:
+2025-12-05T17:59:42.9169190Z   CARGO_HOME: /Users/runner/.cargo
+2025-12-05T17:59:42.9169370Z   CARGO_INCREMENTAL: 0
+2025-12-05T17:59:42.9169530Z   CARGO_TERM_COLOR: always
+2025-12-05T17:59:42.9169710Z ##[endgroup]
+2025-12-05T17:59:42.9498040Z ##[group]Run rustc +stable --version --verbose
+2025-12-05T17:59:42.9498360Z [36;1mrustc +stable --version --verbose[0m
+2025-12-05T17:59:42.9541010Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:42.9541240Z env:
+2025-12-05T17:59:42.9541390Z   CARGO_HOME: /Users/runner/.cargo
+2025-12-05T17:59:42.9541570Z   CARGO_INCREMENTAL: 0
+2025-12-05T17:59:42.9541720Z   CARGO_TERM_COLOR: always
+2025-12-05T17:59:42.9541880Z ##[endgroup]
+2025-12-05T17:59:42.9825980Z rustc 1.91.1 (ed61e7d7e 2025-11-07)
+2025-12-05T17:59:42.9826490Z binary: rustc
+2025-12-05T17:59:42.9826750Z commit-hash: ed61e7d7e242494fb7057f2657300d9e77bb4fcb
+2025-12-05T17:59:42.9827090Z commit-date: 2025-11-07
+2025-12-05T17:59:42.9827280Z host: aarch64-apple-darwin
+2025-12-05T17:59:42.9827490Z release: 1.91.1
+2025-12-05T17:59:42.9830710Z LLVM version: 21.1.2
+2025-12-05T17:59:42.9915240Z ##[group]Run Swatinem/rust-cache@v2
+2025-12-05T17:59:42.9915440Z with:
+2025-12-05T17:59:42.9915610Z   workspaces: src-tauri
+2025-12-05T17:59:42.9915770Z   prefix-key: v0-rust
+2025-12-05T17:59:42.9915920Z   add-job-id-key: true
+2025-12-05T17:59:42.9916090Z   add-rust-environment-hash-key: true
+2025-12-05T17:59:42.9916280Z   cache-targets: true
+2025-12-05T17:59:42.9916430Z   cache-all-crates: false
+2025-12-05T17:59:42.9916610Z   cache-workspace-crates: false
+2025-12-05T17:59:42.9916760Z   save-if: true
+2025-12-05T17:59:42.9916890Z   cache-provider: github
+2025-12-05T17:59:42.9917050Z   cache-bin: true
+2025-12-05T17:59:42.9917190Z   lookup-only: false
+2025-12-05T17:59:42.9917310Z env:
+2025-12-05T17:59:42.9917450Z   CARGO_HOME: /Users/runner/.cargo
+2025-12-05T17:59:42.9917620Z   CARGO_INCREMENTAL: 0
+2025-12-05T17:59:42.9917780Z   CARGO_TERM_COLOR: always
+2025-12-05T17:59:42.9917930Z ##[endgroup]
+2025-12-05T17:59:43.3891850Z ##[group]Cache Configuration
+2025-12-05T17:59:43.3901420Z Cache Provider:
+2025-12-05T17:59:43.3902540Z     github
+2025-12-05T17:59:43.3902760Z Workspaces:
+2025-12-05T17:59:43.3902980Z     /Users/runner/work/anyon-claude/anyon-claude/src-tauri
+2025-12-05T17:59:43.3903850Z Cache Paths:
+2025-12-05T17:59:43.3904030Z     /Users/runner/.cargo/bin
+2025-12-05T17:59:43.3904210Z     /Users/runner/.cargo/.crates.toml
+2025-12-05T17:59:43.3904430Z     /Users/runner/.cargo/.crates2.json
+2025-12-05T17:59:43.3904640Z     /Users/runner/.cargo/registry
+2025-12-05T17:59:43.3904830Z     /Users/runner/.cargo/git
+2025-12-05T17:59:43.3905070Z     /Users/runner/work/anyon-claude/anyon-claude/src-tauri/target
+2025-12-05T17:59:43.3905320Z Restore Key:
+2025-12-05T17:59:43.3905470Z     v0-rust-build-Darwin-arm64-cb1b2ab3
+2025-12-05T17:59:43.3905670Z Cache Key:
+2025-12-05T17:59:43.3905830Z     v0-rust-build-Darwin-arm64-cb1b2ab3-05a3bbc5
+2025-12-05T17:59:43.3906040Z .. Prefix:
+2025-12-05T17:59:43.3906190Z   - v0-rust-build-Darwin-arm64
+2025-12-05T17:59:43.3906360Z .. Environment considered:
+2025-12-05T17:59:43.3906650Z   - Rust Version: 1.91.1 aarch64-apple-darwin (ed61e7d7e242494fb7057f2657300d9e77bb4fcb)
+2025-12-05T17:59:43.3906980Z   - CARGO_HOME
+2025-12-05T17:59:43.3907120Z   - CARGO_INCREMENTAL
+2025-12-05T17:59:43.3907310Z   - CARGO_TERM_COLOR
+2025-12-05T17:59:43.3907520Z .. Lockfiles considered:
+2025-12-05T17:59:43.3907770Z   - /Users/runner/work/anyon-claude/anyon-claude/.cargo/config.toml
+2025-12-05T17:59:43.3908130Z   - /Users/runner/work/anyon-claude/anyon-claude/src-tauri/Cargo.lock
+2025-12-05T17:59:43.3908470Z   - /Users/runner/work/anyon-claude/anyon-claude/src-tauri/Cargo.toml
+2025-12-05T17:59:43.3908890Z ##[endgroup]
+2025-12-05T17:59:43.3908980Z 
+2025-12-05T17:59:43.3909040Z ... Restoring cache ...
+2025-12-05T17:59:43.5012000Z Cache hit for: v0-rust-build-Darwin-arm64-cb1b2ab3-05a3bbc5
+2025-12-05T17:59:44.5360460Z Received 188743680 of 637836173 (29.6%), 180.0 MBs/sec
+2025-12-05T17:59:45.5478090Z Received 402653184 of 637836173 (63.1%), 191.1 MBs/sec
+2025-12-05T17:59:46.5449640Z Received 578813952 of 637836173 (90.7%), 183.4 MBs/sec
+2025-12-05T17:59:46.7691040Z Received 637836173 of 637836173 (100.0%), 188.1 MBs/sec
+2025-12-05T17:59:46.7773160Z Cache Size: ~608 MB (637836173 B)
+2025-12-05T17:59:46.7848670Z [command]/opt/homebrew/bin/gtar -xf /Users/runner/work/_temp/99a84bc3-682c-460b-8b99-6dc31c2309f4/cache.tzst -P -C /Users/runner/work/anyon-claude/anyon-claude --delay-directory-restore --use-compress-program unzstd
+2025-12-05T17:59:51.9313480Z Cache restored successfully
+2025-12-05T17:59:51.9392600Z Restored from cache key "v0-rust-build-Darwin-arm64-cb1b2ab3-05a3bbc5" full match: true.
+2025-12-05T17:59:51.9583830Z ##[group]Run oven-sh/setup-bun@v2
+2025-12-05T17:59:51.9584110Z with:
+2025-12-05T17:59:51.9584320Z   no-cache: false
+2025-12-05T17:59:51.9584590Z env:
+2025-12-05T17:59:51.9584800Z   CARGO_HOME: /Users/runner/.cargo
+2025-12-05T17:59:51.9585150Z   CARGO_INCREMENTAL: 0
+2025-12-05T17:59:51.9585380Z   CARGO_TERM_COLOR: always
+2025-12-05T17:59:51.9585710Z   CACHE_ON_FAILURE: false
+2025-12-05T17:59:51.9585920Z ##[endgroup]
+2025-12-05T17:59:52.0868130Z Downloading a new version of Bun: https://bun.sh/download/latest/darwin/arm64?avx2=true&profile=false
+2025-12-05T17:59:52.8033670Z [command]/usr/bin/unzip -o -q /Users/runner/work/_temp/513cd868-3216-4b14-b525-6d5cecc58b02.zip
+2025-12-05T17:59:53.2196990Z [command]/Users/runner/.bun/bin/bun --revision
+2025-12-05T17:59:53.2522100Z 1.3.3+274e01c73
+2025-12-05T17:59:53.2793930Z ##[group]Run bun install
+2025-12-05T17:59:53.2794160Z [36;1mbun install[0m
+2025-12-05T17:59:53.2873010Z shell: /bin/bash -e {0}
+2025-12-05T17:59:53.2873230Z env:
+2025-12-05T17:59:53.2873390Z   CARGO_HOME: /Users/runner/.cargo
+2025-12-05T17:59:53.2873570Z   CARGO_INCREMENTAL: 0
+2025-12-05T17:59:53.2873780Z   CARGO_TERM_COLOR: always
+2025-12-05T17:59:53.2874050Z   CACHE_ON_FAILURE: false
+2025-12-05T17:59:53.2874250Z ##[endgroup]
+2025-12-05T17:59:53.3195450Z bun install v1.3.3 (274e01c7)
+2025-12-05T17:59:57.2918480Z 
+2025-12-05T17:59:57.2920000Z + @tauri-apps/cli@2.7.1
+2025-12-05T17:59:57.2920550Z + @types/node@22.15.32
+2025-12-05T17:59:57.2920780Z + @types/react@18.3.23
+2025-12-05T17:59:57.2926610Z + @types/react-dom@18.3.7
+2025-12-05T17:59:57.2926880Z + @types/sharp@0.32.0
+2025-12-05T17:59:57.2927170Z + @vitejs/plugin-react@4.5.2
+2025-12-05T17:59:57.2927410Z + concurrently@9.2.1
+2025-12-05T17:59:57.2927600Z + sharp@0.34.2
+2025-12-05T17:59:57.2927900Z + typescript@5.6.3
+2025-12-05T17:59:57.2928200Z + vite@6.3.5
+2025-12-05T17:59:57.2928400Z + @hookform/resolvers@3.10.0
+2025-12-05T17:59:57.2928720Z + @radix-ui/react-dialog@1.1.14
+2025-12-05T17:59:57.2929070Z + @radix-ui/react-dropdown-menu@2.1.15
+2025-12-05T17:59:57.2929390Z + @radix-ui/react-label@2.1.7
+2025-12-05T17:59:57.2929650Z + @radix-ui/react-popover@1.1.14
+2025-12-05T17:59:57.2929950Z + @radix-ui/react-radio-group@1.3.7
+2025-12-05T17:59:57.2930200Z + @radix-ui/react-select@2.2.5
+2025-12-05T17:59:57.2930510Z + @radix-ui/react-switch@1.2.5
+2025-12-05T17:59:57.2930770Z + @radix-ui/react-tabs@1.1.12
+2025-12-05T17:59:57.2931040Z + @radix-ui/react-toast@1.2.14
+2025-12-05T17:59:57.2931340Z + @radix-ui/react-tooltip@1.2.7
+2025-12-05T17:59:57.2931600Z + @tailwindcss/cli@4.1.10
+2025-12-05T17:59:57.2931820Z + @tailwindcss/vite@4.1.10
+2025-12-05T17:59:57.2932000Z + @tanstack/react-virtual@3.13.10
+2025-12-05T17:59:57.2932360Z + @tauri-apps/api@2.5.0
+2025-12-05T17:59:57.2932620Z + @tauri-apps/plugin-dialog@2.2.2
+2025-12-05T17:59:57.2932950Z + @tauri-apps/plugin-global-shortcut@2.2.1
+2025-12-05T17:59:57.2933230Z + @tauri-apps/plugin-http@2.5.4
+2025-12-05T17:59:57.2933460Z + @tauri-apps/plugin-opener@2.3.0
+2025-12-05T17:59:57.2934680Z + @tauri-apps/plugin-shell@2.2.2
+2025-12-05T17:59:57.2935010Z + @types/diff@8.0.0
+2025-12-05T17:59:57.2935240Z + @types/react-syntax-highlighter@15.5.13
+2025-12-05T17:59:57.2935550Z + @uiw/react-md-editor@4.0.7
+2025-12-05T17:59:57.2935740Z + ansi-to-html@0.7.2
+2025-12-05T17:59:57.2935930Z + class-variance-authority@0.7.1
+2025-12-05T17:59:57.2936120Z + clsx@2.1.1
+2025-12-05T17:59:57.2936260Z + date-fns@3.6.0
+2025-12-05T17:59:57.2936540Z + diff@8.0.2
+2025-12-05T17:59:57.2936760Z + framer-motion@12.18.1
+2025-12-05T17:59:57.2937010Z + html2canvas@1.4.1
+2025-12-05T17:59:57.2937200Z + lucide-react@0.468.0
+2025-12-05T17:59:57.2937370Z + posthog-js@1.258.3
+2025-12-05T17:59:57.2937540Z + react@18.3.1
+2025-12-05T17:59:57.2937810Z + react-dom@18.3.1
+2025-12-05T17:59:57.2938100Z + react-hook-form@7.58.1
+2025-12-05T17:59:57.2938350Z + react-markdown@9.1.0
+2025-12-05T17:59:57.2938630Z + react-router-dom@7.10.1
+2025-12-05T17:59:57.2938860Z + react-syntax-highlighter@15.6.1
+2025-12-05T17:59:57.2939140Z + recharts@2.15.3
+2025-12-05T17:59:57.2939290Z + remark-gfm@4.0.1
+2025-12-05T17:59:57.2939620Z + tailwind-merge@2.6.0
+2025-12-05T17:59:57.2939860Z + tailwindcss@4.1.10
+2025-12-05T17:59:57.2940060Z + zod@3.25.67
+2025-12-05T17:59:57.2940240Z + zustand@5.0.6
+2025-12-05T17:59:57.2940410Z 
+2025-12-05T17:59:57.2940470Z 436 packages installed [3.97s]
+2025-12-05T17:59:57.2977270Z ##[group]Run cat << EOF > .env
+2025-12-05T17:59:57.2978020Z [36;1mcat << EOF > .env[0m
+2025-12-05T17:59:57.2978340Z [36;1m# Google OAuth Configuration[0m
+2025-12-05T17:59:57.2979100Z [36;1mGOOGLE_CLIENT_ID=***[0m
+2025-12-05T17:59:57.2979420Z [36;1mGOOGLE_CLIENT_SECRET=***[0m
+2025-12-05T17:59:57.2979650Z [36;1m[0m
+2025-12-05T17:59:57.2980250Z [36;1m# Server Configuration[0m
+2025-12-05T17:59:57.2980460Z [36;1mPORT=4000[0m
+2025-12-05T17:59:57.2980710Z [36;1mNODE_ENV=production[0m
+2025-12-05T17:59:57.2981170Z [36;1mJWT_SECRET=***[0m
+2025-12-05T17:59:57.2981340Z [36;1m[0m
+2025-12-05T17:59:57.2981930Z [36;1m# OAuth Redirect URIs[0m
+2025-12-05T17:59:57.2982230Z [36;1mOAUTH_REDIRECT_URI=http://localhost:4000/auth/google/callback[0m
+2025-12-05T17:59:57.2982540Z [36;1mFRONTEND_URL=http://localhost:1420[0m
+2025-12-05T17:59:57.2982830Z [36;1mEOF[0m
+2025-12-05T17:59:57.3036730Z shell: /bin/bash -e {0}
+2025-12-05T17:59:57.3036910Z env:
+2025-12-05T17:59:57.3037100Z   CARGO_HOME: /Users/runner/.cargo
+2025-12-05T17:59:57.3037300Z   CARGO_INCREMENTAL: 0
+2025-12-05T17:59:57.3037470Z   CARGO_TERM_COLOR: always
+2025-12-05T17:59:57.3037650Z   CACHE_ON_FAILURE: false
+2025-12-05T17:59:57.3038000Z ##[endgroup]
+2025-12-05T17:59:57.3390940Z ##[group]Run bun run tauri build
+2025-12-05T17:59:57.3391190Z [36;1mbun run tauri build[0m
+2025-12-05T17:59:57.3438850Z shell: /bin/bash -e {0}
+2025-12-05T17:59:57.3439100Z env:
+2025-12-05T17:59:57.3439260Z   CARGO_HOME: /Users/runner/.cargo
+2025-12-05T17:59:57.3439450Z   CARGO_INCREMENTAL: 0
+2025-12-05T17:59:57.3439610Z   CARGO_TERM_COLOR: always
+2025-12-05T17:59:57.3439790Z   CACHE_ON_FAILURE: false
+2025-12-05T17:59:57.3439960Z   CI: true
+2025-12-05T17:59:57.3440120Z ##[endgroup]
+2025-12-05T17:59:57.3705660Z $ tauri build
+2025-12-05T17:59:57.5134760Z         Warn The bundle identifier "com.anyon.app" set in `tauri.conf.json identifier` ends with `.app`. This is not recommended because it conflicts with the application bundle extension on macOS.
+2025-12-05T17:59:57.5135430Z      Running beforeBuildCommand `npm run build`
+2025-12-05T17:59:57.7441400Z 
+2025-12-05T17:59:57.7441680Z > anyon@0.2.1 build
+2025-12-05T17:59:57.7441870Z > tsc && vite build
+2025-12-05T17:59:57.7442040Z 
+2025-12-05T18:00:04.3623110Z src/App.tsx(6,1): error TS6133: 'LoginPage' is declared but its value is never read.
+2025-12-05T18:00:04.3635790Z src/App.tsx(501,11): error TS6133: 'isAuthenticated' is declared but its value is never read.
+2025-12-05T18:00:04.3800510Z beforeBuildCommand `npm run build` failed with exit code 2
+2025-12-05T18:00:04.3851780Z        Error beforeBuildCommand `npm run build` failed with exit code 2
+2025-12-05T18:00:04.3855700Z error: script "tauri" exited with code 1
+2025-12-05T18:00:04.3874370Z ##[error]Process completed with exit code 1.
+2025-12-05T18:00:04.3973170Z Post job cleanup.
+2025-12-05T18:00:04.4869880Z [command]/opt/homebrew/bin/git version
+2025-12-05T18:00:04.4936550Z git version 2.50.1
+2025-12-05T18:00:04.4957610Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/ae97fcac-7f1d-49cf-8e23-41cdb5c50abb/.gitconfig'
+2025-12-05T18:00:04.4964940Z Temporarily overriding HOME='/Users/runner/work/_temp/ae97fcac-7f1d-49cf-8e23-41cdb5c50abb' before making global git config changes
+2025-12-05T18:00:04.4965710Z Adding repository directory to the temporary git global config as a safe directory
+2025-12-05T18:00:04.4968880Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/anyon-claude/anyon-claude
+2025-12-05T18:00:04.5037690Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-12-05T18:00:04.5078860Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-12-05T18:00:04.5747680Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-12-05T18:00:04.5786200Z http.https://github.com/.extraheader
+2025-12-05T18:00:04.5794840Z [command]/opt/homebrew/bin/git config --local --unset-all http.https://github.com/.extraheader
+2025-12-05T18:00:04.5845740Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-12-05T18:00:04.6400940Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2025-12-05T18:00:04.6446260Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2025-12-05T18:00:04.7062410Z Cleaning up orphan processes

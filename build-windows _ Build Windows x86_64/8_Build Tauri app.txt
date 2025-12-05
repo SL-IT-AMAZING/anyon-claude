@@ -1,0 +1,22 @@
+﻿2025-12-05T18:01:19.9929620Z ##[group]Run bun run tauri build --target x86_64-pc-windows-msvc
+2025-12-05T18:01:19.9930130Z [36;1mbun run tauri build --target x86_64-pc-windows-msvc[0m
+2025-12-05T18:01:19.9999236Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2025-12-05T18:01:19.9999565Z env:
+2025-12-05T18:01:19.9999749Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2025-12-05T18:01:19.9999993Z   CARGO_INCREMENTAL: 0
+2025-12-05T18:01:20.0000185Z   CARGO_TERM_COLOR: always
+2025-12-05T18:01:20.0000387Z   CACHE_ON_FAILURE: false
+2025-12-05T18:01:20.0000599Z ##[endgroup]
+2025-12-05T18:01:20.2835537Z $ tauri build --target "x86_64-pc-windows-msvc"
+2025-12-05T18:01:21.5247038Z         Warn The bundle identifier "com.anyon.app" set in `tauri.conf.json identifier` ends with `.app`. This is not recommended because it conflicts with the application bundle extension on macOS.
+2025-12-05T18:01:21.5247858Z      Running beforeBuildCommand `npm run build`
+2025-12-05T18:01:22.5687988Z 
+2025-12-05T18:01:22.5688622Z > anyon@0.2.1 build
+2025-12-05T18:01:22.5689051Z > tsc && vite build
+2025-12-05T18:01:22.5691692Z 
+2025-12-05T18:01:33.2253647Z src/App.tsx(6,1): error TS6133: 'LoginPage' is declared but its value is never read.
+2025-12-05T18:01:33.2255903Z src/App.tsx(501,11): error TS6133: 'isAuthenticated' is declared but its value is never read.
+2025-12-05T18:01:33.5759026Z beforeBuildCommand `npm run build` failed with exit code 2
+2025-12-05T18:01:33.5761015Z        Error beforeBuildCommand `npm run build` failed with exit code 2
+2025-12-05T18:01:33.5845577Z error: script "tauri" exited with code 1
+2025-12-05T18:01:33.6832964Z ##[error]Process completed with exit code 1.

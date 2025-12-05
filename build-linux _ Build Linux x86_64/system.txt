@@ -1,0 +1,8 @@
+2025-12-05T17:59:32.4910000Z Requested labels: ubuntu-latest
+2025-12-05T17:59:32.4910000Z Job defined at: SL-IT-AMAZING/anyon-claude/.github/workflows/build-linux.yml@refs/tags/v0.2.2
+2025-12-05T17:59:32.4910000Z Reusable workflow chain:
+2025-12-05T17:59:32.4910000Z SL-IT-AMAZING/anyon-claude/.github/workflows/release.yml@refs/tags/v0.2.2 (9cb07f25d5816d34174efcfaddff71c08fc7224d)
+2025-12-05T17:59:32.4910000Z -> SL-IT-AMAZING/anyon-claude/.github/workflows/build-linux.yml@refs/tags/v0.2.2 (9cb07f25d5816d34174efcfaddff71c08fc7224d)
+2025-12-05T17:59:32.4910000Z Waiting for a runner to pick up this job...
+2025-12-05T17:59:33.0200000Z Job is about to start running on the hosted runner: GitHub Actions 1000000433
+2025-12-05T17:59:33.0200000Z Job is waiting for a hosted runner to come online.

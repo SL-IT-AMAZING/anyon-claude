@@ -1,0 +1,57 @@
+﻿2025-12-05T17:59:42.9915230Z ##[group]Run Swatinem/rust-cache@v2
+2025-12-05T17:59:42.9915440Z with:
+2025-12-05T17:59:42.9915610Z   workspaces: src-tauri
+2025-12-05T17:59:42.9915760Z   prefix-key: v0-rust
+2025-12-05T17:59:42.9915920Z   add-job-id-key: true
+2025-12-05T17:59:42.9916080Z   add-rust-environment-hash-key: true
+2025-12-05T17:59:42.9916270Z   cache-targets: true
+2025-12-05T17:59:42.9916430Z   cache-all-crates: false
+2025-12-05T17:59:42.9916600Z   cache-workspace-crates: false
+2025-12-05T17:59:42.9916760Z   save-if: true
+2025-12-05T17:59:42.9916890Z   cache-provider: github
+2025-12-05T17:59:42.9917050Z   cache-bin: true
+2025-12-05T17:59:42.9917180Z   lookup-only: false
+2025-12-05T17:59:42.9917310Z env:
+2025-12-05T17:59:42.9917450Z   CARGO_HOME: /Users/runner/.cargo
+2025-12-05T17:59:42.9917620Z   CARGO_INCREMENTAL: 0
+2025-12-05T17:59:42.9917770Z   CARGO_TERM_COLOR: always
+2025-12-05T17:59:42.9917930Z ##[endgroup]
+2025-12-05T17:59:43.3891800Z ##[group]Cache Configuration
+2025-12-05T17:59:43.3901270Z Cache Provider:
+2025-12-05T17:59:43.3902530Z     github
+2025-12-05T17:59:43.3902750Z Workspaces:
+2025-12-05T17:59:43.3902980Z     /Users/runner/work/anyon-claude/anyon-claude/src-tauri
+2025-12-05T17:59:43.3903850Z Cache Paths:
+2025-12-05T17:59:43.3904020Z     /Users/runner/.cargo/bin
+2025-12-05T17:59:43.3904210Z     /Users/runner/.cargo/.crates.toml
+2025-12-05T17:59:43.3904430Z     /Users/runner/.cargo/.crates2.json
+2025-12-05T17:59:43.3904640Z     /Users/runner/.cargo/registry
+2025-12-05T17:59:43.3904830Z     /Users/runner/.cargo/git
+2025-12-05T17:59:43.3905070Z     /Users/runner/work/anyon-claude/anyon-claude/src-tauri/target
+2025-12-05T17:59:43.3905320Z Restore Key:
+2025-12-05T17:59:43.3905470Z     v0-rust-build-Darwin-arm64-cb1b2ab3
+2025-12-05T17:59:43.3905660Z Cache Key:
+2025-12-05T17:59:43.3905830Z     v0-rust-build-Darwin-arm64-cb1b2ab3-05a3bbc5
+2025-12-05T17:59:43.3906040Z .. Prefix:
+2025-12-05T17:59:43.3906180Z   - v0-rust-build-Darwin-arm64
+2025-12-05T17:59:43.3906360Z .. Environment considered:
+2025-12-05T17:59:43.3906640Z   - Rust Version: 1.91.1 aarch64-apple-darwin (ed61e7d7e242494fb7057f2657300d9e77bb4fcb)
+2025-12-05T17:59:43.3906970Z   - CARGO_HOME
+2025-12-05T17:59:43.3907120Z   - CARGO_INCREMENTAL
+2025-12-05T17:59:43.3907270Z   - CARGO_TERM_COLOR
+2025-12-05T17:59:43.3907520Z .. Lockfiles considered:
+2025-12-05T17:59:43.3907760Z   - /Users/runner/work/anyon-claude/anyon-claude/.cargo/config.toml
+2025-12-05T17:59:43.3908130Z   - /Users/runner/work/anyon-claude/anyon-claude/src-tauri/Cargo.lock
+2025-12-05T17:59:43.3908470Z   - /Users/runner/work/anyon-claude/anyon-claude/src-tauri/Cargo.toml
+2025-12-05T17:59:43.3908880Z ##[endgroup]
+2025-12-05T17:59:43.3908980Z 
+2025-12-05T17:59:43.3909030Z ... Restoring cache ...
+2025-12-05T17:59:43.5011930Z Cache hit for: v0-rust-build-Darwin-arm64-cb1b2ab3-05a3bbc5
+2025-12-05T17:59:44.5360420Z Received 188743680 of 637836173 (29.6%), 180.0 MBs/sec
+2025-12-05T17:59:45.5478040Z Received 402653184 of 637836173 (63.1%), 191.1 MBs/sec
+2025-12-05T17:59:46.5449570Z Received 578813952 of 637836173 (90.7%), 183.4 MBs/sec
+2025-12-05T17:59:46.7690990Z Received 637836173 of 637836173 (100.0%), 188.1 MBs/sec
+2025-12-05T17:59:46.7773130Z Cache Size: ~608 MB (637836173 B)
+2025-12-05T17:59:46.7848650Z [command]/opt/homebrew/bin/gtar -xf /Users/runner/work/_temp/99a84bc3-682c-460b-8b99-6dc31c2309f4/cache.tzst -P -C /Users/runner/work/anyon-claude/anyon-claude --delay-directory-restore --use-compress-program unzstd
+2025-12-05T17:59:51.9313410Z Cache restored successfully
+2025-12-05T17:59:51.9392560Z Restored from cache key "v0-rust-build-Darwin-arm64-cb1b2ab3-05a3bbc5" full match: true.

@@ -1,0 +1,33 @@
+﻿2025-12-05T17:59:36.4948809Z Current runner version: '2.329.0'
+2025-12-05T17:59:36.5039961Z ##[group]Runner Image Provisioner
+2025-12-05T17:59:36.5041409Z Hosted Compute Agent
+2025-12-05T17:59:36.5042305Z Version: 20251124.448
+2025-12-05T17:59:36.5043418Z Commit: fda5086b43ec66ade217e5fcd18146c879571177
+2025-12-05T17:59:36.5044622Z Build Date: 2025-11-24T21:16:26Z
+2025-12-05T17:59:36.5045590Z ##[endgroup]
+2025-12-05T17:59:36.5046785Z ##[group]Operating System
+2025-12-05T17:59:36.5047787Z Microsoft Windows Server 2025
+2025-12-05T17:59:36.5048658Z 10.0.26100
+2025-12-05T17:59:36.5049415Z Datacenter
+2025-12-05T17:59:36.5050213Z ##[endgroup]
+2025-12-05T17:59:36.5051039Z ##[group]Runner Image
+2025-12-05T17:59:36.5051905Z Image: windows-2025
+2025-12-05T17:59:36.5052836Z Version: 20251125.122.1
+2025-12-05T17:59:36.5054635Z Included Software: https://github.com/actions/runner-images/blob/win25/20251125.122/images/windows/Windows2025-Readme.md
+2025-12-05T17:59:36.5057177Z Image Release: https://github.com/actions/runner-images/releases/tag/win25%2F20251125.122
+2025-12-05T17:59:36.5059799Z ##[endgroup]
+2025-12-05T17:59:36.5061531Z ##[group]GITHUB_TOKEN Permissions
+2025-12-05T17:59:36.5064286Z Contents: write
+2025-12-05T17:59:36.5065217Z Metadata: read
+2025-12-05T17:59:36.5066058Z ##[endgroup]
+2025-12-05T17:59:36.5069427Z Secret source: Actions
+2025-12-05T17:59:36.5070572Z Prepare workflow directory
+2025-12-05T17:59:36.5406799Z Prepare all required actions
+2025-12-05T17:59:36.5445532Z Getting action download info
+2025-12-05T17:59:36.8648389Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+2025-12-05T17:59:37.1399895Z Download action repository 'dtolnay/rust-toolchain@stable' (SHA:6d9817901c499d6b02debbb57edb38d33daa680b)
+2025-12-05T17:59:37.2681941Z Download action repository 'Swatinem/rust-cache@v2' (SHA:779680da715d629ac1d338a641029a2f4372abb5)
+2025-12-05T17:59:37.5736374Z Download action repository 'oven-sh/setup-bun@v2' (SHA:735343b667d3e6f658f44d0eca948eb6282f2b76)
+2025-12-05T17:59:37.8262486Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2025-12-05T17:59:38.2066897Z Uses: SL-IT-AMAZING/anyon-claude/.github/workflows/build-windows.yml@refs/tags/v0.2.2 (9cb07f25d5816d34174efcfaddff71c08fc7224d)
+2025-12-05T17:59:38.2073033Z Complete job name: build-windows / Build Windows x86_64

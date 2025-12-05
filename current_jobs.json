@@ -1,0 +1,578 @@
+{
+  "total_count": 5,
+  "jobs": [
+    {
+      "id": 57275052284,
+      "run_id": 19970889509,
+      "workflow_name": "Release",
+      "head_branch": "v0.2.2",
+      "run_url": "https://api.github.com/repos/SL-IT-AMAZING/anyon-claude/actions/runs/19970889509",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOQi4xS88AAAANVdvw_A",
+      "head_sha": "cb83254781a8788862b62f1bb8d770eb94234571",
+      "url": "https://api.github.com/repos/SL-IT-AMAZING/anyon-claude/actions/jobs/57275052284",
+      "html_url": "https://github.com/SL-IT-AMAZING/anyon-claude/actions/runs/19970889509/job/57275052284",
+      "status": "completed",
+      "conclusion": "failure",
+      "created_at": "2025-12-05T17:31:53Z",
+      "started_at": "2025-12-05T17:31:57Z",
+      "completed_at": "2025-12-05T17:36:07Z",
+      "name": "build-macos / Build macOS aarch64-apple-darwin",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2025-12-05T17:31:57Z",
+          "completed_at": "2025-12-05T17:32:02Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2025-12-05T17:32:02Z",
+          "completed_at": "2025-12-05T17:32:04Z"
+        },
+        {
+          "name": "Setup Rust",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2025-12-05T17:32:04Z",
+          "completed_at": "2025-12-05T17:32:05Z"
+        },
+        {
+          "name": "Setup Rust cache",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2025-12-05T17:32:05Z",
+          "completed_at": "2025-12-05T17:32:05Z"
+        },
+        {
+          "name": "Setup Bun",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2025-12-05T17:32:05Z",
+          "completed_at": "2025-12-05T17:32:07Z"
+        },
+        {
+          "name": "Install dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2025-12-05T17:32:07Z",
+          "completed_at": "2025-12-05T17:32:10Z"
+        },
+        {
+          "name": "Create .env file from secrets",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2025-12-05T17:32:10Z",
+          "completed_at": "2025-12-05T17:32:10Z"
+        },
+        {
+          "name": "Build native",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 8,
+          "started_at": "2025-12-05T17:32:10Z",
+          "completed_at": "2025-12-05T17:36:04Z"
+        },
+        {
+          "name": "Upload architecture-specific artifacts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 9,
+          "started_at": "2025-12-05T17:36:04Z",
+          "completed_at": "2025-12-05T17:36:04Z"
+        },
+        {
+          "name": "Post Setup Bun",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 16,
+          "started_at": "2025-12-05T17:36:04Z",
+          "completed_at": "2025-12-05T17:36:04Z"
+        },
+        {
+          "name": "Post Setup Rust cache",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 17,
+          "started_at": "2025-12-05T17:36:04Z",
+          "completed_at": "2025-12-05T17:36:04Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18,
+          "started_at": "2025-12-05T17:36:04Z",
+          "completed_at": "2025-12-05T17:36:05Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19,
+          "started_at": "2025-12-05T17:36:05Z",
+          "completed_at": "2025-12-05T17:36:05Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/SL-IT-AMAZING/anyon-claude/check-runs/57275052284",
+      "labels": [
+        "macos-14"
+      ],
+      "runner_id": 1000000424,
+      "runner_name": "GitHub Actions 1000000424",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 57275052293,
+      "run_id": 19970889509,
+      "workflow_name": "Release",
+      "head_branch": "v0.2.2",
+      "run_url": "https://api.github.com/repos/SL-IT-AMAZING/anyon-claude/actions/runs/19970889509",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOQi4xS88AAAANVdvxBQ",
+      "head_sha": "cb83254781a8788862b62f1bb8d770eb94234571",
+      "url": "https://api.github.com/repos/SL-IT-AMAZING/anyon-claude/actions/jobs/57275052293",
+      "html_url": "https://github.com/SL-IT-AMAZING/anyon-claude/actions/runs/19970889509/job/57275052293",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "created_at": "2025-12-05T17:31:53Z",
+      "started_at": "2025-12-05T17:32:09Z",
+      "completed_at": "2025-12-05T17:36:27Z",
+      "name": "build-macos / Build macOS x86_64-apple-darwin",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2025-12-05T17:32:11Z",
+          "completed_at": "2025-12-05T17:32:17Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2025-12-05T17:32:17Z",
+          "completed_at": "2025-12-05T17:32:21Z"
+        },
+        {
+          "name": "Setup Rust",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2025-12-05T17:32:21Z",
+          "completed_at": "2025-12-05T17:32:41Z"
+        },
+        {
+          "name": "Setup Rust cache",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2025-12-05T17:32:41Z",
+          "completed_at": "2025-12-05T17:32:42Z"
+        },
+        {
+          "name": "Setup Bun",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2025-12-05T17:32:42Z",
+          "completed_at": "2025-12-05T17:32:43Z"
+        },
+        {
+          "name": "Install dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2025-12-05T17:32:43Z",
+          "completed_at": "2025-12-05T17:32:56Z"
+        },
+        {
+          "name": "Create .env file from secrets",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2025-12-05T17:32:56Z",
+          "completed_at": "2025-12-05T17:32:56Z"
+        },
+        {
+          "name": "Build native",
+          "status": "completed",
+          "conclusion": "cancelled",
+          "number": 8,
+          "started_at": "2025-12-05T17:32:56Z",
+          "completed_at": "2025-12-05T17:36:20Z"
+        },
+        {
+          "name": "Upload architecture-specific artifacts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 9,
+          "started_at": "2025-12-05T17:36:20Z",
+          "completed_at": "2025-12-05T17:36:20Z"
+        },
+        {
+          "name": "Post Setup Bun",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 16,
+          "started_at": "2025-12-05T17:36:20Z",
+          "completed_at": "2025-12-05T17:36:20Z"
+        },
+        {
+          "name": "Post Setup Rust cache",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 17,
+          "started_at": "2025-12-05T17:36:20Z",
+          "completed_at": "2025-12-05T17:36:20Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18,
+          "started_at": "2025-12-05T17:36:20Z",
+          "completed_at": "2025-12-05T17:36:23Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19,
+          "started_at": "2025-12-05T17:36:23Z",
+          "completed_at": "2025-12-05T17:36:26Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/SL-IT-AMAZING/anyon-claude/check-runs/57275052293",
+      "labels": [
+        "macos-13"
+      ],
+      "runner_id": 1000000423,
+      "runner_name": "GitHub Actions 1000000423",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 57275052303,
+      "run_id": 19970889509,
+      "workflow_name": "Release",
+      "head_branch": "v0.2.2",
+      "run_url": "https://api.github.com/repos/SL-IT-AMAZING/anyon-claude/actions/runs/19970889509",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOQi4xS88AAAANVdvxDw",
+      "head_sha": "cb83254781a8788862b62f1bb8d770eb94234571",
+      "url": "https://api.github.com/repos/SL-IT-AMAZING/anyon-claude/actions/jobs/57275052303",
+      "html_url": "https://github.com/SL-IT-AMAZING/anyon-claude/actions/runs/19970889509/job/57275052303",
+      "status": "completed",
+      "conclusion": "failure",
+      "created_at": "2025-12-05T17:31:53Z",
+      "started_at": "2025-12-05T17:31:56Z",
+      "completed_at": "2025-12-05T17:37:16Z",
+      "name": "build-linux / Build Linux x86_64",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2025-12-05T17:31:57Z",
+          "completed_at": "2025-12-05T17:31:58Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2025-12-05T17:31:58Z",
+          "completed_at": "2025-12-05T17:31:59Z"
+        },
+        {
+          "name": "Install system dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2025-12-05T17:31:59Z",
+          "completed_at": "2025-12-05T17:32:26Z"
+        },
+        {
+          "name": "Setup Rust",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2025-12-05T17:32:26Z",
+          "completed_at": "2025-12-05T17:32:27Z"
+        },
+        {
+          "name": "Setup Rust cache",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2025-12-05T17:32:27Z",
+          "completed_at": "2025-12-05T17:32:36Z"
+        },
+        {
+          "name": "Setup Bun",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2025-12-05T17:32:36Z",
+          "completed_at": "2025-12-05T17:32:38Z"
+        },
+        {
+          "name": "Install dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2025-12-05T17:32:38Z",
+          "completed_at": "2025-12-05T17:32:40Z"
+        },
+        {
+          "name": "Create .env file from secrets",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2025-12-05T17:32:40Z",
+          "completed_at": "2025-12-05T17:32:40Z"
+        },
+        {
+          "name": "Build Tauri app",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 9,
+          "started_at": "2025-12-05T17:32:40Z",
+          "completed_at": "2025-12-05T17:37:14Z"
+        },
+        {
+          "name": "Create artifacts directory",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 10,
+          "started_at": "2025-12-05T17:37:14Z",
+          "completed_at": "2025-12-05T17:37:14Z"
+        },
+        {
+          "name": "Upload artifacts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 11,
+          "started_at": "2025-12-05T17:37:14Z",
+          "completed_at": "2025-12-05T17:37:14Z"
+        },
+        {
+          "name": "Post Setup Bun",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 20,
+          "started_at": "2025-12-05T17:37:14Z",
+          "completed_at": "2025-12-05T17:37:14Z"
+        },
+        {
+          "name": "Post Setup Rust cache",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 21,
+          "started_at": "2025-12-05T17:37:14Z",
+          "completed_at": "2025-12-05T17:37:14Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22,
+          "started_at": "2025-12-05T17:37:14Z",
+          "completed_at": "2025-12-05T17:37:14Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23,
+          "started_at": "2025-12-05T17:37:14Z",
+          "completed_at": "2025-12-05T17:37:14Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/SL-IT-AMAZING/anyon-claude/check-runs/57275052303",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000000421,
+      "runner_name": "GitHub Actions 1000000421",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 57275052321,
+      "run_id": 19970889509,
+      "workflow_name": "Release",
+      "head_branch": "v0.2.2",
+      "run_url": "https://api.github.com/repos/SL-IT-AMAZING/anyon-claude/actions/runs/19970889509",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOQi4xS88AAAANVdvxIQ",
+      "head_sha": "cb83254781a8788862b62f1bb8d770eb94234571",
+      "url": "https://api.github.com/repos/SL-IT-AMAZING/anyon-claude/actions/jobs/57275052321",
+      "html_url": "https://github.com/SL-IT-AMAZING/anyon-claude/actions/runs/19970889509/job/57275052321",
+      "status": "in_progress",
+      "conclusion": null,
+      "created_at": "2025-12-05T17:31:53Z",
+      "started_at": "2025-12-05T17:31:56Z",
+      "completed_at": null,
+      "name": "build-windows / Build Windows x86_64",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2025-12-05T17:31:57Z",
+          "completed_at": "2025-12-05T17:31:59Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2025-12-05T17:31:59Z",
+          "completed_at": "2025-12-05T17:32:05Z"
+        },
+        {
+          "name": "Setup Rust",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2025-12-05T17:32:05Z",
+          "completed_at": "2025-12-05T17:32:11Z"
+        },
+        {
+          "name": "Setup Rust cache",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2025-12-05T17:32:11Z",
+          "completed_at": "2025-12-05T17:32:14Z"
+        },
+        {
+          "name": "Setup Bun",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2025-12-05T17:32:14Z",
+          "completed_at": "2025-12-05T17:32:23Z"
+        },
+        {
+          "name": "Install dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2025-12-05T17:32:23Z",
+          "completed_at": "2025-12-05T17:33:19Z"
+        },
+        {
+          "name": "Create .env file from secrets",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2025-12-05T17:33:19Z",
+          "completed_at": "2025-12-05T17:33:19Z"
+        },
+        {
+          "name": "Build Tauri app",
+          "status": "in_progress",
+          "conclusion": null,
+          "number": 8,
+          "started_at": "2025-12-05T17:33:19Z",
+          "completed_at": null
+        },
+        {
+          "name": "Create artifacts directory",
+          "status": "pending",
+          "conclusion": null,
+          "number": 9,
+          "started_at": null,
+          "completed_at": null
+        },
+        {
+          "name": "Upload artifacts",
+          "status": "pending",
+          "conclusion": null,
+          "number": 10,
+          "started_at": null,
+          "completed_at": null
+        },
+        {
+          "name": "Post Setup Bun",
+          "status": "pending",
+          "conclusion": null,
+          "number": 18,
+          "started_at": null,
+          "completed_at": null
+        },
+        {
+          "name": "Post Setup Rust cache",
+          "status": "pending",
+          "conclusion": null,
+          "number": 19,
+          "started_at": null,
+          "completed_at": null
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "pending",
+          "conclusion": null,
+          "number": 20,
+          "started_at": null,
+          "completed_at": null
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/SL-IT-AMAZING/anyon-claude/check-runs/57275052321",
+      "labels": [
+        "windows-latest"
+      ],
+      "runner_id": 1000000422,
+      "runner_name": "GitHub Actions 1000000422",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    },
+    {
+      "id": 57275449989,
+      "run_id": 19970889509,
+      "workflow_name": "Release",
+      "head_branch": "v0.2.2",
+      "run_url": "https://api.github.com/repos/SL-IT-AMAZING/anyon-claude/actions/runs/19970889509",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOQi4xS88AAAANVeIChQ",
+      "head_sha": "cb83254781a8788862b62f1bb8d770eb94234571",
+      "url": "https://api.github.com/repos/SL-IT-AMAZING/anyon-claude/actions/jobs/57275449989",
+      "html_url": "https://github.com/SL-IT-AMAZING/anyon-claude/actions/runs/19970889509/job/57275449989",
+      "status": "completed",
+      "conclusion": "skipped",
+      "created_at": "2025-12-05T17:36:28Z",
+      "started_at": "2025-12-05T17:36:28Z",
+      "completed_at": "2025-12-05T17:36:27Z",
+      "name": "build-macos / Create Universal Binary",
+      "steps": [
+
+      ],
+      "check_run_url": "https://api.github.com/repos/SL-IT-AMAZING/anyon-claude/check-runs/57275449989",
+      "labels": [
+        "macos-latest"
+      ],
+      "runner_id": null,
+      "runner_name": null,
+      "runner_group_id": null,
+      "runner_group_name": null
+    }
+  ]
+}

@@ -1,0 +1,454 @@
+﻿2025-12-05T17:59:36.5003190Z Current runner version: '2.329.0'
+2025-12-05T17:59:36.5039994Z ##[group]Runner Image Provisioner
+2025-12-05T17:59:36.5041430Z Hosted Compute Agent
+2025-12-05T17:59:36.5042317Z Version: 20251124.448
+2025-12-05T17:59:36.5043439Z Commit: fda5086b43ec66ade217e5fcd18146c879571177
+2025-12-05T17:59:36.5044636Z Build Date: 2025-11-24T21:16:26Z
+2025-12-05T17:59:36.5045601Z ##[endgroup]
+2025-12-05T17:59:36.5046798Z ##[group]Operating System
+2025-12-05T17:59:36.5047796Z Microsoft Windows Server 2025
+2025-12-05T17:59:36.5048665Z 10.0.26100
+2025-12-05T17:59:36.5049427Z Datacenter
+2025-12-05T17:59:36.5050226Z ##[endgroup]
+2025-12-05T17:59:36.5051052Z ##[group]Runner Image
+2025-12-05T17:59:36.5051918Z Image: windows-2025
+2025-12-05T17:59:36.5052852Z Version: 20251125.122.1
+2025-12-05T17:59:36.5054651Z Included Software: https://github.com/actions/runner-images/blob/win25/20251125.122/images/windows/Windows2025-Readme.md
+2025-12-05T17:59:36.5058050Z Image Release: https://github.com/actions/runner-images/releases/tag/win25%2F20251125.122
+2025-12-05T17:59:36.5059817Z ##[endgroup]
+2025-12-05T17:59:36.5061546Z ##[group]GITHUB_TOKEN Permissions
+2025-12-05T17:59:36.5064311Z Contents: write
+2025-12-05T17:59:36.5065230Z Metadata: read
+2025-12-05T17:59:36.5066068Z ##[endgroup]
+2025-12-05T17:59:36.5069453Z Secret source: Actions
+2025-12-05T17:59:36.5070583Z Prepare workflow directory
+2025-12-05T17:59:36.5406840Z Prepare all required actions
+2025-12-05T17:59:36.5445559Z Getting action download info
+2025-12-05T17:59:36.8648428Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+2025-12-05T17:59:37.1399935Z Download action repository 'dtolnay/rust-toolchain@stable' (SHA:6d9817901c499d6b02debbb57edb38d33daa680b)
+2025-12-05T17:59:37.2681985Z Download action repository 'Swatinem/rust-cache@v2' (SHA:779680da715d629ac1d338a641029a2f4372abb5)
+2025-12-05T17:59:37.5736550Z Download action repository 'oven-sh/setup-bun@v2' (SHA:735343b667d3e6f658f44d0eca948eb6282f2b76)
+2025-12-05T17:59:37.8262526Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2025-12-05T17:59:38.2066939Z Uses: SL-IT-AMAZING/anyon-claude/.github/workflows/build-windows.yml@refs/tags/v0.2.2 (9cb07f25d5816d34174efcfaddff71c08fc7224d)
+2025-12-05T17:59:38.2073064Z Complete job name: build-windows / Build Windows x86_64
+2025-12-05T17:59:38.3492221Z ##[group]Run actions/checkout@v4
+2025-12-05T17:59:38.3494049Z with:
+2025-12-05T17:59:38.3495126Z   repository: SL-IT-AMAZING/anyon-claude
+2025-12-05T17:59:38.3496699Z   token: ***
+2025-12-05T17:59:38.3497536Z   ssh-strict: true
+2025-12-05T17:59:38.3498321Z   ssh-user: git
+2025-12-05T17:59:38.3499108Z   persist-credentials: true
+2025-12-05T17:59:38.3500038Z   clean: true
+2025-12-05T17:59:38.3500827Z   sparse-checkout-cone-mode: true
+2025-12-05T17:59:38.3501757Z   fetch-depth: 1
+2025-12-05T17:59:38.3502567Z   fetch-tags: false
+2025-12-05T17:59:38.3503376Z   show-progress: true
+2025-12-05T17:59:38.3504129Z   lfs: false
+2025-12-05T17:59:38.3504927Z   submodules: false
+2025-12-05T17:59:38.3505732Z   set-safe-directory: true
+2025-12-05T17:59:38.3506840Z ##[endgroup]
+2025-12-05T17:59:38.5287142Z Syncing repository: SL-IT-AMAZING/anyon-claude
+2025-12-05T17:59:38.5290323Z ##[group]Getting Git version info
+2025-12-05T17:59:38.6410071Z Working directory is 'D:\a\anyon-claude\anyon-claude'
+2025-12-05T17:59:38.6436055Z [command]"C:\Program Files\Git\bin\git.exe" version
+2025-12-05T17:59:39.0173151Z git version 2.52.0.windows.1
+2025-12-05T17:59:39.0177745Z ##[endgroup]
+2025-12-05T17:59:39.0195297Z Temporarily overriding HOME='D:\a\_temp\e8b7cd7e-c6de-4765-921e-89621ea4aae5' before making global git config changes
+2025-12-05T17:59:39.0197626Z Adding repository directory to the temporary git global config as a safe directory
+2025-12-05T17:59:39.0209214Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\anyon-claude\anyon-claude
+2025-12-05T17:59:39.0806404Z Deleting the contents of 'D:\a\anyon-claude\anyon-claude'
+2025-12-05T17:59:39.0814356Z ##[group]Initializing the repository
+2025-12-05T17:59:39.0824997Z [command]"C:\Program Files\Git\bin\git.exe" init D:\a\anyon-claude\anyon-claude
+2025-12-05T17:59:39.1631115Z Initialized empty Git repository in D:/a/anyon-claude/anyon-claude/.git/
+2025-12-05T17:59:39.1687747Z [command]"C:\Program Files\Git\bin\git.exe" remote add origin https://github.com/SL-IT-AMAZING/anyon-claude
+2025-12-05T17:59:39.2207255Z ##[endgroup]
+2025-12-05T17:59:39.2208562Z ##[group]Disabling automatic garbage collection
+2025-12-05T17:59:39.2218376Z [command]"C:\Program Files\Git\bin\git.exe" config --local gc.auto 0
+2025-12-05T17:59:39.2549550Z ##[endgroup]
+2025-12-05T17:59:39.2551342Z ##[group]Setting up auth
+2025-12-05T17:59:39.2565872Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2025-12-05T17:59:39.2885924Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2025-12-05T17:59:40.7333804Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-12-05T17:59:40.7649016Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2025-12-05T17:59:41.3187008Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2025-12-05T17:59:41.3509405Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2025-12-05T17:59:41.9106020Z [command]"C:\Program Files\Git\bin\git.exe" config --local http.https://github.com/.extraheader "AUTHORIZATION: basic ***"
+2025-12-05T17:59:41.9449744Z ##[endgroup]
+2025-12-05T17:59:41.9450973Z ##[group]Fetching the repository
+2025-12-05T17:59:41.9464510Z [command]"C:\Program Files\Git\bin\git.exe" -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +9cb07f25d5816d34174efcfaddff71c08fc7224d:refs/tags/v0.2.2
+2025-12-05T17:59:43.0156180Z From https://github.com/SL-IT-AMAZING/anyon-claude
+2025-12-05T17:59:43.0157503Z  * [new ref]         9cb07f25d5816d34174efcfaddff71c08fc7224d -> v0.2.2
+2025-12-05T17:59:43.0489736Z ##[endgroup]
+2025-12-05T17:59:43.0490312Z ##[group]Determining the checkout info
+2025-12-05T17:59:43.0494005Z ##[endgroup]
+2025-12-05T17:59:43.0510769Z [command]"C:\Program Files\Git\bin\git.exe" sparse-checkout disable
+2025-12-05T17:59:43.1019126Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all extensions.worktreeConfig
+2025-12-05T17:59:43.1368674Z ##[group]Checking out the ref
+2025-12-05T17:59:43.1380313Z [command]"C:\Program Files\Git\bin\git.exe" checkout --progress --force refs/tags/v0.2.2
+2025-12-05T17:59:43.4155646Z Note: switching to 'refs/tags/v0.2.2'.
+2025-12-05T17:59:43.4156207Z 
+2025-12-05T17:59:43.4156559Z You are in 'detached HEAD' state. You can look around, make experimental
+2025-12-05T17:59:43.4157531Z changes and commit them, and you can discard any commits you make in this
+2025-12-05T17:59:43.4159047Z state without impacting any branches by switching back to a branch.
+2025-12-05T17:59:43.4159348Z 
+2025-12-05T17:59:43.4159528Z If you want to create a new branch to retain commits you create, you may
+2025-12-05T17:59:43.4159966Z do so (now or later) by using -c with the switch command. Example:
+2025-12-05T17:59:43.4160198Z 
+2025-12-05T17:59:43.4160292Z   git switch -c <new-branch-name>
+2025-12-05T17:59:43.4160476Z 
+2025-12-05T17:59:43.4160566Z Or undo this operation with:
+2025-12-05T17:59:43.4161401Z 
+2025-12-05T17:59:43.4161522Z   git switch -
+2025-12-05T17:59:43.4161640Z 
+2025-12-05T17:59:43.4161840Z Turn off this advice by setting config variable advice.detachedHead to false
+2025-12-05T17:59:43.4163148Z 
+2025-12-05T17:59:43.4163329Z HEAD is now at 9cb07f2 feat: Disable login requirement for standalone app
+2025-12-05T17:59:43.4215289Z ##[endgroup]
+2025-12-05T17:59:43.4678653Z [command]"C:\Program Files\Git\bin\git.exe" log -1 --format=%H
+2025-12-05T17:59:43.4968984Z 9cb07f25d5816d34174efcfaddff71c08fc7224d
+2025-12-05T17:59:43.5479849Z ##[group]Run dtolnay/rust-toolchain@stable
+2025-12-05T17:59:43.5480243Z with:
+2025-12-05T17:59:43.5480467Z   targets: x86_64-pc-windows-msvc
+2025-12-05T17:59:43.5480746Z   toolchain: stable
+2025-12-05T17:59:43.5480968Z ##[endgroup]
+2025-12-05T17:59:43.5725870Z ##[group]Run : parse toolchain version
+2025-12-05T17:59:43.5726217Z [36;1m: parse toolchain version[0m
+2025-12-05T17:59:43.5726468Z [36;1mif [[ -z $toolchain ]]; then[0m
+2025-12-05T17:59:43.5726933Z [36;1m  # GitHub does not enforce `required: true` inputs itself. https://github.com/actions/runner/issues/1070[0m
+2025-12-05T17:59:43.5727426Z [36;1m  echo "'toolchain' is a required input" >&2[0m
+2025-12-05T17:59:43.5727666Z [36;1m  exit 1[0m
+2025-12-05T17:59:43.5727944Z [36;1melif [[ $toolchain =~ ^stable' '[0-9]+' '(year|month|week|day)s?' 'ago$ ]]; then[0m
+2025-12-05T17:59:43.5728296Z [36;1m  if [[ Windows == macOS ]]; then[0m
+2025-12-05T17:59:43.5728774Z [36;1m    echo "toolchain=1.$((($(date -v-$(sed 's/stable \([0-9]*\) \(.\).*/\1\2/' <<< $toolchain) +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:43.5729175Z [36;1m  else[0m
+2025-12-05T17:59:43.5729509Z [36;1m    echo "toolchain=1.$((($(date --date "${toolchain#stable }" +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:43.5729875Z [36;1m  fi[0m
+2025-12-05T17:59:43.5730127Z [36;1melif [[ $toolchain =~ ^stable' 'minus' '[0-9]+' 'releases?$ ]]; then[0m
+2025-12-05T17:59:43.5730582Z [36;1m  echo "toolchain=1.$((($(date +%s)/60/60/24-16569)/7/6-${toolchain//[^0-9]/}))" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:43.5730962Z [36;1melif [[ $toolchain =~ ^1\.[0-9]+$ ]]; then[0m
+2025-12-05T17:59:43.5731389Z [36;1m  echo "toolchain=1.$((i=${toolchain#1.}, c=($(date +%s)/60/60/24-16569)/7/6, i+9*i*(10*i<=c)+90*i*(100*i<=c)))" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:43.5731780Z [36;1melse[0m
+2025-12-05T17:59:43.5731985Z [36;1m  echo "toolchain=$toolchain" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:43.5732238Z [36;1mfi[0m
+2025-12-05T17:59:43.5753375Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:43.5753736Z env:
+2025-12-05T17:59:43.5753904Z   toolchain: stable
+2025-12-05T17:59:43.5754086Z ##[endgroup]
+2025-12-05T17:59:43.7579600Z ##[group]Run : construct rustup command line
+2025-12-05T17:59:43.7579909Z [36;1m: construct rustup command line[0m
+2025-12-05T17:59:43.7580288Z [36;1mecho "targets=$(for t in ${targets//,/ }; do echo -n ' --target' $t; done)" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:43.7580815Z [36;1mecho "components=$(for c in ${components//,/ }; do echo -n ' --component' $c; done)" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:43.7581230Z [36;1mecho "downgrade=" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:43.7597164Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:43.7597553Z env:
+2025-12-05T17:59:43.7597724Z   targets: x86_64-pc-windows-msvc
+2025-12-05T17:59:43.7597931Z   components: 
+2025-12-05T17:59:43.7598111Z ##[endgroup]
+2025-12-05T17:59:43.8394897Z ##[group]Run : set $CARGO_HOME
+2025-12-05T17:59:43.8395141Z [36;1m: set $CARGO_HOME[0m
+2025-12-05T17:59:43.8395438Z [36;1mecho CARGO_HOME=${CARGO_HOME:-"$USERPROFILE\.cargo"} >> $GITHUB_ENV[0m
+2025-12-05T17:59:43.8412310Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:43.8412683Z ##[endgroup]
+2025-12-05T17:59:43.8967058Z ##[group]Run : install rustup if needed on windows
+2025-12-05T17:59:43.8967392Z [36;1m: install rustup if needed on windows[0m
+2025-12-05T17:59:43.8967665Z [36;1mif ! command -v rustup &>/dev/null; then[0m
+2025-12-05T17:59:43.8968498Z [36;1m  curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused --location --silent --show-error --fail https://win.rustup.rs/x86_64 --output 'D:\a\_temp\rustup-init.exe'[0m
+2025-12-05T17:59:43.8969235Z [36;1m  'D:\a\_temp\rustup-init.exe' --default-toolchain none --no-modify-path -y[0m
+2025-12-05T17:59:43.8972425Z [36;1m  echo "$CARGO_HOME\bin" >> $GITHUB_PATH[0m
+2025-12-05T17:59:43.8972744Z [36;1mfi[0m
+2025-12-05T17:59:43.8989336Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:43.8989822Z env:
+2025-12-05T17:59:43.8990315Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2025-12-05T17:59:43.8990547Z ##[endgroup]
+2025-12-05T17:59:43.9616839Z ##[group]Run rustup toolchain install stable --target x86_64-pc-windows-msvc --profile minimal --no-self-update
+2025-12-05T17:59:43.9617517Z [36;1mrustup toolchain install stable --target x86_64-pc-windows-msvc --profile minimal --no-self-update[0m
+2025-12-05T17:59:43.9634535Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:43.9634879Z env:
+2025-12-05T17:59:43.9635052Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2025-12-05T17:59:43.9635277Z ##[endgroup]
+2025-12-05T17:59:47.0299976Z info: syncing channel updates for 'stable-x86_64-pc-windows-msvc'
+2025-12-05T17:59:47.8030691Z info: latest update on 2025-11-10, rust version 1.91.1 (ed61e7d7e 2025-11-07)
+2025-12-05T17:59:47.8537106Z info: component 'rust-std' for target 'x86_64-pc-windows-msvc' is up to date
+2025-12-05T17:59:47.8564358Z 
+2025-12-05T17:59:47.8777491Z   stable-x86_64-pc-windows-msvc unchanged - rustc 1.91.1 (ed61e7d7e 2025-11-07)
+2025-12-05T17:59:47.8779434Z 
+2025-12-05T17:59:47.9009309Z ##[group]Run rustup default stable
+2025-12-05T17:59:47.9009570Z [36;1mrustup default stable[0m
+2025-12-05T17:59:47.9048840Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:47.9049193Z env:
+2025-12-05T17:59:47.9049398Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2025-12-05T17:59:47.9049627Z ##[endgroup]
+2025-12-05T17:59:47.9831307Z info: using existing install for 'stable-x86_64-pc-windows-msvc'
+2025-12-05T17:59:48.0384849Z info: default toolchain set to 'stable-x86_64-pc-windows-msvc'
+2025-12-05T17:59:48.0385239Z 
+2025-12-05T17:59:48.0596660Z   stable-x86_64-pc-windows-msvc unchanged - rustc 1.91.1 (ed61e7d7e 2025-11-07)
+2025-12-05T17:59:48.0597024Z 
+2025-12-05T17:59:48.0812134Z ##[group]Run : create cachekey
+2025-12-05T17:59:48.0812373Z [36;1m: create cachekey[0m
+2025-12-05T17:59:48.0812796Z [36;1mDATE=$(rustc +stable --version --verbose | sed -ne 's/^commit-date: \(20[0-9][0-9]\)-\([01][0-9]\)-\([0-3][0-9]\)$/\1\2\3/p')[0m
+2025-12-05T17:59:48.0813347Z [36;1mHASH=$(rustc +stable --version --verbose | sed -ne 's/^commit-hash: //p')[0m
+2025-12-05T17:59:48.0813774Z [36;1mecho "cachekey=$(echo $DATE$HASH | head -c12)" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:48.0839189Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:48.0839555Z env:
+2025-12-05T17:59:48.0839723Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2025-12-05T17:59:48.0839949Z ##[endgroup]
+2025-12-05T17:59:48.9483842Z ##[group]Run : disable incremental compilation
+2025-12-05T17:59:48.9484147Z [36;1m: disable incremental compilation[0m
+2025-12-05T17:59:48.9484437Z [36;1mif [ -z "${CARGO_INCREMENTAL+set}" ]; then[0m
+2025-12-05T17:59:48.9484722Z [36;1m  echo CARGO_INCREMENTAL=0 >> $GITHUB_ENV[0m
+2025-12-05T17:59:48.9484952Z [36;1mfi[0m
+2025-12-05T17:59:48.9499909Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:48.9500269Z env:
+2025-12-05T17:59:48.9500440Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2025-12-05T17:59:48.9500695Z ##[endgroup]
+2025-12-05T17:59:49.0046611Z ##[group]Run : enable colors in Cargo output
+2025-12-05T17:59:49.0046915Z [36;1m: enable colors in Cargo output[0m
+2025-12-05T17:59:49.0047187Z [36;1mif [ -z "${CARGO_TERM_COLOR+set}" ]; then[0m
+2025-12-05T17:59:49.0047667Z [36;1m  echo CARGO_TERM_COLOR=always >> $GITHUB_ENV[0m
+2025-12-05T17:59:49.0047916Z [36;1mfi[0m
+2025-12-05T17:59:49.0063501Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:49.0063852Z env:
+2025-12-05T17:59:49.0064021Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2025-12-05T17:59:49.0065030Z   CARGO_INCREMENTAL: 0
+2025-12-05T17:59:49.0065242Z ##[endgroup]
+2025-12-05T17:59:49.0621066Z ##[group]Run : enable Cargo sparse registry
+2025-12-05T17:59:49.0621365Z [36;1m: enable Cargo sparse registry[0m
+2025-12-05T17:59:49.0621673Z [36;1m# implemented in 1.66, stabilized in 1.68, made default in 1.70[0m
+2025-12-05T17:59:49.0622222Z [36;1mif [ -z "${CARGO_REGISTRIES_CRATES_IO_PROTOCOL+set}" -o -f "D:\a\_temp"/.implicit_cargo_registries_crates_io_protocol ]; then[0m
+2025-12-05T17:59:49.0622808Z [36;1m  if rustc +stable --version --verbose | grep -q '^release: 1\.6[89]\.'; then[0m
+2025-12-05T17:59:49.0623258Z [36;1m    touch "D:\a\_temp"/.implicit_cargo_registries_crates_io_protocol || true[0m
+2025-12-05T17:59:49.0623657Z [36;1m    echo CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse >> $GITHUB_ENV[0m
+2025-12-05T17:59:49.0624073Z [36;1m  elif rustc +stable --version --verbose | grep -q '^release: 1\.6[67]\.'; then[0m
+2025-12-05T17:59:49.0624516Z [36;1m    touch "D:\a\_temp"/.implicit_cargo_registries_crates_io_protocol || true[0m
+2025-12-05T17:59:49.0625339Z [36;1m    echo CARGO_REGISTRIES_CRATES_IO_PROTOCOL=git >> $GITHUB_ENV[0m
+2025-12-05T17:59:49.0625637Z [36;1m  fi[0m
+2025-12-05T17:59:49.0625782Z [36;1mfi[0m
+2025-12-05T17:59:49.0640522Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:49.0640864Z env:
+2025-12-05T17:59:49.0641037Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2025-12-05T17:59:49.0641262Z   CARGO_INCREMENTAL: 0
+2025-12-05T17:59:49.0641455Z   CARGO_TERM_COLOR: always
+2025-12-05T17:59:49.0641641Z ##[endgroup]
+2025-12-05T17:59:49.2814113Z ##[group]Run : work around spurious network errors in curl 8.0
+2025-12-05T17:59:49.2814488Z [36;1m: work around spurious network errors in curl 8.0[0m
+2025-12-05T17:59:49.2814969Z [36;1m# https://rust-lang.zulipchat.com/#narrow/stream/246057-t-cargo/topic/timeout.20investigation[0m
+2025-12-05T17:59:49.2815519Z [36;1mif rustc +stable --version --verbose | grep -q '^release: 1\.7[01]\.'; then[0m
+2025-12-05T17:59:49.2815904Z [36;1m  echo CARGO_HTTP_MULTIPLEXING=false >> $GITHUB_ENV[0m
+2025-12-05T17:59:49.2816159Z [36;1mfi[0m
+2025-12-05T17:59:49.2831148Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:49.2831496Z env:
+2025-12-05T17:59:49.2831671Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2025-12-05T17:59:49.2832195Z   CARGO_INCREMENTAL: 0
+2025-12-05T17:59:49.2832379Z   CARGO_TERM_COLOR: always
+2025-12-05T17:59:49.2832565Z ##[endgroup]
+2025-12-05T17:59:49.4096484Z ##[group]Run rustc +stable --version --verbose
+2025-12-05T17:59:49.4096804Z [36;1mrustc +stable --version --verbose[0m
+2025-12-05T17:59:49.4111919Z shell: C:\Program Files\Git\bin\bash.EXE --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:49.4112255Z env:
+2025-12-05T17:59:49.4112428Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2025-12-05T17:59:49.4112662Z   CARGO_INCREMENTAL: 0
+2025-12-05T17:59:49.4112849Z   CARGO_TERM_COLOR: always
+2025-12-05T17:59:49.4113043Z ##[endgroup]
+2025-12-05T17:59:49.5041970Z rustc 1.91.1 (ed61e7d7e 2025-11-07)
+2025-12-05T17:59:49.5042297Z binary: rustc
+2025-12-05T17:59:49.5042528Z commit-hash: ed61e7d7e242494fb7057f2657300d9e77bb4fcb
+2025-12-05T17:59:49.5042794Z commit-date: 2025-11-07
+2025-12-05T17:59:49.5042992Z host: x86_64-pc-windows-msvc
+2025-12-05T17:59:49.5043194Z release: 1.91.1
+2025-12-05T17:59:49.5044930Z LLVM version: 21.1.2
+2025-12-05T17:59:49.5384868Z ##[group]Run Swatinem/rust-cache@v2
+2025-12-05T17:59:49.5385180Z with:
+2025-12-05T17:59:49.5385345Z   workspaces: src-tauri
+2025-12-05T17:59:49.5386596Z   prefix-key: v0-rust
+2025-12-05T17:59:49.5386794Z   add-job-id-key: true
+2025-12-05T17:59:49.5387001Z   add-rust-environment-hash-key: true
+2025-12-05T17:59:49.5387229Z   cache-targets: true
+2025-12-05T17:59:49.5387427Z   cache-all-crates: false
+2025-12-05T17:59:49.5387636Z   cache-workspace-crates: false
+2025-12-05T17:59:49.5387836Z   save-if: true
+2025-12-05T17:59:49.5387996Z   cache-provider: github
+2025-12-05T17:59:49.5388182Z   cache-bin: true
+2025-12-05T17:59:49.5388348Z   lookup-only: false
+2025-12-05T17:59:49.5388509Z env:
+2025-12-05T17:59:49.5388664Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2025-12-05T17:59:49.5388890Z   CARGO_INCREMENTAL: 0
+2025-12-05T17:59:49.5389067Z   CARGO_TERM_COLOR: always
+2025-12-05T17:59:49.5389249Z ##[endgroup]
+2025-12-05T17:59:52.0058645Z ##[group]Cache Configuration
+2025-12-05T17:59:52.0059513Z Cache Provider:
+2025-12-05T17:59:52.0059777Z     github
+2025-12-05T17:59:52.0060005Z Workspaces:
+2025-12-05T17:59:52.0060566Z     D:\a\anyon-claude\anyon-claude\src-tauri
+2025-12-05T17:59:52.0060981Z Cache Paths:
+2025-12-05T17:59:52.0061245Z     C:\Users\runneradmin\.cargo\bin
+2025-12-05T17:59:52.0061639Z     C:\Users\runneradmin\.cargo\.crates.toml
+2025-12-05T17:59:52.0062431Z     C:\Users\runneradmin\.cargo\.crates2.json
+2025-12-05T17:59:52.0085868Z     C:\Users\runneradmin\.cargo\registry
+2025-12-05T17:59:52.0086564Z     C:\Users\runneradmin\.cargo\git
+2025-12-05T17:59:52.0087877Z     D:\a\anyon-claude\anyon-claude\src-tauri\target
+2025-12-05T17:59:52.0090921Z Restore Key:
+2025-12-05T17:59:52.0091941Z     v0-rust-build-Windows_NT-x64-d6c8c276
+2025-12-05T17:59:52.0093260Z Cache Key:
+2025-12-05T17:59:52.0094482Z     v0-rust-build-Windows_NT-x64-d6c8c276-dc3ee88a
+2025-12-05T17:59:52.0096088Z .. Prefix:
+2025-12-05T17:59:52.0097310Z   - v0-rust-build-Windows_NT-x64
+2025-12-05T17:59:52.0098324Z .. Environment considered:
+2025-12-05T17:59:52.0100340Z   - Rust Version: 1.91.1 x86_64-pc-windows-msvc (ed61e7d7e242494fb7057f2657300d9e77bb4fcb)
+2025-12-05T17:59:52.0101641Z   - CARGO_HOME
+2025-12-05T17:59:52.0102055Z   - CARGO_INCREMENTAL
+2025-12-05T17:59:52.0102545Z   - CARGO_TERM_COLOR
+2025-12-05T17:59:52.0102983Z .. Lockfiles considered:
+2025-12-05T17:59:52.0104073Z   - D:\a\anyon-claude\anyon-claude\.cargo\config.toml
+2025-12-05T17:59:52.0104769Z   - D:\a\anyon-claude\anyon-claude\src-tauri\Cargo.lock
+2025-12-05T17:59:52.0106191Z   - D:\a\anyon-claude\anyon-claude\src-tauri\Cargo.toml
+2025-12-05T17:59:52.0172579Z ##[endgroup]
+2025-12-05T17:59:52.0172864Z 
+2025-12-05T17:59:52.0172990Z ... Restoring cache ...
+2025-12-05T17:59:52.2724473Z Cache hit for: v0-rust-build-Windows_NT-x64-d6c8c276-dc3ee88a
+2025-12-05T17:59:53.3464580Z Received 176160768 of 649359204 (27.1%), 162.8 MBs/sec
+2025-12-05T17:59:54.3500888Z Received 390070272 of 649359204 (60.1%), 182.7 MBs/sec
+2025-12-05T17:59:55.3639295Z Received 541065216 of 649359204 (83.3%), 169.2 MBs/sec
+2025-12-05T17:59:55.8780356Z Received 649359204 of 649359204 (100.0%), 173.8 MBs/sec
+2025-12-05T17:59:55.8785147Z Cache Size: ~619 MB (649359204 B)
+2025-12-05T17:59:55.8869543Z [command]"C:\Program Files\Git\usr\bin\tar.exe" -xf D:/a/_temp/9279bb7c-4374-4df6-8d5a-01b066e66c26/cache.tzst -P -C D:/a/anyon-claude/anyon-claude --force-local --use-compress-program "zstd -d"
+2025-12-05T18:00:15.0544679Z Cache restored successfully
+2025-12-05T18:00:15.0885259Z Restored from cache key "v0-rust-build-Windows_NT-x64-d6c8c276-dc3ee88a" full match: true.
+2025-12-05T18:00:15.1184269Z ##[group]Run oven-sh/setup-bun@v2
+2025-12-05T18:00:15.1185000Z with:
+2025-12-05T18:00:15.1185267Z   no-cache: false
+2025-12-05T18:00:15.1185564Z env:
+2025-12-05T18:00:15.1185839Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2025-12-05T18:00:15.1186222Z   CARGO_INCREMENTAL: 0
+2025-12-05T18:00:15.1186537Z   CARGO_TERM_COLOR: always
+2025-12-05T18:00:15.1186892Z   CACHE_ON_FAILURE: false
+2025-12-05T18:00:15.1187199Z ##[endgroup]
+2025-12-05T18:00:15.3142351Z Downloading a new version of Bun: https://bun.sh/download/latest/win32/x64?avx2=true&profile=false
+2025-12-05T18:00:16.9454824Z [command]"C:\Program Files\PowerShell\7\pwsh.exe" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Unrestricted -Command "$ErrorActionPreference = 'Stop' ; try { Add-Type -AssemblyName System.IO.Compression.ZipFile } catch { } ; try { [System.IO.Compression.ZipFile]::ExtractToDirectory('D:\a\_temp\98dce38b-bc76-4a34-b7d9-9d148601d67c.zip', 'D:\a\_temp\07f88328-a84a-473c-b7b3-cc0fc941e669', $true) } catch { if (($_.Exception.GetType().FullName -eq 'System.Management.Automation.MethodException') -or ($_.Exception.GetType().FullName -eq 'System.Management.Automation.RuntimeException') ){ Expand-Archive -LiteralPath 'D:\a\_temp\98dce38b-bc76-4a34-b7d9-9d148601d67c.zip' -DestinationPath 'D:\a\_temp\07f88328-a84a-473c-b7b3-cc0fc941e669' -Force } else { throw $_ } } ;"
+2025-12-05T18:00:23.0866215Z [command]C:\Users\runneradmin\.bun\bin\bun.exe --revision
+2025-12-05T18:00:23.7586341Z 1.3.3+274e01c73
+2025-12-05T18:00:23.7897908Z ##[group]Run bun install
+2025-12-05T18:00:23.7898329Z [36;1mbun install[0m
+2025-12-05T18:00:23.7978080Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2025-12-05T18:00:23.7978405Z env:
+2025-12-05T18:00:23.7978598Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2025-12-05T18:00:23.7978847Z   CARGO_INCREMENTAL: 0
+2025-12-05T18:00:23.7979046Z   CARGO_TERM_COLOR: always
+2025-12-05T18:00:23.7979251Z   CACHE_ON_FAILURE: false
+2025-12-05T18:00:23.7979441Z ##[endgroup]
+2025-12-05T18:00:24.1896599Z bun install v1.3.3 (274e01c7)
+2025-12-05T18:01:19.3205778Z 
+2025-12-05T18:01:19.3206311Z + @tauri-apps/cli@2.7.1
+2025-12-05T18:01:19.3206747Z + @types/node@22.15.32
+2025-12-05T18:01:19.3207089Z + @types/react@18.3.23
+2025-12-05T18:01:19.3208650Z + @types/react-dom@18.3.7
+2025-12-05T18:01:19.3209630Z + @types/sharp@0.32.0
+2025-12-05T18:01:19.3210820Z + @vitejs/plugin-react@4.5.2
+2025-12-05T18:01:19.3211236Z + concurrently@9.2.1
+2025-12-05T18:01:19.3211571Z + sharp@0.34.2
+2025-12-05T18:01:19.3211871Z + typescript@5.6.3
+2025-12-05T18:01:19.3212093Z + vite@6.3.5
+2025-12-05T18:01:19.3212271Z + @hookform/resolvers@3.10.0
+2025-12-05T18:01:19.3212496Z + @radix-ui/react-dialog@1.1.14
+2025-12-05T18:01:19.3212732Z + @radix-ui/react-dropdown-menu@2.1.15
+2025-12-05T18:01:19.3212980Z + @radix-ui/react-label@2.1.7
+2025-12-05T18:01:19.3213203Z + @radix-ui/react-popover@1.1.14
+2025-12-05T18:01:19.3213772Z + @radix-ui/react-radio-group@1.3.7
+2025-12-05T18:01:19.3214115Z + @radix-ui/react-select@2.2.5
+2025-12-05T18:01:19.3214331Z + @radix-ui/react-switch@1.2.5
+2025-12-05T18:01:19.3214528Z + @radix-ui/react-tabs@1.1.12
+2025-12-05T18:01:19.3214733Z + @radix-ui/react-toast@1.2.14
+2025-12-05T18:01:19.3214947Z + @radix-ui/react-tooltip@1.2.7
+2025-12-05T18:01:19.3215154Z + @tailwindcss/cli@4.1.10
+2025-12-05T18:01:19.3215355Z + @tailwindcss/vite@4.1.10
+2025-12-05T18:01:19.3215561Z + @tanstack/react-virtual@3.13.10
+2025-12-05T18:01:19.3215781Z + @tauri-apps/api@2.5.0
+2025-12-05T18:01:19.3215993Z + @tauri-apps/plugin-dialog@2.2.2
+2025-12-05T18:01:19.3216245Z + @tauri-apps/plugin-global-shortcut@2.2.1
+2025-12-05T18:01:19.3216491Z + @tauri-apps/plugin-http@2.5.4
+2025-12-05T18:01:19.3216709Z + @tauri-apps/plugin-opener@2.3.0
+2025-12-05T18:01:19.3216929Z + @tauri-apps/plugin-shell@2.2.2
+2025-12-05T18:01:19.3217133Z + @types/diff@8.0.0
+2025-12-05T18:01:19.3217344Z + @types/react-syntax-highlighter@15.5.13
+2025-12-05T18:01:19.3217598Z + @uiw/react-md-editor@4.0.7
+2025-12-05T18:01:19.3217805Z + ansi-to-html@0.7.2
+2025-12-05T18:01:19.3217998Z + class-variance-authority@0.7.1
+2025-12-05T18:01:19.3218204Z + clsx@2.1.1
+2025-12-05T18:01:19.3218350Z + date-fns@3.6.0
+2025-12-05T18:01:19.3218515Z + diff@8.0.2
+2025-12-05T18:01:19.3218677Z + framer-motion@12.18.1
+2025-12-05T18:01:19.3218862Z + html2canvas@1.4.1
+2025-12-05T18:01:19.3219034Z + lucide-react@0.468.0
+2025-12-05T18:01:19.3219218Z + posthog-js@1.258.3
+2025-12-05T18:01:19.3219390Z + react@18.3.1
+2025-12-05T18:01:19.3219558Z + react-dom@18.3.1
+2025-12-05T18:01:19.3219729Z + react-hook-form@7.58.1
+2025-12-05T18:01:19.3220779Z + react-markdown@9.1.0
+2025-12-05T18:01:19.3221072Z + react-router-dom@7.10.1
+2025-12-05T18:01:19.3221388Z + react-syntax-highlighter@15.6.1
+2025-12-05T18:01:19.3221614Z + recharts@2.15.3
+2025-12-05T18:01:19.3221805Z + remark-gfm@4.0.1
+2025-12-05T18:01:19.3222096Z + tailwind-merge@2.6.0
+2025-12-05T18:01:19.3222288Z + tailwindcss@4.1.10
+2025-12-05T18:01:19.3222461Z + zod@3.25.67
+2025-12-05T18:01:19.3222610Z + zustand@5.0.6
+2025-12-05T18:01:19.3222718Z 
+2025-12-05T18:01:19.3222805Z 434 packages installed [55.14s]
+2025-12-05T18:01:19.5582882Z ##[group]Run @"
+2025-12-05T18:01:19.5583172Z [36;1m@"[0m
+2025-12-05T18:01:19.5583359Z [36;1m# Google OAuth Configuration[0m
+2025-12-05T18:01:19.5584273Z [36;1mGOOGLE_CLIENT_ID=***[0m
+2025-12-05T18:01:19.5584607Z [36;1mGOOGLE_CLIENT_SECRET=***[0m
+2025-12-05T18:01:19.5584820Z [36;1m[0m
+2025-12-05T18:01:19.5584987Z [36;1m# Server Configuration[0m
+2025-12-05T18:01:19.5585194Z [36;1mPORT=4000[0m
+2025-12-05T18:01:19.5585397Z [36;1mNODE_ENV=development[0m
+2025-12-05T18:01:19.5585789Z [36;1mJWT_SECRET=***[0m
+2025-12-05T18:01:19.5586030Z [36;1m[0m
+2025-12-05T18:01:19.5586318Z [36;1m# OAuth Redirect URIs[0m
+2025-12-05T18:01:19.5587184Z [36;1mOAUTH_REDIRECT_URI=http://localhost:4000/auth/google/callback[0m
+2025-12-05T18:01:19.5587637Z [36;1mFRONTEND_URL=http://localhost:1420[0m
+2025-12-05T18:01:19.5587961Z [36;1m"@ | Out-File -FilePath .env -Encoding utf8[0m
+2025-12-05T18:01:19.5656991Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2025-12-05T18:01:19.5657318Z env:
+2025-12-05T18:01:19.5657502Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2025-12-05T18:01:19.5657752Z   CARGO_INCREMENTAL: 0
+2025-12-05T18:01:19.5657946Z   CARGO_TERM_COLOR: always
+2025-12-05T18:01:19.5658163Z   CACHE_ON_FAILURE: false
+2025-12-05T18:01:19.5658352Z ##[endgroup]
+2025-12-05T18:01:19.9929643Z ##[group]Run bun run tauri build --target x86_64-pc-windows-msvc
+2025-12-05T18:01:19.9930133Z [36;1mbun run tauri build --target x86_64-pc-windows-msvc[0m
+2025-12-05T18:01:19.9999251Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2025-12-05T18:01:19.9999568Z env:
+2025-12-05T18:01:19.9999752Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2025-12-05T18:01:19.9999995Z   CARGO_INCREMENTAL: 0
+2025-12-05T18:01:20.0000188Z   CARGO_TERM_COLOR: always
+2025-12-05T18:01:20.0000389Z   CACHE_ON_FAILURE: false
+2025-12-05T18:01:20.0000601Z ##[endgroup]
+2025-12-05T18:01:20.2835577Z $ tauri build --target "x86_64-pc-windows-msvc"
+2025-12-05T18:01:21.5247079Z         Warn The bundle identifier "com.anyon.app" set in `tauri.conf.json identifier` ends with `.app`. This is not recommended because it conflicts with the application bundle extension on macOS.
+2025-12-05T18:01:21.5247861Z      Running beforeBuildCommand `npm run build`
+2025-12-05T18:01:22.5688038Z 
+2025-12-05T18:01:22.5688719Z > anyon@0.2.1 build
+2025-12-05T18:01:22.5689054Z > tsc && vite build
+2025-12-05T18:01:22.5691711Z 
+2025-12-05T18:01:33.2253686Z src/App.tsx(6,1): error TS6133: 'LoginPage' is declared but its value is never read.
+2025-12-05T18:01:33.2255915Z src/App.tsx(501,11): error TS6133: 'isAuthenticated' is declared but its value is never read.
+2025-12-05T18:01:33.5759078Z beforeBuildCommand `npm run build` failed with exit code 2
+2025-12-05T18:01:33.5761037Z        Error beforeBuildCommand `npm run build` failed with exit code 2
+2025-12-05T18:01:33.5845615Z error: script "tauri" exited with code 1
+2025-12-05T18:01:33.6832995Z ##[error]Process completed with exit code 1.
+2025-12-05T18:01:33.7096477Z Post job cleanup.
+2025-12-05T18:01:33.9570337Z [command]"C:\Program Files\Git\bin\git.exe" version
+2025-12-05T18:01:33.9861998Z git version 2.52.0.windows.1
+2025-12-05T18:01:33.9942200Z Temporarily overriding HOME='D:\a\_temp\b8db95a5-2a16-45f5-ac96-eaa28df7951d' before making global git config changes
+2025-12-05T18:01:33.9943171Z Adding repository directory to the temporary git global config as a safe directory
+2025-12-05T18:01:33.9955807Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\anyon-claude\anyon-claude
+2025-12-05T18:01:34.0285273Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2025-12-05T18:01:34.0776531Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2025-12-05T18:01:34.6641247Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-12-05T18:01:34.6918484Z http.https://github.com/.extraheader
+2025-12-05T18:01:34.6966862Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all http.https://github.com/.extraheader
+2025-12-05T18:01:34.7298010Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2025-12-05T18:01:35.3034727Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2025-12-05T18:01:35.3370863Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2025-12-05T18:01:35.9315809Z Cleaning up orphan processes

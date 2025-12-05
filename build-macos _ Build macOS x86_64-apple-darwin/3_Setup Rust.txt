@@ -1,0 +1,81 @@
+﻿2025-12-05T17:59:54.0432650Z ##[group]Run dtolnay/rust-toolchain@stable
+2025-12-05T17:59:54.0433400Z with:
+2025-12-05T17:59:54.0433830Z   toolchain: stable
+2025-12-05T17:59:54.0434320Z ##[endgroup]
+2025-12-05T17:59:54.0637330Z ##[group]Run : parse toolchain version
+2025-12-05T17:59:54.0637880Z [36;1m: parse toolchain version[0m
+2025-12-05T17:59:54.0638320Z [36;1mif [[ -z $toolchain ]]; then[0m
+2025-12-05T17:59:54.0639180Z [36;1m  # GitHub does not enforce `required: true` inputs itself. https://github.com/actions/runner/issues/1070[0m
+2025-12-05T17:59:54.0640110Z [36;1m  echo "'toolchain' is a required input" >&2[0m
+2025-12-05T17:59:54.0640590Z [36;1m  exit 1[0m
+2025-12-05T17:59:54.0641120Z [36;1melif [[ $toolchain =~ ^stable' '[0-9]+' '(year|month|week|day)s?' 'ago$ ]]; then[0m
+2025-12-05T17:59:54.0641780Z [36;1m  if [[ macOS == macOS ]]; then[0m
+2025-12-05T17:59:54.0642610Z [36;1m    echo "toolchain=1.$((($(date -v-$(sed 's/stable \([0-9]*\) \(.\).*/\1\2/' <<< $toolchain) +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:54.0643460Z [36;1m  else[0m
+2025-12-05T17:59:54.0644100Z [36;1m    echo "toolchain=1.$((($(date --date "${toolchain#stable }" +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:54.0644880Z [36;1m  fi[0m
+2025-12-05T17:59:54.0645370Z [36;1melif [[ $toolchain =~ ^stable' 'minus' '[0-9]+' 'releases?$ ]]; then[0m
+2025-12-05T17:59:54.0646290Z [36;1m  echo "toolchain=1.$((($(date +%s)/60/60/24-16569)/7/6-${toolchain//[^0-9]/}))" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:54.0647050Z [36;1melif [[ $toolchain =~ ^1\.[0-9]+$ ]]; then[0m
+2025-12-05T17:59:54.0647900Z [36;1m  echo "toolchain=1.$((i=${toolchain#1.}, c=($(date +%s)/60/60/24-16569)/7/6, i+9*i*(10*i<=c)+90*i*(100*i<=c)))" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:54.0648710Z [36;1melse[0m
+2025-12-05T17:59:54.0649090Z [36;1m  echo "toolchain=$toolchain" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:54.0649580Z [36;1mfi[0m
+2025-12-05T17:59:54.0767260Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:54.0767830Z env:
+2025-12-05T17:59:54.0768110Z   toolchain: stable
+2025-12-05T17:59:54.0768430Z ##[endgroup]
+2025-12-05T17:59:54.1121000Z ##[group]Run : construct rustup command line
+2025-12-05T17:59:54.1121720Z [36;1m: construct rustup command line[0m
+2025-12-05T17:59:54.1122540Z [36;1mecho "targets=$(for t in ${targets//,/ }; do echo -n ' --target' $t; done)" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:54.1123650Z [36;1mecho "components=$(for c in ${components//,/ }; do echo -n ' --component' $c; done)" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:54.1124540Z [36;1mecho "downgrade=" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:54.1748260Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:54.1748990Z env:
+2025-12-05T17:59:54.1749340Z   targets: 
+2025-12-05T17:59:54.1749720Z   components: 
+2025-12-05T17:59:54.1750100Z ##[endgroup]
+2025-12-05T17:59:54.2047940Z ##[group]Run : set $CARGO_HOME
+2025-12-05T17:59:54.2048670Z [36;1m: set $CARGO_HOME[0m
+2025-12-05T17:59:54.2049270Z [36;1mecho CARGO_HOME=${CARGO_HOME:-"$HOME/.cargo"} >> $GITHUB_ENV[0m
+2025-12-05T17:59:54.2159690Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:54.2160320Z ##[endgroup]
+2025-12-05T17:59:54.2404010Z ##[group]Run : install rustup if needed
+2025-12-05T17:59:54.2404740Z [36;1m: install rustup if needed[0m
+2025-12-05T17:59:54.2405290Z [36;1mif ! command -v rustup &>/dev/null; then[0m
+2025-12-05T17:59:54.2406630Z [36;1m  curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused --location --silent --show-error --fail https://sh.rustup.rs | sh -s -- --default-toolchain none -y[0m
+2025-12-05T17:59:54.2407970Z [36;1m  echo "$CARGO_HOME/bin" >> $GITHUB_PATH[0m
+2025-12-05T17:59:54.2408520Z [36;1mfi[0m
+2025-12-05T17:59:54.2521560Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:54.2522280Z env:
+2025-12-05T17:59:54.2523150Z   CARGO_HOME: /Users/runner/.cargo
+2025-12-05T17:59:54.2523850Z ##[endgroup]
+2025-12-05T17:59:54.2871420Z ##[group]Run rustup toolchain install stable --profile minimal --no-self-update
+2025-12-05T17:59:54.2873180Z [36;1mrustup toolchain install stable --profile minimal --no-self-update[0m
+2025-12-05T17:59:54.2984010Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:54.2984630Z env:
+2025-12-05T17:59:54.2984960Z   CARGO_HOME: /Users/runner/.cargo
+2025-12-05T17:59:54.2985420Z ##[endgroup]
+2025-12-05T17:59:54.7782060Z info: syncing channel updates for 'stable-x86_64-apple-darwin'
+2025-12-05T17:59:55.0319340Z info: latest update on 2025-11-10, rust version 1.91.1 (ed61e7d7e 2025-11-07)
+2025-12-05T17:59:55.1036750Z info: downloading component 'clippy'
+2025-12-05T17:59:55.1584560Z info: downloading component 'rustfmt'
+2025-12-05T17:59:55.1952160Z info: downloading component 'cargo'
+2025-12-05T17:59:55.3109130Z info: downloading component 'rust-std'
+2025-12-05T17:59:55.6440450Z info: downloading component 'rustc'
+2025-12-05T17:59:56.5396920Z info: removing previous version of component 'clippy'
+2025-12-05T17:59:56.5433660Z info: removing previous version of component 'rustfmt'
+2025-12-05T17:59:56.5455860Z info: removing previous version of component 'cargo'
+2025-12-05T17:59:56.5547650Z info: removing previous version of component 'rust-std'
+2025-12-05T17:59:56.5627620Z info: removing previous version of component 'rustc'
+2025-12-05T17:59:56.5732030Z info: installing component 'clippy'
+2025-12-05T17:59:56.9701750Z info: installing component 'rustfmt'
+2025-12-05T17:59:57.3794500Z info: installing component 'cargo'
+2025-12-05T17:59:58.6584460Z info: installing component 'rust-std'
+2025-12-05T18:00:01.9607500Z info: installing component 'rustc'
+2025-12-05T18:00:08.6529820Z 
+2025-12-05T18:00:08.6832480Z info: self-update is disabled for this build of rustup
+2025-12-05T18:00:08.6834030Z info: any updates to rustup will need to be fetched with your system package manager
+2025-12-05T18:00:08.6835510Z   stable-x86_64-apple-darwin updated - rustc 1.91.1 (ed61e7d7e 2025-11-07) (from rustc 1.89.0 (29483883e 2025-08-04))
+2025-12-05T18:00:08.6836300Z 
+2025-12-05T18:00:08.7001790Z ##[error]The operation was canceled.

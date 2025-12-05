@@ -1,0 +1,202 @@
+﻿2025-12-05T17:59:45.7208430Z Current runner version: '2.329.0'
+2025-12-05T17:59:45.7235000Z ##[group]Runner Image Provisioner
+2025-12-05T17:59:45.7235910Z Hosted Compute Agent
+2025-12-05T17:59:45.7236700Z Version: 20251202.455
+2025-12-05T17:59:45.7237400Z Commit: 6c10caca4910e198df60de23adf20ad317c474e3
+2025-12-05T17:59:45.7238230Z Build Date: 2025-12-02T15:56:59Z
+2025-12-05T17:59:45.7238980Z Worker ID: {cbb5eda1-b036-4223-a307-65e1479ca494}
+2025-12-05T17:59:45.7239770Z ##[endgroup]
+2025-12-05T17:59:45.7240340Z ##[group]Operating System
+2025-12-05T17:59:45.7240960Z macOS
+2025-12-05T17:59:45.7241480Z 13.7.6
+2025-12-05T17:59:45.7241990Z 22H625
+2025-12-05T17:59:45.7242510Z ##[endgroup]
+2025-12-05T17:59:45.7243070Z ##[group]Runner Image
+2025-12-05T17:59:45.7243670Z Image: macos-13
+2025-12-05T17:59:45.7244250Z Version: 20250908.1476
+2025-12-05T17:59:45.7245850Z Included Software: https://github.com/actions/runner-images/blob/macos-13/20250908.1476/images/macos/macos-13-Readme.md
+2025-12-05T17:59:45.7247980Z Image Release: https://github.com/actions/runner-images/releases/tag/macos-13%2F20250908.1476
+2025-12-05T17:59:45.7249220Z ##[endgroup]
+2025-12-05T17:59:45.7250530Z ##[group]GITHUB_TOKEN Permissions
+2025-12-05T17:59:45.7252470Z Contents: write
+2025-12-05T17:59:45.7253080Z Metadata: read
+2025-12-05T17:59:45.7253650Z ##[endgroup]
+2025-12-05T17:59:45.7256120Z Secret source: Actions
+2025-12-05T17:59:45.7256930Z Prepare workflow directory
+2025-12-05T17:59:45.7738330Z Prepare all required actions
+2025-12-05T17:59:45.7790870Z Getting action download info
+2025-12-05T17:59:46.0730200Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+2025-12-05T17:59:47.5418590Z Download action repository 'dtolnay/rust-toolchain@stable' (SHA:6d9817901c499d6b02debbb57edb38d33daa680b)
+2025-12-05T17:59:48.5009100Z Download action repository 'Swatinem/rust-cache@v2' (SHA:779680da715d629ac1d338a641029a2f4372abb5)
+2025-12-05T17:59:50.0268350Z Download action repository 'oven-sh/setup-bun@v2' (SHA:735343b667d3e6f658f44d0eca948eb6282f2b76)
+2025-12-05T17:59:51.3179900Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2025-12-05T17:59:51.6398850Z Uses: SL-IT-AMAZING/anyon-claude/.github/workflows/build-macos.yml@refs/tags/v0.2.2 (9cb07f25d5816d34174efcfaddff71c08fc7224d)
+2025-12-05T17:59:51.6404290Z Complete job name: build-macos / Build macOS x86_64-apple-darwin
+2025-12-05T17:59:51.7041470Z ##[group]Run actions/checkout@v4
+2025-12-05T17:59:51.7042430Z with:
+2025-12-05T17:59:51.7042860Z   repository: SL-IT-AMAZING/anyon-claude
+2025-12-05T17:59:51.7043650Z   token: ***
+2025-12-05T17:59:51.7044040Z   ssh-strict: true
+2025-12-05T17:59:51.7044430Z   ssh-user: git
+2025-12-05T17:59:51.7044890Z   persist-credentials: true
+2025-12-05T17:59:51.7045320Z   clean: true
+2025-12-05T17:59:51.7045730Z   sparse-checkout-cone-mode: true
+2025-12-05T17:59:51.7046260Z   fetch-depth: 1
+2025-12-05T17:59:51.7046660Z   fetch-tags: false
+2025-12-05T17:59:51.7047050Z   show-progress: true
+2025-12-05T17:59:51.7060270Z   lfs: false
+2025-12-05T17:59:51.7060580Z   submodules: false
+2025-12-05T17:59:51.7060920Z   set-safe-directory: true
+2025-12-05T17:59:51.7061720Z ##[endgroup]
+2025-12-05T17:59:51.9509230Z Syncing repository: SL-IT-AMAZING/anyon-claude
+2025-12-05T17:59:51.9511350Z ##[group]Getting Git version info
+2025-12-05T17:59:51.9512210Z Working directory is '/Users/runner/work/anyon-claude/anyon-claude'
+2025-12-05T17:59:51.9513310Z [command]/usr/local/bin/git version
+2025-12-05T17:59:51.9651010Z git version 2.50.1
+2025-12-05T17:59:51.9683500Z ##[endgroup]
+2025-12-05T17:59:51.9696910Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/0a28f104-b734-4b10-b97d-f988ba1f74f1/.gitconfig'
+2025-12-05T17:59:51.9712740Z Temporarily overriding HOME='/Users/runner/work/_temp/0a28f104-b734-4b10-b97d-f988ba1f74f1' before making global git config changes
+2025-12-05T17:59:51.9714290Z Adding repository directory to the temporary git global config as a safe directory
+2025-12-05T17:59:51.9728110Z [command]/usr/local/bin/git config --global --add safe.directory /Users/runner/work/anyon-claude/anyon-claude
+2025-12-05T17:59:51.9835920Z Deleting the contents of '/Users/runner/work/anyon-claude/anyon-claude'
+2025-12-05T17:59:51.9841240Z ##[group]Initializing the repository
+2025-12-05T17:59:51.9848100Z [command]/usr/local/bin/git init /Users/runner/work/anyon-claude/anyon-claude
+2025-12-05T17:59:52.0096400Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-12-05T17:59:52.0097910Z hint: is subject to change. To configure the initial branch name to use in all
+2025-12-05T17:59:52.0099080Z hint: of your new repositories, which will suppress this warning, call:
+2025-12-05T17:59:52.0100040Z hint:
+2025-12-05T17:59:52.0100620Z hint: 	git config --global init.defaultBranch <name>
+2025-12-05T17:59:52.0101290Z hint:
+2025-12-05T17:59:52.0102020Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-12-05T17:59:52.0103320Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-12-05T17:59:52.0104280Z hint:
+2025-12-05T17:59:52.0104720Z hint: 	git branch -m <name>
+2025-12-05T17:59:52.0105250Z hint:
+2025-12-05T17:59:52.0105990Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2025-12-05T17:59:52.0107370Z Initialized empty Git repository in /Users/runner/work/anyon-claude/anyon-claude/.git/
+2025-12-05T17:59:52.0114080Z [command]/usr/local/bin/git remote add origin https://github.com/SL-IT-AMAZING/anyon-claude
+2025-12-05T17:59:52.0220470Z ##[endgroup]
+2025-12-05T17:59:52.0221350Z ##[group]Disabling automatic garbage collection
+2025-12-05T17:59:52.0226610Z [command]/usr/local/bin/git config --local gc.auto 0
+2025-12-05T17:59:52.0323470Z ##[endgroup]
+2025-12-05T17:59:52.0324110Z ##[group]Setting up auth
+2025-12-05T17:59:52.0332640Z [command]/usr/local/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-12-05T17:59:52.0410030Z [command]/usr/local/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-12-05T17:59:52.1583700Z [command]/usr/local/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-12-05T17:59:52.1656240Z [command]/usr/local/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-12-05T17:59:52.2664020Z [command]/usr/local/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2025-12-05T17:59:52.2734990Z [command]/usr/local/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2025-12-05T17:59:52.3885920Z [command]/usr/local/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-12-05T17:59:52.3889400Z ##[endgroup]
+2025-12-05T17:59:52.3890180Z ##[group]Fetching the repository
+2025-12-05T17:59:52.3891870Z [command]/usr/local/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +9cb07f25d5816d34174efcfaddff71c08fc7224d:refs/tags/v0.2.2
+2025-12-05T17:59:53.7298290Z From https://github.com/SL-IT-AMAZING/anyon-claude
+2025-12-05T17:59:53.7299250Z  * [new ref]         9cb07f25d5816d34174efcfaddff71c08fc7224d -> v0.2.2
+2025-12-05T17:59:53.7381030Z ##[endgroup]
+2025-12-05T17:59:53.7381770Z ##[group]Determining the checkout info
+2025-12-05T17:59:53.7382520Z ##[endgroup]
+2025-12-05T17:59:53.7388340Z [command]/usr/local/bin/git sparse-checkout disable
+2025-12-05T17:59:53.7476540Z [command]/usr/local/bin/git config --local --unset-all extensions.worktreeConfig
+2025-12-05T17:59:53.7543640Z ##[group]Checking out the ref
+2025-12-05T17:59:53.7548870Z [command]/usr/local/bin/git checkout --progress --force refs/tags/v0.2.2
+2025-12-05T17:59:53.9774390Z HEAD is now at 9cb07f2 feat: Disable login requirement for standalone app
+2025-12-05T17:59:53.9820000Z ##[endgroup]
+2025-12-05T17:59:53.9910980Z [command]/usr/local/bin/git log -1 --format=%H
+2025-12-05T17:59:53.9981150Z 9cb07f25d5816d34174efcfaddff71c08fc7224d
+2025-12-05T17:59:54.0432680Z ##[group]Run dtolnay/rust-toolchain@stable
+2025-12-05T17:59:54.0433420Z with:
+2025-12-05T17:59:54.0433830Z   toolchain: stable
+2025-12-05T17:59:54.0434330Z ##[endgroup]
+2025-12-05T17:59:54.0637350Z ##[group]Run : parse toolchain version
+2025-12-05T17:59:54.0637890Z [36;1m: parse toolchain version[0m
+2025-12-05T17:59:54.0638320Z [36;1mif [[ -z $toolchain ]]; then[0m
+2025-12-05T17:59:54.0639180Z [36;1m  # GitHub does not enforce `required: true` inputs itself. https://github.com/actions/runner/issues/1070[0m
+2025-12-05T17:59:54.0640110Z [36;1m  echo "'toolchain' is a required input" >&2[0m
+2025-12-05T17:59:54.0640590Z [36;1m  exit 1[0m
+2025-12-05T17:59:54.0641120Z [36;1melif [[ $toolchain =~ ^stable' '[0-9]+' '(year|month|week|day)s?' 'ago$ ]]; then[0m
+2025-12-05T17:59:54.0641790Z [36;1m  if [[ macOS == macOS ]]; then[0m
+2025-12-05T17:59:54.0642650Z [36;1m    echo "toolchain=1.$((($(date -v-$(sed 's/stable \([0-9]*\) \(.\).*/\1\2/' <<< $toolchain) +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:54.0643470Z [36;1m  else[0m
+2025-12-05T17:59:54.0644110Z [36;1m    echo "toolchain=1.$((($(date --date "${toolchain#stable }" +%s)/60/60/24-16569)/7/6))" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:54.0644880Z [36;1m  fi[0m
+2025-12-05T17:59:54.0645370Z [36;1melif [[ $toolchain =~ ^stable' 'minus' '[0-9]+' 'releases?$ ]]; then[0m
+2025-12-05T17:59:54.0646290Z [36;1m  echo "toolchain=1.$((($(date +%s)/60/60/24-16569)/7/6-${toolchain//[^0-9]/}))" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:54.0647050Z [36;1melif [[ $toolchain =~ ^1\.[0-9]+$ ]]; then[0m
+2025-12-05T17:59:54.0647910Z [36;1m  echo "toolchain=1.$((i=${toolchain#1.}, c=($(date +%s)/60/60/24-16569)/7/6, i+9*i*(10*i<=c)+90*i*(100*i<=c)))" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:54.0648720Z [36;1melse[0m
+2025-12-05T17:59:54.0649090Z [36;1m  echo "toolchain=$toolchain" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:54.0649590Z [36;1mfi[0m
+2025-12-05T17:59:54.0767290Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:54.0767830Z env:
+2025-12-05T17:59:54.0768120Z   toolchain: stable
+2025-12-05T17:59:54.0768430Z ##[endgroup]
+2025-12-05T17:59:54.1121070Z ##[group]Run : construct rustup command line
+2025-12-05T17:59:54.1121730Z [36;1m: construct rustup command line[0m
+2025-12-05T17:59:54.1122550Z [36;1mecho "targets=$(for t in ${targets//,/ }; do echo -n ' --target' $t; done)" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:54.1123650Z [36;1mecho "components=$(for c in ${components//,/ }; do echo -n ' --component' $c; done)" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:54.1124550Z [36;1mecho "downgrade=" >> $GITHUB_OUTPUT[0m
+2025-12-05T17:59:54.1748300Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:54.1749000Z env:
+2025-12-05T17:59:54.1749350Z   targets: 
+2025-12-05T17:59:54.1749720Z   components: 
+2025-12-05T17:59:54.1750100Z ##[endgroup]
+2025-12-05T17:59:54.2048020Z ##[group]Run : set $CARGO_HOME
+2025-12-05T17:59:54.2048670Z [36;1m: set $CARGO_HOME[0m
+2025-12-05T17:59:54.2049340Z [36;1mecho CARGO_HOME=${CARGO_HOME:-"$HOME/.cargo"} >> $GITHUB_ENV[0m
+2025-12-05T17:59:54.2159720Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:54.2160320Z ##[endgroup]
+2025-12-05T17:59:54.2404110Z ##[group]Run : install rustup if needed
+2025-12-05T17:59:54.2404750Z [36;1m: install rustup if needed[0m
+2025-12-05T17:59:54.2405320Z [36;1mif ! command -v rustup &>/dev/null; then[0m
+2025-12-05T17:59:54.2406630Z [36;1m  curl --proto '=https' --tlsv1.2 --retry 10 --retry-connrefused --location --silent --show-error --fail https://sh.rustup.rs | sh -s -- --default-toolchain none -y[0m
+2025-12-05T17:59:54.2407970Z [36;1m  echo "$CARGO_HOME/bin" >> $GITHUB_PATH[0m
+2025-12-05T17:59:54.2408520Z [36;1mfi[0m
+2025-12-05T17:59:54.2521640Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:54.2522280Z env:
+2025-12-05T17:59:54.2523160Z   CARGO_HOME: /Users/runner/.cargo
+2025-12-05T17:59:54.2523850Z ##[endgroup]
+2025-12-05T17:59:54.2872100Z ##[group]Run rustup toolchain install stable --profile minimal --no-self-update
+2025-12-05T17:59:54.2873190Z [36;1mrustup toolchain install stable --profile minimal --no-self-update[0m
+2025-12-05T17:59:54.2984030Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2025-12-05T17:59:54.2984630Z env:
+2025-12-05T17:59:54.2984990Z   CARGO_HOME: /Users/runner/.cargo
+2025-12-05T17:59:54.2985430Z ##[endgroup]
+2025-12-05T17:59:54.7782170Z info: syncing channel updates for 'stable-x86_64-apple-darwin'
+2025-12-05T17:59:55.0319370Z info: latest update on 2025-11-10, rust version 1.91.1 (ed61e7d7e 2025-11-07)
+2025-12-05T17:59:55.1036790Z info: downloading component 'clippy'
+2025-12-05T17:59:55.1584600Z info: downloading component 'rustfmt'
+2025-12-05T17:59:55.1952200Z info: downloading component 'cargo'
+2025-12-05T17:59:55.3109170Z info: downloading component 'rust-std'
+2025-12-05T17:59:55.6440490Z info: downloading component 'rustc'
+2025-12-05T17:59:56.5396960Z info: removing previous version of component 'clippy'
+2025-12-05T17:59:56.5433760Z info: removing previous version of component 'rustfmt'
+2025-12-05T17:59:56.5455880Z info: removing previous version of component 'cargo'
+2025-12-05T17:59:56.5547670Z info: removing previous version of component 'rust-std'
+2025-12-05T17:59:56.5627640Z info: removing previous version of component 'rustc'
+2025-12-05T17:59:56.5732050Z info: installing component 'clippy'
+2025-12-05T17:59:56.9701790Z info: installing component 'rustfmt'
+2025-12-05T17:59:57.3794540Z info: installing component 'cargo'
+2025-12-05T17:59:58.6584500Z info: installing component 'rust-std'
+2025-12-05T18:00:01.9607710Z info: installing component 'rustc'
+2025-12-05T18:00:08.6529860Z 
+2025-12-05T18:00:08.6832530Z info: self-update is disabled for this build of rustup
+2025-12-05T18:00:08.6834050Z info: any updates to rustup will need to be fetched with your system package manager
+2025-12-05T18:00:08.6835520Z   stable-x86_64-apple-darwin updated - rustc 1.91.1 (ed61e7d7e 2025-11-07) (from rustc 1.89.0 (29483883e 2025-08-04))
+2025-12-05T18:00:08.6836320Z 
+2025-12-05T18:00:08.7001810Z ##[error]The operation was canceled.
+2025-12-05T18:00:08.7250750Z Post job cleanup.
+2025-12-05T18:00:08.8742190Z [command]/usr/local/bin/git version
+2025-12-05T18:00:08.8767820Z git version 2.50.1
+2025-12-05T18:00:08.8772530Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/4db63d9b-4712-4cf8-a745-271d862f850a/.gitconfig'
+2025-12-05T18:00:08.8774300Z Temporarily overriding HOME='/Users/runner/work/_temp/4db63d9b-4712-4cf8-a745-271d862f850a' before making global git config changes
+2025-12-05T18:00:08.8775870Z Adding repository directory to the temporary git global config as a safe directory
+2025-12-05T18:00:08.8777270Z [command]/usr/local/bin/git config --global --add safe.directory /Users/runner/work/anyon-claude/anyon-claude
+2025-12-05T18:00:08.8858200Z [command]/usr/local/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-12-05T18:00:08.8993890Z [command]/usr/local/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-12-05T18:00:08.9919360Z [command]/usr/local/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-12-05T18:00:08.9978590Z http.https://github.com/.extraheader
+2025-12-05T18:00:08.9993580Z [command]/usr/local/bin/git config --local --unset-all http.https://github.com/.extraheader
+2025-12-05T18:00:09.0078780Z [command]/usr/local/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-12-05T18:00:09.1141640Z [command]/usr/local/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2025-12-05T18:00:09.1211020Z [command]/usr/local/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2025-12-05T18:00:09.3063940Z Cleaning up orphan processes

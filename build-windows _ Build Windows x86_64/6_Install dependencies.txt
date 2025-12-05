@@ -1,0 +1,67 @@
+﻿2025-12-05T18:00:23.7897878Z ##[group]Run bun install
+2025-12-05T18:00:23.7898323Z [36;1mbun install[0m
+2025-12-05T18:00:23.7978070Z shell: C:\Program Files\PowerShell\7\pwsh.EXE -command ". '{0}'"
+2025-12-05T18:00:23.7978403Z env:
+2025-12-05T18:00:23.7978595Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2025-12-05T18:00:23.7978844Z   CARGO_INCREMENTAL: 0
+2025-12-05T18:00:23.7979042Z   CARGO_TERM_COLOR: always
+2025-12-05T18:00:23.7979250Z   CACHE_ON_FAILURE: false
+2025-12-05T18:00:23.7979439Z ##[endgroup]
+2025-12-05T18:00:24.1896546Z bun install v1.3.3 (274e01c7)
+2025-12-05T18:01:19.3205725Z 
+2025-12-05T18:01:19.3206300Z + @tauri-apps/cli@2.7.1
+2025-12-05T18:01:19.3206741Z + @types/node@22.15.32
+2025-12-05T18:01:19.3207084Z + @types/react@18.3.23
+2025-12-05T18:01:19.3208635Z + @types/react-dom@18.3.7
+2025-12-05T18:01:19.3209616Z + @types/sharp@0.32.0
+2025-12-05T18:01:19.3210774Z + @vitejs/plugin-react@4.5.2
+2025-12-05T18:01:19.3211230Z + concurrently@9.2.1
+2025-12-05T18:01:19.3211490Z + sharp@0.34.2
+2025-12-05T18:01:19.3211866Z + typescript@5.6.3
+2025-12-05T18:01:19.3212090Z + vite@6.3.5
+2025-12-05T18:01:19.3212269Z + @hookform/resolvers@3.10.0
+2025-12-05T18:01:19.3212494Z + @radix-ui/react-dialog@1.1.14
+2025-12-05T18:01:19.3212729Z + @radix-ui/react-dropdown-menu@2.1.15
+2025-12-05T18:01:19.3212978Z + @radix-ui/react-label@2.1.7
+2025-12-05T18:01:19.3213200Z + @radix-ui/react-popover@1.1.14
+2025-12-05T18:01:19.3213766Z + @radix-ui/react-radio-group@1.3.7
+2025-12-05T18:01:19.3214112Z + @radix-ui/react-select@2.2.5
+2025-12-05T18:01:19.3214329Z + @radix-ui/react-switch@1.2.5
+2025-12-05T18:01:19.3214526Z + @radix-ui/react-tabs@1.1.12
+2025-12-05T18:01:19.3214731Z + @radix-ui/react-toast@1.2.14
+2025-12-05T18:01:19.3214944Z + @radix-ui/react-tooltip@1.2.7
+2025-12-05T18:01:19.3215153Z + @tailwindcss/cli@4.1.10
+2025-12-05T18:01:19.3215352Z + @tailwindcss/vite@4.1.10
+2025-12-05T18:01:19.3215558Z + @tanstack/react-virtual@3.13.10
+2025-12-05T18:01:19.3215778Z + @tauri-apps/api@2.5.0
+2025-12-05T18:01:19.3215981Z + @tauri-apps/plugin-dialog@2.2.2
+2025-12-05T18:01:19.3216242Z + @tauri-apps/plugin-global-shortcut@2.2.1
+2025-12-05T18:01:19.3216490Z + @tauri-apps/plugin-http@2.5.4
+2025-12-05T18:01:19.3216707Z + @tauri-apps/plugin-opener@2.3.0
+2025-12-05T18:01:19.3216927Z + @tauri-apps/plugin-shell@2.2.2
+2025-12-05T18:01:19.3217131Z + @types/diff@8.0.0
+2025-12-05T18:01:19.3217343Z + @types/react-syntax-highlighter@15.5.13
+2025-12-05T18:01:19.3217596Z + @uiw/react-md-editor@4.0.7
+2025-12-05T18:01:19.3217803Z + ansi-to-html@0.7.2
+2025-12-05T18:01:19.3217996Z + class-variance-authority@0.7.1
+2025-12-05T18:01:19.3218203Z + clsx@2.1.1
+2025-12-05T18:01:19.3218349Z + date-fns@3.6.0
+2025-12-05T18:01:19.3218514Z + diff@8.0.2
+2025-12-05T18:01:19.3218675Z + framer-motion@12.18.1
+2025-12-05T18:01:19.3218860Z + html2canvas@1.4.1
+2025-12-05T18:01:19.3219033Z + lucide-react@0.468.0
+2025-12-05T18:01:19.3219216Z + posthog-js@1.258.3
+2025-12-05T18:01:19.3219388Z + react@18.3.1
+2025-12-05T18:01:19.3219551Z + react-dom@18.3.1
+2025-12-05T18:01:19.3219727Z + react-hook-form@7.58.1
+2025-12-05T18:01:19.3220768Z + react-markdown@9.1.0
+2025-12-05T18:01:19.3221067Z + react-router-dom@7.10.1
+2025-12-05T18:01:19.3221384Z + react-syntax-highlighter@15.6.1
+2025-12-05T18:01:19.3221612Z + recharts@2.15.3
+2025-12-05T18:01:19.3221801Z + remark-gfm@4.0.1
+2025-12-05T18:01:19.3222093Z + tailwind-merge@2.6.0
+2025-12-05T18:01:19.3222286Z + tailwindcss@4.1.10
+2025-12-05T18:01:19.3222459Z + zod@3.25.67
+2025-12-05T18:01:19.3222608Z + zustand@5.0.6
+2025-12-05T18:01:19.3222715Z 
+2025-12-05T18:01:19.3222803Z 434 packages installed [55.14s]

@@ -1,0 +1,33 @@
+﻿2025-12-05T17:59:36.8918983Z Current runner version: '2.329.0'
+2025-12-05T17:59:36.8945038Z ##[group]Runner Image Provisioner
+2025-12-05T17:59:36.8945905Z Hosted Compute Agent
+2025-12-05T17:59:36.8946590Z Version: 20251124.448
+2025-12-05T17:59:36.8947232Z Commit: fda5086b43ec66ade217e5fcd18146c879571177
+2025-12-05T17:59:36.8947990Z Build Date: 2025-11-24T21:16:26Z
+2025-12-05T17:59:36.8948584Z ##[endgroup]
+2025-12-05T17:59:36.8949147Z ##[group]Operating System
+2025-12-05T17:59:36.8949757Z Ubuntu
+2025-12-05T17:59:36.8950258Z 24.04.3
+2025-12-05T17:59:36.8950691Z LTS
+2025-12-05T17:59:36.8951222Z ##[endgroup]
+2025-12-05T17:59:36.8951791Z ##[group]Runner Image
+2025-12-05T17:59:36.8952359Z Image: ubuntu-24.04
+2025-12-05T17:59:36.8952888Z Version: 20251126.144.1
+2025-12-05T17:59:36.8954327Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20251126.144/images/ubuntu/Ubuntu2404-Readme.md
+2025-12-05T17:59:36.8955751Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20251126.144
+2025-12-05T17:59:36.8957035Z ##[endgroup]
+2025-12-05T17:59:36.8958093Z ##[group]GITHUB_TOKEN Permissions
+2025-12-05T17:59:36.8960023Z Contents: write
+2025-12-05T17:59:36.8960600Z Metadata: read
+2025-12-05T17:59:36.8961273Z ##[endgroup]
+2025-12-05T17:59:36.8964130Z Secret source: Actions
+2025-12-05T17:59:36.8965088Z Prepare workflow directory
+2025-12-05T17:59:36.9292532Z Prepare all required actions
+2025-12-05T17:59:36.9330645Z Getting action download info
+2025-12-05T17:59:37.4507660Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+2025-12-05T17:59:38.0363516Z Download action repository 'dtolnay/rust-toolchain@stable' (SHA:6d9817901c499d6b02debbb57edb38d33daa680b)
+2025-12-05T17:59:38.4842241Z Download action repository 'Swatinem/rust-cache@v2' (SHA:779680da715d629ac1d338a641029a2f4372abb5)
+2025-12-05T17:59:39.2921927Z Download action repository 'oven-sh/setup-bun@v2' (SHA:735343b667d3e6f658f44d0eca948eb6282f2b76)
+2025-12-05T17:59:39.7825509Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2025-12-05T17:59:39.9951138Z Uses: SL-IT-AMAZING/anyon-claude/.github/workflows/build-linux.yml@refs/tags/v0.2.2 (9cb07f25d5816d34174efcfaddff71c08fc7224d)
+2025-12-05T17:59:39.9955825Z Complete job name: build-linux / Build Linux x86_64

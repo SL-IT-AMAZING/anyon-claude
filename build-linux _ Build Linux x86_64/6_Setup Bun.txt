@@ -1,0 +1,13 @@
+﻿2025-12-05T18:00:44.9536060Z ##[group]Run oven-sh/setup-bun@v2
+2025-12-05T18:00:44.9536343Z with:
+2025-12-05T18:00:44.9536525Z   no-cache: false
+2025-12-05T18:00:44.9536708Z env:
+2025-12-05T18:00:44.9536884Z   CARGO_HOME: /home/runner/.cargo
+2025-12-05T18:00:44.9537131Z   CARGO_INCREMENTAL: 0
+2025-12-05T18:00:44.9537339Z   CARGO_TERM_COLOR: always
+2025-12-05T18:00:44.9537552Z   CACHE_ON_FAILURE: false
+2025-12-05T18:00:44.9537757Z ##[endgroup]
+2025-12-05T18:00:45.0797654Z Downloading a new version of Bun: https://bun.sh/download/latest/linux/x64?avx2=true&profile=false
+2025-12-05T18:00:45.6463565Z [command]/usr/bin/unzip -o -q /home/runner/work/_temp/bc51c3a0-216d-4958-acd3-b558ea17c65e.zip
+2025-12-05T18:00:46.6459598Z [command]/home/runner/.bun/bin/bun --revision
+2025-12-05T18:00:46.6498829Z 1.3.3+274e01c73

@@ -1,0 +1,71 @@
+﻿2025-12-05T17:59:51.7041430Z ##[group]Run actions/checkout@v4
+2025-12-05T17:59:51.7042420Z with:
+2025-12-05T17:59:51.7042860Z   repository: SL-IT-AMAZING/anyon-claude
+2025-12-05T17:59:51.7043640Z   token: ***
+2025-12-05T17:59:51.7044040Z   ssh-strict: true
+2025-12-05T17:59:51.7044430Z   ssh-user: git
+2025-12-05T17:59:51.7044880Z   persist-credentials: true
+2025-12-05T17:59:51.7045310Z   clean: true
+2025-12-05T17:59:51.7045720Z   sparse-checkout-cone-mode: true
+2025-12-05T17:59:51.7046260Z   fetch-depth: 1
+2025-12-05T17:59:51.7046650Z   fetch-tags: false
+2025-12-05T17:59:51.7047050Z   show-progress: true
+2025-12-05T17:59:51.7060240Z   lfs: false
+2025-12-05T17:59:51.7060580Z   submodules: false
+2025-12-05T17:59:51.7060910Z   set-safe-directory: true
+2025-12-05T17:59:51.7061710Z ##[endgroup]
+2025-12-05T17:59:51.9509140Z Syncing repository: SL-IT-AMAZING/anyon-claude
+2025-12-05T17:59:51.9511330Z ##[group]Getting Git version info
+2025-12-05T17:59:51.9512120Z Working directory is '/Users/runner/work/anyon-claude/anyon-claude'
+2025-12-05T17:59:51.9513300Z [command]/usr/local/bin/git version
+2025-12-05T17:59:51.9650950Z git version 2.50.1
+2025-12-05T17:59:51.9683470Z ##[endgroup]
+2025-12-05T17:59:51.9696890Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/0a28f104-b734-4b10-b97d-f988ba1f74f1/.gitconfig'
+2025-12-05T17:59:51.9712720Z Temporarily overriding HOME='/Users/runner/work/_temp/0a28f104-b734-4b10-b97d-f988ba1f74f1' before making global git config changes
+2025-12-05T17:59:51.9714290Z Adding repository directory to the temporary git global config as a safe directory
+2025-12-05T17:59:51.9728080Z [command]/usr/local/bin/git config --global --add safe.directory /Users/runner/work/anyon-claude/anyon-claude
+2025-12-05T17:59:51.9835880Z Deleting the contents of '/Users/runner/work/anyon-claude/anyon-claude'
+2025-12-05T17:59:51.9841220Z ##[group]Initializing the repository
+2025-12-05T17:59:51.9848040Z [command]/usr/local/bin/git init /Users/runner/work/anyon-claude/anyon-claude
+2025-12-05T17:59:52.0096310Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-12-05T17:59:52.0097900Z hint: is subject to change. To configure the initial branch name to use in all
+2025-12-05T17:59:52.0099070Z hint: of your new repositories, which will suppress this warning, call:
+2025-12-05T17:59:52.0100020Z hint:
+2025-12-05T17:59:52.0100580Z hint: 	git config --global init.defaultBranch <name>
+2025-12-05T17:59:52.0101290Z hint:
+2025-12-05T17:59:52.0102010Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-12-05T17:59:52.0103310Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-12-05T17:59:52.0104270Z hint:
+2025-12-05T17:59:52.0104710Z hint: 	git branch -m <name>
+2025-12-05T17:59:52.0105250Z hint:
+2025-12-05T17:59:52.0105990Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2025-12-05T17:59:52.0107370Z Initialized empty Git repository in /Users/runner/work/anyon-claude/anyon-claude/.git/
+2025-12-05T17:59:52.0114030Z [command]/usr/local/bin/git remote add origin https://github.com/SL-IT-AMAZING/anyon-claude
+2025-12-05T17:59:52.0220430Z ##[endgroup]
+2025-12-05T17:59:52.0221350Z ##[group]Disabling automatic garbage collection
+2025-12-05T17:59:52.0226580Z [command]/usr/local/bin/git config --local gc.auto 0
+2025-12-05T17:59:52.0323430Z ##[endgroup]
+2025-12-05T17:59:52.0324100Z ##[group]Setting up auth
+2025-12-05T17:59:52.0332610Z [command]/usr/local/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-12-05T17:59:52.0409980Z [command]/usr/local/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-12-05T17:59:52.1583640Z [command]/usr/local/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-12-05T17:59:52.1655440Z [command]/usr/local/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-12-05T17:59:52.2663960Z [command]/usr/local/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2025-12-05T17:59:52.2734940Z [command]/usr/local/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2025-12-05T17:59:52.3885830Z [command]/usr/local/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-12-05T17:59:52.3889390Z ##[endgroup]
+2025-12-05T17:59:52.3890180Z ##[group]Fetching the repository
+2025-12-05T17:59:52.3891860Z [command]/usr/local/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +9cb07f25d5816d34174efcfaddff71c08fc7224d:refs/tags/v0.2.2
+2025-12-05T17:59:53.7298220Z From https://github.com/SL-IT-AMAZING/anyon-claude
+2025-12-05T17:59:53.7299210Z  * [new ref]         9cb07f25d5816d34174efcfaddff71c08fc7224d -> v0.2.2
+2025-12-05T17:59:53.7380980Z ##[endgroup]
+2025-12-05T17:59:53.7381760Z ##[group]Determining the checkout info
+2025-12-05T17:59:53.7382510Z ##[endgroup]
+2025-12-05T17:59:53.7388320Z [command]/usr/local/bin/git sparse-checkout disable
+2025-12-05T17:59:53.7476510Z [command]/usr/local/bin/git config --local --unset-all extensions.worktreeConfig
+2025-12-05T17:59:53.7543610Z ##[group]Checking out the ref
+2025-12-05T17:59:53.7548840Z [command]/usr/local/bin/git checkout --progress --force refs/tags/v0.2.2
+2025-12-05T17:59:53.9774340Z HEAD is now at 9cb07f2 feat: Disable login requirement for standalone app
+2025-12-05T17:59:53.9819970Z ##[endgroup]
+2025-12-05T17:59:53.9910940Z [command]/usr/local/bin/git log -1 --format=%H
+2025-12-05T17:59:53.9981110Z 9cb07f25d5816d34174efcfaddff71c08fc7224d

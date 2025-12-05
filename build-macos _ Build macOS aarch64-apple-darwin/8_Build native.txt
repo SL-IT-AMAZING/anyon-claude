@@ -1,0 +1,23 @@
+﻿2025-12-05T17:59:57.3390930Z ##[group]Run bun run tauri build
+2025-12-05T17:59:57.3391190Z [36;1mbun run tauri build[0m
+2025-12-05T17:59:57.3438840Z shell: /bin/bash -e {0}
+2025-12-05T17:59:57.3439030Z env:
+2025-12-05T17:59:57.3439260Z   CARGO_HOME: /Users/runner/.cargo
+2025-12-05T17:59:57.3439450Z   CARGO_INCREMENTAL: 0
+2025-12-05T17:59:57.3439600Z   CARGO_TERM_COLOR: always
+2025-12-05T17:59:57.3439790Z   CACHE_ON_FAILURE: false
+2025-12-05T17:59:57.3439950Z   CI: true
+2025-12-05T17:59:57.3440120Z ##[endgroup]
+2025-12-05T17:59:57.3705580Z $ tauri build
+2025-12-05T17:59:57.5134730Z         Warn The bundle identifier "com.anyon.app" set in `tauri.conf.json identifier` ends with `.app`. This is not recommended because it conflicts with the application bundle extension on macOS.
+2025-12-05T17:59:57.5135420Z      Running beforeBuildCommand `npm run build`
+2025-12-05T17:59:57.7441360Z 
+2025-12-05T17:59:57.7441680Z > anyon@0.2.1 build
+2025-12-05T17:59:57.7441870Z > tsc && vite build
+2025-12-05T17:59:57.7442040Z 
+2025-12-05T18:00:04.3622710Z src/App.tsx(6,1): error TS6133: 'LoginPage' is declared but its value is never read.
+2025-12-05T18:00:04.3635770Z src/App.tsx(501,11): error TS6133: 'isAuthenticated' is declared but its value is never read.
+2025-12-05T18:00:04.3800460Z beforeBuildCommand `npm run build` failed with exit code 2
+2025-12-05T18:00:04.3851730Z        Error beforeBuildCommand `npm run build` failed with exit code 2
+2025-12-05T18:00:04.3855690Z error: script "tauri" exited with code 1
+2025-12-05T18:00:04.3874350Z ##[error]Process completed with exit code 1.

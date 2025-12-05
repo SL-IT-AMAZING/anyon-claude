@@ -1,0 +1,65 @@
+﻿2025-12-05T18:00:24.1248570Z ##[group]Run Swatinem/rust-cache@v2
+2025-12-05T18:00:24.1248858Z with:
+2025-12-05T18:00:24.1249044Z   workspaces: src-tauri
+2025-12-05T18:00:24.1249260Z   prefix-key: v0-rust
+2025-12-05T18:00:24.1249462Z   add-job-id-key: true
+2025-12-05T18:00:24.1249684Z   add-rust-environment-hash-key: true
+2025-12-05T18:00:24.1249932Z   cache-targets: true
+2025-12-05T18:00:24.1250137Z   cache-all-crates: false
+2025-12-05T18:00:24.1250362Z   cache-workspace-crates: false
+2025-12-05T18:00:24.1250593Z   save-if: true
+2025-12-05T18:00:24.1250783Z   cache-provider: github
+2025-12-05T18:00:24.1250988Z   cache-bin: true
+2025-12-05T18:00:24.1251175Z   lookup-only: false
+2025-12-05T18:00:24.1251359Z env:
+2025-12-05T18:00:24.1251532Z   CARGO_HOME: /home/runner/.cargo
+2025-12-05T18:00:24.1251765Z   CARGO_INCREMENTAL: 0
+2025-12-05T18:00:24.1251969Z   CARGO_TERM_COLOR: always
+2025-12-05T18:00:24.1252169Z ##[endgroup]
+2025-12-05T18:00:25.1941448Z ##[group]Cache Configuration
+2025-12-05T18:00:25.1941990Z Cache Provider:
+2025-12-05T18:00:25.1945219Z     github
+2025-12-05T18:00:25.1945600Z Workspaces:
+2025-12-05T18:00:25.1946020Z     /home/runner/work/anyon-claude/anyon-claude/src-tauri
+2025-12-05T18:00:25.1946553Z Cache Paths:
+2025-12-05T18:00:25.1946863Z     /home/runner/.cargo/bin
+2025-12-05T18:00:25.1947253Z     /home/runner/.cargo/.crates.toml
+2025-12-05T18:00:25.1947692Z     /home/runner/.cargo/.crates2.json
+2025-12-05T18:00:25.1948129Z     /home/runner/.cargo/registry
+2025-12-05T18:00:25.1948514Z     /home/runner/.cargo/git
+2025-12-05T18:00:25.1949023Z     /home/runner/work/anyon-claude/anyon-claude/src-tauri/target
+2025-12-05T18:00:25.1949565Z Restore Key:
+2025-12-05T18:00:25.1949912Z     v0-rust-build-Linux-x64-8d789153
+2025-12-05T18:00:25.1950319Z Cache Key:
+2025-12-05T18:00:25.1950665Z     v0-rust-build-Linux-x64-8d789153-05a3bbc5
+2025-12-05T18:00:25.1951110Z .. Prefix:
+2025-12-05T18:00:25.1951431Z   - v0-rust-build-Linux-x64
+2025-12-05T18:00:25.1951808Z .. Environment considered:
+2025-12-05T18:00:25.1952797Z   - Rust Version: 1.91.1 x86_64-unknown-linux-gnu (ed61e7d7e242494fb7057f2657300d9e77bb4fcb)
+2025-12-05T18:00:25.1953686Z   - CARGO_HOME
+2025-12-05T18:00:25.1954015Z   - CARGO_INCREMENTAL
+2025-12-05T18:00:25.1954355Z   - CARGO_TERM_COLOR
+2025-12-05T18:00:25.1954707Z .. Lockfiles considered:
+2025-12-05T18:00:25.1955238Z   - /home/runner/work/anyon-claude/anyon-claude/.cargo/config.toml
+2025-12-05T18:00:25.1955998Z   - /home/runner/work/anyon-claude/anyon-claude/src-tauri/Cargo.lock
+2025-12-05T18:00:25.1956749Z   - /home/runner/work/anyon-claude/anyon-claude/src-tauri/Cargo.toml
+2025-12-05T18:00:25.1957662Z ##[endgroup]
+2025-12-05T18:00:25.1957844Z 
+2025-12-05T18:00:25.1957978Z ... Restoring cache ...
+2025-12-05T18:00:25.5082290Z Cache hit for: v0-rust-build-Linux-x64-8d789153-05a3bbc5
+2025-12-05T18:00:26.8030351Z Received 0 of 1131915298 (0.0%), 0.0 MBs/sec
+2025-12-05T18:00:27.8671928Z Received 134217728 of 1131915298 (11.9%), 62.1 MBs/sec
+2025-12-05T18:00:28.8647843Z Received 251658240 of 1131915298 (22.2%), 78.4 MBs/sec
+2025-12-05T18:00:29.8657333Z Received 352321536 of 1131915298 (31.1%), 82.7 MBs/sec
+2025-12-05T18:00:30.8661643Z Received 402653184 of 1131915298 (35.6%), 75.8 MBs/sec
+2025-12-05T18:00:31.8704560Z Received 532676608 of 1131915298 (47.1%), 83.8 MBs/sec
+2025-12-05T18:00:32.8682579Z Received 633339904 of 1131915298 (56.0%), 85.5 MBs/sec
+2025-12-05T18:00:33.8682199Z Received 725614592 of 1131915298 (64.1%), 85.8 MBs/sec
+2025-12-05T18:00:34.8684643Z Received 838860800 of 1131915298 (74.1%), 88.2 MBs/sec
+2025-12-05T18:00:35.8690447Z Received 939524096 of 1131915298 (83.0%), 89.0 MBs/sec
+2025-12-05T18:00:36.8695739Z Received 1044381696 of 1131915298 (92.3%), 90.0 MBs/sec
+2025-12-05T18:00:37.6744445Z Received 1131915298 of 1131915298 (100.0%), 90.9 MBs/sec
+2025-12-05T18:00:37.6746274Z Cache Size: ~1079 MB (1131915298 B)
+2025-12-05T18:00:37.6884094Z [command]/usr/bin/tar -xf /home/runner/work/_temp/37723b82-1def-4b5e-95bb-02de5fc69c94/cache.tzst -P -C /home/runner/work/anyon-claude/anyon-claude --use-compress-program unzstd
+2025-12-05T18:00:44.7326430Z Cache restored successfully
+2025-12-05T18:00:44.9391669Z Restored from cache key "v0-rust-build-Linux-x64-8d789153-05a3bbc5" full match: true.

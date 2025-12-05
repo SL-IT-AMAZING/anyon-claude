@@ -1,0 +1,75 @@
+﻿2025-12-05T17:59:38.3492167Z ##[group]Run actions/checkout@v4
+2025-12-05T17:59:38.3494038Z with:
+2025-12-05T17:59:38.3495121Z   repository: SL-IT-AMAZING/anyon-claude
+2025-12-05T17:59:38.3496661Z   token: ***
+2025-12-05T17:59:38.3497533Z   ssh-strict: true
+2025-12-05T17:59:38.3498318Z   ssh-user: git
+2025-12-05T17:59:38.3499105Z   persist-credentials: true
+2025-12-05T17:59:38.3500035Z   clean: true
+2025-12-05T17:59:38.3500823Z   sparse-checkout-cone-mode: true
+2025-12-05T17:59:38.3501751Z   fetch-depth: 1
+2025-12-05T17:59:38.3502559Z   fetch-tags: false
+2025-12-05T17:59:38.3503372Z   show-progress: true
+2025-12-05T17:59:38.3504127Z   lfs: false
+2025-12-05T17:59:38.3504924Z   submodules: false
+2025-12-05T17:59:38.3505729Z   set-safe-directory: true
+2025-12-05T17:59:38.3506833Z ##[endgroup]
+2025-12-05T17:59:38.5287083Z Syncing repository: SL-IT-AMAZING/anyon-claude
+2025-12-05T17:59:38.5290294Z ##[group]Getting Git version info
+2025-12-05T17:59:38.6409836Z Working directory is 'D:\a\anyon-claude\anyon-claude'
+2025-12-05T17:59:38.6436001Z [command]"C:\Program Files\Git\bin\git.exe" version
+2025-12-05T17:59:39.0173059Z git version 2.52.0.windows.1
+2025-12-05T17:59:39.0177721Z ##[endgroup]
+2025-12-05T17:59:39.0195255Z Temporarily overriding HOME='D:\a\_temp\e8b7cd7e-c6de-4765-921e-89621ea4aae5' before making global git config changes
+2025-12-05T17:59:39.0197616Z Adding repository directory to the temporary git global config as a safe directory
+2025-12-05T17:59:39.0209183Z [command]"C:\Program Files\Git\bin\git.exe" config --global --add safe.directory D:\a\anyon-claude\anyon-claude
+2025-12-05T17:59:39.0806327Z Deleting the contents of 'D:\a\anyon-claude\anyon-claude'
+2025-12-05T17:59:39.0814319Z ##[group]Initializing the repository
+2025-12-05T17:59:39.0824952Z [command]"C:\Program Files\Git\bin\git.exe" init D:\a\anyon-claude\anyon-claude
+2025-12-05T17:59:39.1631011Z Initialized empty Git repository in D:/a/anyon-claude/anyon-claude/.git/
+2025-12-05T17:59:39.1687618Z [command]"C:\Program Files\Git\bin\git.exe" remote add origin https://github.com/SL-IT-AMAZING/anyon-claude
+2025-12-05T17:59:39.2207188Z ##[endgroup]
+2025-12-05T17:59:39.2208558Z ##[group]Disabling automatic garbage collection
+2025-12-05T17:59:39.2218339Z [command]"C:\Program Files\Git\bin\git.exe" config --local gc.auto 0
+2025-12-05T17:59:39.2549474Z ##[endgroup]
+2025-12-05T17:59:39.2551311Z ##[group]Setting up auth
+2025-12-05T17:59:39.2565835Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp core\.sshCommand
+2025-12-05T17:59:39.2885848Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :\""
+2025-12-05T17:59:40.7333723Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-12-05T17:59:40.7648922Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "sh -c \"git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :\""
+2025-12-05T17:59:41.3186946Z [command]"C:\Program Files\Git\bin\git.exe" config --local --name-only --get-regexp ^includeIf\.gitdir:
+2025-12-05T17:59:41.3509340Z [command]"C:\Program Files\Git\bin\git.exe" submodule foreach --recursive "git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2025-12-05T17:59:41.9105965Z [command]"C:\Program Files\Git\bin\git.exe" config --local http.https://github.com/.extraheader "AUTHORIZATION: basic ***"
+2025-12-05T17:59:41.9449688Z ##[endgroup]
+2025-12-05T17:59:41.9450942Z ##[group]Fetching the repository
+2025-12-05T17:59:41.9464479Z [command]"C:\Program Files\Git\bin\git.exe" -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +9cb07f25d5816d34174efcfaddff71c08fc7224d:refs/tags/v0.2.2
+2025-12-05T17:59:43.0153461Z From https://github.com/SL-IT-AMAZING/anyon-claude
+2025-12-05T17:59:43.0157493Z  * [new ref]         9cb07f25d5816d34174efcfaddff71c08fc7224d -> v0.2.2
+2025-12-05T17:59:43.0489679Z ##[endgroup]
+2025-12-05T17:59:43.0490302Z ##[group]Determining the checkout info
+2025-12-05T17:59:43.0493979Z ##[endgroup]
+2025-12-05T17:59:43.0510737Z [command]"C:\Program Files\Git\bin\git.exe" sparse-checkout disable
+2025-12-05T17:59:43.1019067Z [command]"C:\Program Files\Git\bin\git.exe" config --local --unset-all extensions.worktreeConfig
+2025-12-05T17:59:43.1368634Z ##[group]Checking out the ref
+2025-12-05T17:59:43.1380278Z [command]"C:\Program Files\Git\bin\git.exe" checkout --progress --force refs/tags/v0.2.2
+2025-12-05T17:59:43.4155594Z Note: switching to 'refs/tags/v0.2.2'.
+2025-12-05T17:59:43.4156198Z 
+2025-12-05T17:59:43.4156552Z You are in 'detached HEAD' state. You can look around, make experimental
+2025-12-05T17:59:43.4157516Z changes and commit them, and you can discard any commits you make in this
+2025-12-05T17:59:43.4158965Z state without impacting any branches by switching back to a branch.
+2025-12-05T17:59:43.4159344Z 
+2025-12-05T17:59:43.4159525Z If you want to create a new branch to retain commits you create, you may
+2025-12-05T17:59:43.4159964Z do so (now or later) by using -c with the switch command. Example:
+2025-12-05T17:59:43.4160196Z 
+2025-12-05T17:59:43.4160290Z   git switch -c <new-branch-name>
+2025-12-05T17:59:43.4160466Z 
+2025-12-05T17:59:43.4160563Z Or undo this operation with:
+2025-12-05T17:59:43.4161395Z 
+2025-12-05T17:59:43.4161518Z   git switch -
+2025-12-05T17:59:43.4161637Z 
+2025-12-05T17:59:43.4161837Z Turn off this advice by setting config variable advice.detachedHead to false
+2025-12-05T17:59:43.4163143Z 
+2025-12-05T17:59:43.4163326Z HEAD is now at 9cb07f2 feat: Disable login requirement for standalone app
+2025-12-05T17:59:43.4215274Z ##[endgroup]
+2025-12-05T17:59:43.4678620Z [command]"C:\Program Files\Git\bin\git.exe" log -1 --format=%H
+2025-12-05T17:59:43.4968889Z 9cb07f25d5816d34174efcfaddff71c08fc7224d

@@ -1,0 +1,88 @@
+﻿2025-12-05T17:59:40.0649192Z ##[group]Run actions/checkout@v4
+2025-12-05T17:59:40.0650166Z with:
+2025-12-05T17:59:40.0650568Z   repository: SL-IT-AMAZING/anyon-claude
+2025-12-05T17:59:40.0651225Z   token: ***
+2025-12-05T17:59:40.0651676Z   ssh-strict: true
+2025-12-05T17:59:40.0652062Z   ssh-user: git
+2025-12-05T17:59:40.0652462Z   persist-credentials: true
+2025-12-05T17:59:40.0652817Z   clean: true
+2025-12-05T17:59:40.0653437Z   sparse-checkout-cone-mode: true
+2025-12-05T17:59:40.0653894Z   fetch-depth: 1
+2025-12-05T17:59:40.0654289Z   fetch-tags: false
+2025-12-05T17:59:40.0654644Z   show-progress: true
+2025-12-05T17:59:40.0655046Z   lfs: false
+2025-12-05T17:59:40.0655424Z   submodules: false
+2025-12-05T17:59:40.0655793Z   set-safe-directory: true
+2025-12-05T17:59:40.0656532Z ##[endgroup]
+2025-12-05T17:59:40.1789354Z Syncing repository: SL-IT-AMAZING/anyon-claude
+2025-12-05T17:59:40.1791252Z ##[group]Getting Git version info
+2025-12-05T17:59:40.1791805Z Working directory is '/home/runner/work/anyon-claude/anyon-claude'
+2025-12-05T17:59:40.1792749Z [command]/usr/bin/git version
+2025-12-05T17:59:40.1913782Z git version 2.52.0
+2025-12-05T17:59:40.1942103Z ##[endgroup]
+2025-12-05T17:59:40.1957124Z Temporarily overriding HOME='/home/runner/work/_temp/acc93dc2-7591-43e1-8457-8405c6852f9e' before making global git config changes
+2025-12-05T17:59:40.1958184Z Adding repository directory to the temporary git global config as a safe directory
+2025-12-05T17:59:40.1970872Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/anyon-claude/anyon-claude
+2025-12-05T17:59:40.2013490Z Deleting the contents of '/home/runner/work/anyon-claude/anyon-claude'
+2025-12-05T17:59:40.2017153Z ##[group]Initializing the repository
+2025-12-05T17:59:40.2021163Z [command]/usr/bin/git init /home/runner/work/anyon-claude/anyon-claude
+2025-12-05T17:59:40.2149952Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-12-05T17:59:40.2151525Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2025-12-05T17:59:40.2152683Z hint: to use in all of your new repositories, which will suppress this warning,
+2025-12-05T17:59:40.2153903Z hint: call:
+2025-12-05T17:59:40.2154379Z hint:
+2025-12-05T17:59:40.2155287Z hint: 	git config --global init.defaultBranch <name>
+2025-12-05T17:59:40.2156051Z hint:
+2025-12-05T17:59:40.2156730Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-12-05T17:59:40.2157525Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-12-05T17:59:40.2158089Z hint:
+2025-12-05T17:59:40.2158451Z hint: 	git branch -m <name>
+2025-12-05T17:59:40.2158891Z hint:
+2025-12-05T17:59:40.2159495Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2025-12-05T17:59:40.2160293Z Initialized empty Git repository in /home/runner/work/anyon-claude/anyon-claude/.git/
+2025-12-05T17:59:40.2167878Z [command]/usr/bin/git remote add origin https://github.com/SL-IT-AMAZING/anyon-claude
+2025-12-05T17:59:40.2206524Z ##[endgroup]
+2025-12-05T17:59:40.2207157Z ##[group]Disabling automatic garbage collection
+2025-12-05T17:59:40.2210517Z [command]/usr/bin/git config --local gc.auto 0
+2025-12-05T17:59:40.2240387Z ##[endgroup]
+2025-12-05T17:59:40.2240993Z ##[group]Setting up auth
+2025-12-05T17:59:40.2247720Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-12-05T17:59:40.2278638Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-12-05T17:59:40.2766848Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-12-05T17:59:40.2797780Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-12-05T17:59:40.3022254Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2025-12-05T17:59:40.3052535Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2025-12-05T17:59:40.3286913Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-12-05T17:59:40.3322305Z ##[endgroup]
+2025-12-05T17:59:40.3323543Z ##[group]Fetching the repository
+2025-12-05T17:59:40.3330676Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +9cb07f25d5816d34174efcfaddff71c08fc7224d:refs/tags/v0.2.2
+2025-12-05T17:59:40.9832651Z From https://github.com/SL-IT-AMAZING/anyon-claude
+2025-12-05T17:59:40.9835819Z  * [new ref]         9cb07f25d5816d34174efcfaddff71c08fc7224d -> v0.2.2
+2025-12-05T17:59:40.9876307Z ##[endgroup]
+2025-12-05T17:59:40.9884664Z ##[group]Determining the checkout info
+2025-12-05T17:59:40.9956887Z ##[endgroup]
+2025-12-05T17:59:40.9957492Z [command]/usr/bin/git sparse-checkout disable
+2025-12-05T17:59:40.9958867Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-12-05T17:59:40.9960620Z ##[group]Checking out the ref
+2025-12-05T17:59:40.9963445Z [command]/usr/bin/git checkout --progress --force refs/tags/v0.2.2
+2025-12-05T17:59:41.0669783Z Note: switching to 'refs/tags/v0.2.2'.
+2025-12-05T17:59:41.0670358Z 
+2025-12-05T17:59:41.0670700Z You are in 'detached HEAD' state. You can look around, make experimental
+2025-12-05T17:59:41.0671369Z changes and commit them, and you can discard any commits you make in this
+2025-12-05T17:59:41.0672023Z state without impacting any branches by switching back to a branch.
+2025-12-05T17:59:41.0672411Z 
+2025-12-05T17:59:41.0672938Z If you want to create a new branch to retain commits you create, you may
+2025-12-05T17:59:41.0673853Z do so (now or later) by using -c with the switch command. Example:
+2025-12-05T17:59:41.0674206Z 
+2025-12-05T17:59:41.0674350Z   git switch -c <new-branch-name>
+2025-12-05T17:59:41.0674593Z 
+2025-12-05T17:59:41.0674744Z Or undo this operation with:
+2025-12-05T17:59:41.0674961Z 
+2025-12-05T17:59:41.0675080Z   git switch -
+2025-12-05T17:59:41.0675264Z 
+2025-12-05T17:59:41.0675559Z Turn off this advice by setting config variable advice.detachedHead to false
+2025-12-05T17:59:41.0679430Z 
+2025-12-05T17:59:41.0679907Z HEAD is now at 9cb07f2 feat: Disable login requirement for standalone app
+2025-12-05T17:59:41.0681187Z ##[endgroup]
+2025-12-05T17:59:41.0719859Z [command]/usr/bin/git log -1 --format=%H
+2025-12-05T17:59:41.0742362Z 9cb07f25d5816d34174efcfaddff71c08fc7224d

@@ -1,0 +1,57 @@
+﻿2025-12-05T17:59:49.5384845Z ##[group]Run Swatinem/rust-cache@v2
+2025-12-05T17:59:49.5385177Z with:
+2025-12-05T17:59:49.5385343Z   workspaces: src-tauri
+2025-12-05T17:59:49.5386591Z   prefix-key: v0-rust
+2025-12-05T17:59:49.5386792Z   add-job-id-key: true
+2025-12-05T17:59:49.5386999Z   add-rust-environment-hash-key: true
+2025-12-05T17:59:49.5387227Z   cache-targets: true
+2025-12-05T17:59:49.5387425Z   cache-all-crates: false
+2025-12-05T17:59:49.5387633Z   cache-workspace-crates: false
+2025-12-05T17:59:49.5387834Z   save-if: true
+2025-12-05T17:59:49.5387994Z   cache-provider: github
+2025-12-05T17:59:49.5388179Z   cache-bin: true
+2025-12-05T17:59:49.5388346Z   lookup-only: false
+2025-12-05T17:59:49.5388506Z env:
+2025-12-05T17:59:49.5388661Z   CARGO_HOME: C:\Users\runneradmin\.cargo
+2025-12-05T17:59:49.5388888Z   CARGO_INCREMENTAL: 0
+2025-12-05T17:59:49.5389065Z   CARGO_TERM_COLOR: always
+2025-12-05T17:59:49.5389247Z ##[endgroup]
+2025-12-05T17:59:52.0058601Z ##[group]Cache Configuration
+2025-12-05T17:59:52.0059432Z Cache Provider:
+2025-12-05T17:59:52.0059773Z     github
+2025-12-05T17:59:52.0060003Z Workspaces:
+2025-12-05T17:59:52.0060560Z     D:\a\anyon-claude\anyon-claude\src-tauri
+2025-12-05T17:59:52.0060977Z Cache Paths:
+2025-12-05T17:59:52.0061241Z     C:\Users\runneradmin\.cargo\bin
+2025-12-05T17:59:52.0061635Z     C:\Users\runneradmin\.cargo\.crates.toml
+2025-12-05T17:59:52.0062426Z     C:\Users\runneradmin\.cargo\.crates2.json
+2025-12-05T17:59:52.0085853Z     C:\Users\runneradmin\.cargo\registry
+2025-12-05T17:59:52.0086558Z     C:\Users\runneradmin\.cargo\git
+2025-12-05T17:59:52.0087861Z     D:\a\anyon-claude\anyon-claude\src-tauri\target
+2025-12-05T17:59:52.0089335Z Restore Key:
+2025-12-05T17:59:52.0091928Z     v0-rust-build-Windows_NT-x64-d6c8c276
+2025-12-05T17:59:52.0093249Z Cache Key:
+2025-12-05T17:59:52.0094471Z     v0-rust-build-Windows_NT-x64-d6c8c276-dc3ee88a
+2025-12-05T17:59:52.0095848Z .. Prefix:
+2025-12-05T17:59:52.0097054Z   - v0-rust-build-Windows_NT-x64
+2025-12-05T17:59:52.0098300Z .. Environment considered:
+2025-12-05T17:59:52.0100112Z   - Rust Version: 1.91.1 x86_64-pc-windows-msvc (ed61e7d7e242494fb7057f2657300d9e77bb4fcb)
+2025-12-05T17:59:52.0101628Z   - CARGO_HOME
+2025-12-05T17:59:52.0102050Z   - CARGO_INCREMENTAL
+2025-12-05T17:59:52.0102541Z   - CARGO_TERM_COLOR
+2025-12-05T17:59:52.0102979Z .. Lockfiles considered:
+2025-12-05T17:59:52.0104056Z   - D:\a\anyon-claude\anyon-claude\.cargo\config.toml
+2025-12-05T17:59:52.0104760Z   - D:\a\anyon-claude\anyon-claude\src-tauri\Cargo.lock
+2025-12-05T17:59:52.0106175Z   - D:\a\anyon-claude\anyon-claude\src-tauri\Cargo.toml
+2025-12-05T17:59:52.0172123Z ##[endgroup]
+2025-12-05T17:59:52.0172857Z 
+2025-12-05T17:59:52.0172986Z ... Restoring cache ...
+2025-12-05T17:59:52.2724445Z Cache hit for: v0-rust-build-Windows_NT-x64-d6c8c276-dc3ee88a
+2025-12-05T17:59:53.3464544Z Received 176160768 of 649359204 (27.1%), 162.8 MBs/sec
+2025-12-05T17:59:54.3500846Z Received 390070272 of 649359204 (60.1%), 182.7 MBs/sec
+2025-12-05T17:59:55.3639232Z Received 541065216 of 649359204 (83.3%), 169.2 MBs/sec
+2025-12-05T17:59:55.8780319Z Received 649359204 of 649359204 (100.0%), 173.8 MBs/sec
+2025-12-05T17:59:55.8785130Z Cache Size: ~619 MB (649359204 B)
+2025-12-05T17:59:55.8869517Z [command]"C:\Program Files\Git\usr\bin\tar.exe" -xf D:/a/_temp/9279bb7c-4374-4df6-8d5a-01b066e66c26/cache.tzst -P -C D:/a/anyon-claude/anyon-claude --force-local --use-compress-program "zstd -d"
+2025-12-05T18:00:15.0544638Z Cache restored successfully
+2025-12-05T18:00:15.0885222Z Restored from cache key "v0-rust-build-Windows_NT-x64-d6c8c276-dc3ee88a" full match: true.
