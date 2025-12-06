@@ -103,7 +103,7 @@ export const MaintenanceWorkspace: React.FC<MaintenanceWorkspaceProps> = ({ proj
   }, [project?.path]);
 
   // Handle new session created
-  const handleSessionCreated = useCallback((sessionId: string, firstMessage?: string) => {
+  const handleSessionCreated = useCallback((sessionId: string, _firstMessage?: string) => {
     if (project?.path) {
       SessionPersistenceService.saveLastSessionForTab(project.path, 'maintenance', sessionId);
     }

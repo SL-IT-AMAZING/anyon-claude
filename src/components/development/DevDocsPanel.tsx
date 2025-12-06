@@ -3,7 +3,7 @@ import { PlayCircle, Square, AlertCircle, Loader2, CheckCircle2 } from 'lucide-r
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { DEV_WORKFLOW_SEQUENCE } from '@/constants/development';
-import { api } from '@/lib/api';
+import { planningApi } from '@/lib/api';
 
 const DEV_COMPLETE_FILE = 'anyon-docs/conversation/DEVELOPMENT_COMPLETE.md';
 
@@ -64,7 +64,7 @@ export const DevDocsPanel: React.FC<DevDocsPanelProps> = ({
         if (!projectPath) return;
 
         const completeFilePath = `${projectPath}/${DEV_COMPLETE_FILE}`;
-        const isComplete = await api.checkFileExists(completeFilePath);
+        const isComplete = await planningApi.checkFileExists(completeFilePath);
 
         if (isComplete) {
           setIsDevComplete(true);
