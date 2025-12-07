@@ -1,11 +1,10 @@
 import React, { useState, useCallback } from 'react';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { FileCode, FolderOpen, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
 import { SplitPane } from '@/components/ui/split-pane';
 import { FileTree } from '@/components/FileTree';
+import { CodeEditor } from '@/components/CodeEditor';
 import { useTheme } from '@/hooks/useTheme';
 
 interface FileExplorerProps {
@@ -17,51 +16,14 @@ interface FileExplorerProps {
    * Optional className
    */
   className?: string;
+  /**
+   * Callback when a file is clicked (selected)
+   */
+  onFileClick?: (filePath: string) => void;
 }
 
 /**
- * Detects language from file extension
- */
-const getLanguageFromPath = (filePath: string): string => {
-  const ext = filePath.split('.').pop()?.toLowerCase() || '';
-  const langMap: Record<string, string> = {
-    ts: 'typescript',
-    tsx: 'tsx',
-    js: 'javascript',
-    jsx: 'jsx',
-    py: 'python',
-    rb: 'ruby',
-    go: 'go',
-    rs: 'rust',
-    java: 'java',
-    kt: 'kotlin',
-    swift: 'swift',
-    c: 'c',
-    cpp: 'cpp',
-    h: 'c',
-    hpp: 'cpp',
-    cs: 'csharp',
-    php: 'php',
-    html: 'html',
-    css: 'css',
-    scss: 'scss',
-    json: 'json',
-    yaml: 'yaml',
-    yml: 'yaml',
-    md: 'markdown',
-    sql: 'sql',
-    sh: 'bash',
-    bash: 'bash',
-    zsh: 'bash',
-    dockerfile: 'dockerfile',
-    xml: 'xml',
-    toml: 'toml',
-  };
-  return langMap[ext] || 'text';
-};
-
-/**
- * FileExplorer - File tree + Code viewer with split pane layout
+ * FileExplorer - File tree + Code editor with split pane layout
  *
  * Layout:
  * ┌─────────────────┬──────────────────────────────────┐
@@ -72,6 +34,7 @@ const getLanguageFromPath = (filePath: string): string => {
 export const FileExplorer: React.FC<FileExplorerProps> = ({
   rootPath,
   className,
+  onFileClick,
 }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark' || theme === 'gray';
@@ -86,6 +49,9 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
     setIsLoadingFile(true);
     setFileError(null);
 
+    // Notify parent about file selection
+    onFileClick?.(filePath);
+
     try {
       const content = await api.readFileContent(filePath);
       setFileContent(content);
@@ -95,9 +61,13 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
     } finally {
       setIsLoadingFile(false);
     }
-  }, []);
+  }, [onFileClick]);
 
-  const detectedLanguage = selectedFile ? getLanguageFromPath(selectedFile) : 'text';
+  // Handle file save callback
+  const handleFileSave = useCallback((filePath: string, _content: string) => {
+    console.log('File saved:', filePath);
+    // Could add toast notification here
+  }, []);
 
   // Empty state when no root path
   if (!rootPath) {
@@ -152,13 +122,13 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
           right={
             <div className={cn(
               "h-full flex flex-col",
-              isDark ? "bg-[#282c34]" : "bg-background"
+              isDark ? "bg-[#1e1e1e]" : "bg-background"
             )}>
-              {/* Code Viewer Header */}
+              {/* Code Editor Header */}
               {selectedFile && (
                 <div className={cn(
                   "flex-shrink-0 flex items-center gap-2 px-3 py-2 border-b",
-                  isDark ? "bg-[#21252b] border-[#181a1f]" : "bg-muted/50 border-border"
+                  isDark ? "bg-[#252526] border-[#3c3c3c]" : "bg-muted/50 border-border"
                 )}>
                   <FileCode className="w-4 h-4 text-muted-foreground" />
                   <span className="text-xs text-muted-foreground truncate" title={selectedFile}>
@@ -167,8 +137,8 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
                 </div>
               )}
 
-              {/* Code Content */}
-              <div className="flex-1 overflow-auto">
+              {/* Code Editor */}
+              <div className="flex-1 overflow-hidden">
                 {isLoadingFile ? (
                   <div className="flex items-center justify-center h-full">
                     <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
@@ -178,28 +148,11 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
                     <p className="text-sm text-destructive text-center">{fileError}</p>
                   </div>
                 ) : selectedFile && fileContent !== null ? (
-                  <SyntaxHighlighter
-                    language={detectedLanguage}
-                    style={isDark ? oneDark : oneLight}
-                    showLineNumbers
-                    wrapLines
-                    customStyle={{
-                      margin: 0,
-                      padding: '12px',
-                      fontSize: '13px',
-                      lineHeight: '1.5',
-                      background: 'transparent',
-                      minHeight: '100%',
-                    }}
-                    lineNumberStyle={{
-                      minWidth: '3em',
-                      paddingRight: '1em',
-                      color: isDark ? '#636d83' : '#999999',
-                      userSelect: 'none',
-                    }}
-                  >
-                    {fileContent}
-                  </SyntaxHighlighter>
+                  <CodeEditor
+                    filePath={selectedFile}
+                    content={fileContent}
+                    onSave={handleFileSave}
+                  />
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                     <div className="w-12 h-12 rounded-xl bg-muted/30 flex items-center justify-center mb-3">
@@ -207,7 +160,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
                     </div>
                     <p className="text-sm font-medium mb-1">No file selected</p>
                     <p className="text-xs text-center max-w-[180px]">
-                      Click a file in the tree to view its contents
+                      Click a file in the tree to edit its contents
                     </p>
                   </div>
                 )}

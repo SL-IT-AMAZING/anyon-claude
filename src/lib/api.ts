@@ -1135,6 +1135,16 @@ export const api = {
   },
 
   /**
+   * Writes content to a file
+   * @param filePath - The absolute path to the file
+   * @param content - The content to write
+   * @returns Promise resolving when the file is written
+   */
+  async writeFileContent(filePath: string, content: string): Promise<void> {
+    return apiCall("write_file_content", { filePath, content });
+  },
+
+  /**
    * Gets overall usage statistics
    * @returns Promise resolving to usage statistics
    */

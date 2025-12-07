@@ -1,23 +1,27 @@
-import React, { useEffect, useState, Suspense, lazy, useCallback } from 'react';
+import React, { useEffect, useState, Suspense, lazy, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Wrench, Loader2, Code, Monitor } from 'lucide-react';
+import { ArrowLeft, Wrench, Loader2, Code, Monitor, ListTodo } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SplitPane } from '@/components/ui/split-pane';
 import { FileExplorer } from '@/components/FileExplorer';
-import { PreviewPanel } from '@/components/PreviewPanel';
+import { PreviewPanel, type SelectedElement, type ElementAction } from '@/components/PreviewPanel';
+import { PlanModePanel, type PlanItem, type PlanModeState } from '@/components/PlanModePanel';
 import { SessionDropdown } from '@/components/SessionDropdown';
 import { useProjects, useProjectsNavigation } from '@/components/ProjectRoutes';
 import type { Project, Session } from '@/lib/api';
 import { api } from '@/lib/api';
 import { SessionPersistenceService } from '@/services/sessionPersistence';
+import type { ClaudeCodeSessionRef } from '@/components/ClaudeCodeSession';
+import { listen as tauriListen } from '@tauri-apps/api/event';
+import type { ClaudeStreamMessage } from '@/components/AgentExecution';
 
 // Lazy load ClaudeCodeSession for better performance
 const ClaudeCodeSession = lazy(() =>
   import('@/components/ClaudeCodeSession').then(m => ({ default: m.ClaudeCodeSession }))
 );
 
-type MaintenanceTabType = 'code' | 'preview';
+type MaintenanceTabType = 'code' | 'preview' | 'plan';
 
 interface MaintenanceWorkspaceProps {
   projectId: string;
@@ -39,6 +43,19 @@ export const MaintenanceWorkspace: React.FC<MaintenanceWorkspaceProps> = ({ proj
   const [activeTab, setActiveTab] = useState<MaintenanceTabType>('code');
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
   const [sessionKey, setSessionKey] = useState(0); // Key to force re-mount ClaudeCodeSession
+
+  // Ref to access ClaudeCodeSession for sending prompts
+  const claudeSessionRef = useRef<ClaudeCodeSessionRef>(null);
+
+  // Element selection state for preview panel
+  const [_selectedElement, setSelectedElement] = useState<SelectedElement | null>(null);
+  const [selectedHtmlFile, setSelectedHtmlFile] = useState<string | undefined>(undefined);
+
+  // Plan mode state
+  const [planItems, setPlanItems] = useState<PlanItem[]>([]);
+  const [planModeState, setPlanModeState] = useState<PlanModeState>('idle');
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [claudeSessionId, setClaudeSessionId] = useState<string | null>(null);
 
   useEffect(() => {
     if (projectId && projects.length > 0) {
@@ -64,11 +81,11 @@ export const MaintenanceWorkspace: React.FC<MaintenanceWorkspaceProps> = ({ proj
       if (project?.path) {
         try {
           const isGitRepo = await api.checkIsGitRepo(project.path);
-          
+
           if (!isGitRepo) {
             console.log('Initializing git repository for project:', project.path);
             const gitResult = await api.initGitRepo(project.path);
-            
+
             if (gitResult.success) {
               console.log('Git repository initialized successfully');
             } else {
@@ -82,6 +99,100 @@ export const MaintenanceWorkspace: React.FC<MaintenanceWorkspaceProps> = ({ proj
     };
     checkGitRepo();
   }, [project?.path]);
+
+  // Listen for Claude messages to detect plan mode tool calls
+  useEffect(() => {
+    if (!claudeSessionId) return;
+
+    let isMounted = true;
+
+    const setupListener = async () => {
+      // Listen for session-specific Claude output
+      const unlisten = await tauriListen(`claude-output:${claudeSessionId}`, (event: any) => {
+        if (!isMounted) return;
+
+        try {
+          const message = JSON.parse(event.payload) as ClaudeStreamMessage;
+
+          // Check for tool uses in assistant messages
+          if (message.type === 'assistant' && message.message?.content) {
+            for (const content of message.message.content) {
+              if (content.type === 'tool_use') {
+                const toolName = content.name?.toLowerCase();
+
+                // EnterPlanMode - activate plan mode
+                if (toolName === 'enterplanmode') {
+                  console.log('[MaintenanceWorkspace] EnterPlanMode detected');
+                  setPlanModeState('planning');
+                  setActiveTab('plan');
+                }
+
+                // TodoWrite - update plan items
+                if (toolName === 'todowrite' && content.input?.todos) {
+                  console.log('[MaintenanceWorkspace] TodoWrite detected:', content.input.todos);
+                  const todos = content.input.todos as Array<{
+                    content: string;
+                    activeForm: string;
+                    status: 'pending' | 'in_progress' | 'completed';
+                  }>;
+
+                  const newPlanItems: PlanItem[] = todos.map((todo, index) => ({
+                    id: `plan-${Date.now()}-${index}`,
+                    content: todo.content,
+                    activeForm: todo.activeForm,
+                    status: todo.status,
+                  }));
+
+                  setPlanItems(newPlanItems);
+
+                  // If we're in planning state, move to awaiting approval
+                  if (planModeState === 'planning') {
+                    setPlanModeState('awaiting_approval');
+                  }
+                }
+
+                // ExitPlanMode - Claude is done planning
+                if (toolName === 'exitplanmode') {
+                  console.log('[MaintenanceWorkspace] ExitPlanMode detected');
+                  // If approved, start executing
+                  if (planModeState === 'awaiting_approval') {
+                    setPlanModeState('executing');
+                  }
+                }
+              }
+            }
+          }
+        } catch (err) {
+          console.error('[MaintenanceWorkspace] Failed to parse Claude message:', err);
+        }
+      });
+
+      return unlisten;
+    };
+
+    let unlistenFn: (() => void) | null = null;
+    setupListener().then(fn => {
+      unlistenFn = fn;
+    });
+
+    return () => {
+      isMounted = false;
+      unlistenFn?.();
+    };
+  }, [claudeSessionId, planModeState]);
+
+  // Handle streaming state change from ClaudeCodeSession
+  const handleStreamingChange = useCallback((streaming: boolean, sessionId: string | null) => {
+    setIsStreaming(streaming);
+    if (sessionId) {
+      setClaudeSessionId(sessionId);
+    }
+
+    // When streaming stops and we're in planning mode, finalize the state
+    if (!streaming && planModeState === 'planning' && planItems.length > 0) {
+      setPlanModeState('awaiting_approval');
+    }
+  }, [planModeState, planItems.length]);
 
   const handleBack = () => {
     if (projectId) {
@@ -108,6 +219,65 @@ export const MaintenanceWorkspace: React.FC<MaintenanceWorkspaceProps> = ({ proj
       SessionPersistenceService.saveLastSessionForTab(project.path, 'maintenance', sessionId);
     }
   }, [project?.path]);
+
+  // Handle file selection from FileExplorer (for HTML preview)
+  const handleFileSelect = useCallback((filePath: string) => {
+    if (filePath.toLowerCase().endsWith('.html') || filePath.toLowerCase().endsWith('.htm')) {
+      setSelectedHtmlFile(filePath);
+      setActiveTab('preview');
+    }
+  }, []);
+
+  // Handle element selection from preview panel
+  const handleElementSelected = useCallback((element: SelectedElement | null) => {
+    setSelectedElement(element);
+  }, []);
+
+  // Handle element action (edit/remove/add) from preview panel
+  const handleElementAction = useCallback((action: ElementAction, element: SelectedElement) => {
+    const actionText = action === 'edit' ? '수정' : action === 'remove' ? '삭제' : '다음에 추가';
+    const prompt = `다음 요소를 ${actionText}해주세요:
+
+선택자: ${element.selector}
+태그: ${element.tag}
+${element.id ? `ID: ${element.id}` : ''}
+${element.classes ? `클래스: ${element.classes}` : ''}
+${element.text ? `텍스트: ${element.text.substring(0, 50)}${element.text.length > 50 ? '...' : ''}` : ''}
+
+HTML:
+\`\`\`html
+${element.html || '(HTML 없음)'}
+\`\`\``;
+
+    // Send prompt to Claude
+    claudeSessionRef.current?.sendPrompt(prompt, 'sonnet');
+  }, []);
+
+  // Plan mode handlers
+  const handlePlanApprove = useCallback((items: PlanItem[]) => {
+    console.log('[MaintenanceWorkspace] Plan approved:', items);
+    setPlanModeState('executing');
+    // The plan continues executing - ClaudeCodeSession will handle this
+  }, []);
+
+  const handlePlanReject = useCallback(() => {
+    console.log('[MaintenanceWorkspace] Plan rejected');
+    setPlanModeState('rejected');
+    // Clear plan items
+    setPlanItems([]);
+    // After a delay, reset to idle
+    setTimeout(() => {
+      setPlanModeState('idle');
+    }, 2000);
+  }, []);
+
+  const handlePlanReorder = useCallback((items: PlanItem[]) => {
+    setPlanItems(items);
+  }, []);
+
+  const handlePlanRemoveItem = useCallback((id: string) => {
+    setPlanItems(prev => prev.filter(item => item.id !== id));
+  }, []);
 
   const projectName = project?.path.split('/').pop() || 'Project';
 
@@ -188,11 +358,13 @@ export const MaintenanceWorkspace: React.FC<MaintenanceWorkspaceProps> = ({ proj
               }
             >
               <ClaudeCodeSession
+                ref={claudeSessionRef}
                 key={sessionKey}
                 session={currentSession || undefined}
                 initialProjectPath={project?.path}
                 onBack={handleBack}
                 onProjectPathChange={() => {}}
+                onStreamingChange={handleStreamingChange}
                 embedded={true}
                 tabType="maintenance"
                 onSessionCreated={handleSessionCreated}
@@ -214,6 +386,13 @@ export const MaintenanceWorkspace: React.FC<MaintenanceWorkspaceProps> = ({ proj
                         <Monitor className="w-3.5 h-3.5" />
                         프리뷰
                       </TabsTrigger>
+                      <TabsTrigger value="plan" className="gap-1.5 relative">
+                        <ListTodo className="w-3.5 h-3.5" />
+                        플랜
+                        {planModeState !== 'idle' && planModeState !== 'completed' && (
+                          <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                        )}
+                      </TabsTrigger>
                     </TabsList>
                   </Tabs>
                 </div>
@@ -221,10 +400,26 @@ export const MaintenanceWorkspace: React.FC<MaintenanceWorkspaceProps> = ({ proj
                 {/* Tab Content */}
                 <div className="flex-1 overflow-hidden">
                   {activeTab === 'code' && (
-                    <FileExplorer rootPath={project?.path} />
+                    <FileExplorer rootPath={project?.path} onFileClick={handleFileSelect} />
                   )}
                   {activeTab === 'preview' && (
-                    <PreviewPanel />
+                    <PreviewPanel
+                      htmlFilePath={selectedHtmlFile}
+                      projectPath={project?.path}
+                      onElementSelected={handleElementSelected}
+                      onElementAction={handleElementAction}
+                    />
+                  )}
+                  {activeTab === 'plan' && (
+                    <PlanModePanel
+                      planItems={planItems}
+                      state={planModeState}
+                      isLoading={isStreaming}
+                      onApprove={handlePlanApprove}
+                      onReject={handlePlanReject}
+                      onReorder={handlePlanReorder}
+                      onRemoveItem={handlePlanRemoveItem}
+                    />
                   )}
                 </div>
               </div>

@@ -1346,12 +1346,14 @@ async fn spawn_claude_process(
                 let _ = registry_clone.append_live_output(run_id, &line);
             }
 
-            // Emit the line to the frontend with session isolation if we have session ID
+            // Emit the line to the frontend
+            // Always emit on generic channel for frontend compatibility
+            let _ = app_handle.emit("claude-output", &line);
+
+            // Also emit on session-specific channel if session_id is available (for tab isolation)
             if let Some(ref session_id) = *session_id_holder_clone.lock().unwrap() {
                 let _ = app_handle.emit(&format!("claude-output:{}", session_id), &line);
             }
-            // Also emit to the generic event for backward compatibility
-            let _ = app_handle.emit("claude-output", &line);
         }
     });
 
@@ -1361,12 +1363,14 @@ async fn spawn_claude_process(
         let mut lines = stderr_reader.lines();
         while let Ok(Some(line)) = lines.next_line().await {
             log::error!("Claude stderr: {}", line);
-            // Emit error lines to the frontend with session isolation if we have session ID
+            // Emit error lines to the frontend
+            // Always emit on generic channel for frontend compatibility
+            let _ = app_handle_stderr.emit("claude-error", &line);
+
+            // Also emit on session-specific channel if session_id is available (for tab isolation)
             if let Some(ref session_id) = *session_id_holder_clone2.lock().unwrap() {
                 let _ = app_handle_stderr.emit(&format!("claude-error:{}", session_id), &line);
             }
-            // Also emit to the generic event for backward compatibility
-            let _ = app_handle_stderr.emit("claude-error", &line);
         }
     });
 
@@ -1682,6 +1686,36 @@ pub async fn read_file_content(file_path: String) -> Result<String, String> {
         .map_err(|e| format!("Failed to read file: {}", e))?;
 
     Ok(content)
+}
+
+/// Writes content to a file
+#[tauri::command]
+pub async fn write_file_content(file_path: String, content: String) -> Result<(), String> {
+    log::info!("Writing file content: '{}'", file_path);
+
+    // Check if path is empty
+    if file_path.trim().is_empty() {
+        log::error!("File path is empty or whitespace");
+        return Err("File path cannot be empty".to_string());
+    }
+
+    let path = PathBuf::from(&file_path);
+    log::debug!("Resolved path: {:?}", path);
+
+    // Ensure parent directory exists
+    if let Some(parent) = path.parent() {
+        if !parent.exists() {
+            fs::create_dir_all(parent)
+                .map_err(|e| format!("Failed to create parent directories: {}", e))?;
+        }
+    }
+
+    // Write the file content
+    fs::write(&path, &content)
+        .map_err(|e| format!("Failed to write file: {}", e))?;
+
+    log::info!("Successfully wrote {} bytes to {}", content.len(), file_path);
+    Ok(())
 }
 
 /// Checks if a file exists at the given path
