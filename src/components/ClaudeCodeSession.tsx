@@ -106,6 +106,10 @@ interface ClaudeCodeSessionProps {
    * Callback when a new session is created
    */
   onSessionCreated?: (sessionId: string, firstMessage?: string) => void;
+  /**
+   * Optional prompt prefix to prepend to first message (e.g., for plan mode)
+   */
+  promptPrefix?: string;
 }
 
 /**
@@ -135,6 +139,7 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
   embedded = false,
   tabType,
   onSessionCreated,
+  promptPrefix,
 }, ref) => {
   const [projectPath] = useState(initialProjectPath || session?.project_path || "");
   const [messages, setMessages] = useState<ClaudeStreamMessage[]>([]);
@@ -371,12 +376,20 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
 
   const loadSessionHistory = async () => {
     if (!session) return;
-    
+
     try {
       setIsLoading(true);
       setError(null);
-      
-      const history = await api.loadSessionHistory(session.id, session.project_id);
+
+      // Add 10 second timeout to prevent infinite loading
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Session history load timeout')), 10000)
+      );
+
+      const history = await Promise.race([
+        api.loadSessionHistory(session.id, session.project_id),
+        timeoutPromise
+      ]);
       
       // Save session data for restoration
       if (history && history.length > 0) {
@@ -418,7 +431,10 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
       }, 100);
     } catch (err) {
       console.error("Failed to load session history:", err);
-      setError("Failed to load session history");
+      setError("Failed to load session history. Starting fresh.");
+      // Clear messages on error so user can start fresh
+      setMessages([]);
+      setRawJsonlOutput([]);
     } finally {
       setIsLoading(false);
     }
@@ -941,18 +957,23 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
           session_age_ms: sessionAge
         });
 
+        // Apply promptPrefix for first prompt if provided
+        const finalPrompt = isFirstPrompt && promptPrefix
+          ? `${promptPrefix}\n\n${prompt}`
+          : prompt;
+
         // Execute the appropriate command
         if (effectiveSession && !isFirstPrompt) {
           console.log('[ClaudeCodeSession] Resuming session:', effectiveSession.id);
           trackEvent.sessionResumed(effectiveSession.id);
           trackEvent.modelSelected(model);
-          await api.resumeClaudeCode(projectPath, effectiveSession.id, prompt, model);
+          await api.resumeClaudeCode(projectPath, effectiveSession.id, finalPrompt, model);
         } else {
-          console.log('[ClaudeCodeSession] Starting new session');
+          console.log('[ClaudeCodeSession] Starting new session with promptPrefix:', !!promptPrefix);
           setIsFirstPrompt(false);
           trackEvent.sessionCreated(model, 'prompt_input');
           trackEvent.modelSelected(model);
-          await api.executeClaudeCode(projectPath, prompt, model);
+          await api.executeClaudeCode(projectPath, finalPrompt, model);
         }
       }
     } catch (err) {

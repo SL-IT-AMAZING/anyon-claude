@@ -114,9 +114,9 @@ export const PlanModePanel: React.FC<PlanModePanelProps> = ({
           <div className="w-16 h-16 rounded-xl bg-muted/50 flex items-center justify-center mb-4">
             <ListTodo className="w-8 h-8" />
           </div>
-          <p className="text-sm font-medium mb-1">Plan Mode</p>
+          <p className="text-sm font-medium mb-1">플랜 모드</p>
           <p className="text-xs text-center max-w-[200px]">
-            Claude will show planned tasks here before executing them
+            Claude가 작업을 실행하기 전에 여기에 계획을 표시합니다
           </p>
         </div>
       </div>
@@ -129,9 +129,9 @@ export const PlanModePanel: React.FC<PlanModePanelProps> = ({
       <div className={cn('h-full flex flex-col', className)}>
         <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-6">
           <Loader2 className="w-8 h-8 animate-spin mb-4" />
-          <p className="text-sm font-medium">Planning...</p>
+          <p className="text-sm font-medium">계획 작성 중...</p>
           <p className="text-xs text-center max-w-[200px] mt-1">
-            Claude is analyzing and creating a plan
+            Claude가 분석하고 계획을 세우고 있습니다
           </p>
         </div>
       </div>
@@ -144,30 +144,30 @@ export const PlanModePanel: React.FC<PlanModePanelProps> = ({
       <div className="flex-shrink-0 flex items-center justify-between p-4 border-b">
         <div className="flex items-center gap-2">
           <ListTodo className="w-5 h-5 text-primary" />
-          <h3 className="font-semibold">Plan Mode</h3>
+          <h3 className="font-semibold">플랜 모드</h3>
           {state === 'planning' && (
             <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-500/10 text-yellow-600 dark:text-yellow-400">
-              Planning...
+              계획 중...
             </span>
           )}
           {state === 'awaiting_approval' && (
             <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
-              Review Required
+              승인 대기
             </span>
           )}
           {state === 'executing' && (
             <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400">
-              Executing
+              실행 중
             </span>
           )}
           {state === 'completed' && (
             <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400">
-              Completed
+              완료
             </span>
           )}
         </div>
         <div className="text-xs text-muted-foreground">
-          {items.filter(i => i.status === 'completed').length}/{items.length} completed
+          {items.filter(i => i.status === 'completed').length}/{items.length} 완료
         </div>
       </div>
 
@@ -262,9 +262,13 @@ export const PlanModePanel: React.FC<PlanModePanelProps> = ({
           animate={{ opacity: 1, y: 0 }}
           className="flex-shrink-0 border-t p-4"
         >
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm text-muted-foreground">
-              Review the plan and approve to continue
+          {/* Info Banner */}
+          <div className="p-3 mb-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+            <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">
+              계획을 검토해주세요
+            </p>
+            <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+              승인하기 전까지 Claude는 실행을 대기합니다. 항목을 드래그하여 순서를 변경하거나 삭제할 수 있습니다.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -274,7 +278,7 @@ export const PlanModePanel: React.FC<PlanModePanelProps> = ({
               onClick={onReject}
             >
               <XCircle className="w-4 h-4" />
-              Reject
+              거절
             </Button>
             <Button
               className="flex-1 gap-2"
@@ -282,7 +286,7 @@ export const PlanModePanel: React.FC<PlanModePanelProps> = ({
               disabled={items.length === 0}
             >
               <CheckCircle2 className="w-4 h-4" />
-              Approve & Execute
+              승인 & 실행
             </Button>
           </div>
         </motion.div>
@@ -298,9 +302,9 @@ export const PlanModePanel: React.FC<PlanModePanelProps> = ({
           <div className="flex items-center gap-3">
             <Loader2 className="w-5 h-5 animate-spin text-primary" />
             <div>
-              <p className="text-sm font-medium">Executing Plan</p>
+              <p className="text-sm font-medium">계획 실행 중</p>
               <p className="text-xs text-muted-foreground">
-                {items.filter(i => i.status === 'completed').length} of {items.length} tasks completed
+                {items.filter(i => i.status === 'completed').length} / {items.length} 작업 완료
               </p>
             </div>
           </div>
@@ -317,9 +321,9 @@ export const PlanModePanel: React.FC<PlanModePanelProps> = ({
           <div className="flex items-center gap-3">
             <CheckCircle2 className="w-5 h-5 text-green-500" />
             <div>
-              <p className="text-sm font-medium text-green-700 dark:text-green-400">Plan Completed</p>
+              <p className="text-sm font-medium text-green-700 dark:text-green-400">계획 완료</p>
               <p className="text-xs text-muted-foreground">
-                All {items.length} tasks have been completed
+                모든 {items.length}개 작업이 완료되었습니다
               </p>
             </div>
           </div>
@@ -336,9 +340,9 @@ export const PlanModePanel: React.FC<PlanModePanelProps> = ({
           <div className="flex items-center gap-3">
             <AlertCircle className="w-5 h-5 text-destructive" />
             <div>
-              <p className="text-sm font-medium text-destructive">Plan Rejected</p>
+              <p className="text-sm font-medium text-destructive">계획 거절됨</p>
               <p className="text-xs text-muted-foreground">
-                The plan was rejected. You can request a new plan.
+                계획이 거절되었습니다. 새로운 계획을 요청할 수 있습니다.
               </p>
             </div>
           </div>

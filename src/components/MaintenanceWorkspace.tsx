@@ -21,6 +21,17 @@ const ClaudeCodeSession = lazy(() =>
   import('@/components/ClaudeCodeSession').then(m => ({ default: m.ClaudeCodeSession }))
 );
 
+// Plan Mode system prompt - forces Claude to use Plan Mode tools
+const PLAN_MODE_SYSTEM_PROMPT = `[CRITICAL: Plan Mode Required]
+You MUST follow this workflow for any code changes:
+1. FIRST, use the EnterPlanMode tool to enter planning mode
+2. THEN, use the TodoWrite tool to create a detailed plan with todos (each todo must have content, activeForm, and status)
+3. FINALLY, use the ExitPlanMode tool and STOP - wait for user approval
+4. Do NOT execute any changes until the user explicitly approves the plan
+
+This is mandatory for all tasks in the Maintenance workspace.
+`;
+
 type MaintenanceTabType = 'code' | 'preview' | 'plan';
 
 interface MaintenanceWorkspaceProps {
@@ -69,8 +80,15 @@ export const MaintenanceWorkspace: React.FC<MaintenanceWorkspaceProps> = ({ proj
     if (project?.path) {
       const lastSessionData = SessionPersistenceService.getLastSessionDataForTab(project.path, 'maintenance');
       if (lastSessionData) {
-        const session = SessionPersistenceService.createSessionFromRestoreData(lastSessionData);
-        setCurrentSession(session);
+        // Validate session data before restoring
+        if (lastSessionData.sessionId && lastSessionData.projectId && lastSessionData.projectPath) {
+          const session = SessionPersistenceService.createSessionFromRestoreData(lastSessionData);
+          setCurrentSession(session);
+        } else {
+          // Invalid session data, clear it
+          console.warn('[MaintenanceWorkspace] Invalid session data, clearing');
+          SessionPersistenceService.clearLastSessionForTab(project.path, 'maintenance');
+        }
       }
     }
   }, [project?.path]);
@@ -100,86 +118,100 @@ export const MaintenanceWorkspace: React.FC<MaintenanceWorkspaceProps> = ({ proj
     checkGitRepo();
   }, [project?.path]);
 
-  // Listen for Claude messages to detect plan mode tool calls
-  useEffect(() => {
-    if (!claudeSessionId) return;
+  // Handle Claude message for plan mode tool detection
+  const handleClaudeMessage = useCallback((event: any) => {
+    try {
+      const message = JSON.parse(event.payload) as ClaudeStreamMessage;
 
-    let isMounted = true;
+      // Debug: Log all messages
+      console.log('[MaintenanceWorkspace] Received message:', message.type);
 
-    const setupListener = async () => {
-      // Listen for session-specific Claude output
-      const unlisten = await tauriListen(`claude-output:${claudeSessionId}`, (event: any) => {
-        if (!isMounted) return;
+      // Check for tool uses in assistant messages
+      if (message.type === 'assistant' && message.message?.content) {
+        console.log('[MaintenanceWorkspace] Assistant content:', message.message.content);
 
-        try {
-          const message = JSON.parse(event.payload) as ClaudeStreamMessage;
+        for (const content of message.message.content) {
+          if (content.type === 'tool_use') {
+            const toolName = content.name?.toLowerCase();
+            console.log('[MaintenanceWorkspace] Tool use detected:', {
+              name: toolName,
+              input: content.input
+            });
 
-          // Check for tool uses in assistant messages
-          if (message.type === 'assistant' && message.message?.content) {
-            for (const content of message.message.content) {
-              if (content.type === 'tool_use') {
-                const toolName = content.name?.toLowerCase();
+            // EnterPlanMode - activate plan mode
+            if (toolName === 'enterplanmode') {
+              console.log('[MaintenanceWorkspace] EnterPlanMode detected');
+              setPlanModeState('planning');
+              setActiveTab('plan');
+            }
 
-                // EnterPlanMode - activate plan mode
-                if (toolName === 'enterplanmode') {
-                  console.log('[MaintenanceWorkspace] EnterPlanMode detected');
-                  setPlanModeState('planning');
-                  setActiveTab('plan');
-                }
+            // TodoWrite - update plan items
+            if (toolName === 'todowrite' && content.input?.todos) {
+              console.log('[MaintenanceWorkspace] TodoWrite detected:', content.input.todos);
+              const todos = content.input.todos as Array<{
+                content: string;
+                activeForm: string;
+                status: 'pending' | 'in_progress' | 'completed';
+              }>;
 
-                // TodoWrite - update plan items
-                if (toolName === 'todowrite' && content.input?.todos) {
-                  console.log('[MaintenanceWorkspace] TodoWrite detected:', content.input.todos);
-                  const todos = content.input.todos as Array<{
-                    content: string;
-                    activeForm: string;
-                    status: 'pending' | 'in_progress' | 'completed';
-                  }>;
+              const newPlanItems: PlanItem[] = todos.map((todo, index) => ({
+                id: `plan-${Date.now()}-${index}`,
+                content: todo.content,
+                activeForm: todo.activeForm,
+                status: todo.status,
+              }));
 
-                  const newPlanItems: PlanItem[] = todos.map((todo, index) => ({
-                    id: `plan-${Date.now()}-${index}`,
-                    content: todo.content,
-                    activeForm: todo.activeForm,
-                    status: todo.status,
-                  }));
+              setPlanItems(newPlanItems);
 
-                  setPlanItems(newPlanItems);
+              // Move to awaiting approval when we get todos
+              setPlanModeState('awaiting_approval');
+              setActiveTab('plan');
+            }
 
-                  // If we're in planning state, move to awaiting approval
-                  if (planModeState === 'planning') {
-                    setPlanModeState('awaiting_approval');
-                  }
-                }
-
-                // ExitPlanMode - Claude is done planning
-                if (toolName === 'exitplanmode') {
-                  console.log('[MaintenanceWorkspace] ExitPlanMode detected');
-                  // If approved, start executing
-                  if (planModeState === 'awaiting_approval') {
-                    setPlanModeState('executing');
-                  }
-                }
-              }
+            // ExitPlanMode - Claude is done planning, wait for user approval
+            if (toolName === 'exitplanmode') {
+              console.log('[MaintenanceWorkspace] ExitPlanMode detected - waiting for user approval');
+              setPlanModeState('awaiting_approval');
+              setActiveTab('plan');
             }
           }
-        } catch (err) {
-          console.error('[MaintenanceWorkspace] Failed to parse Claude message:', err);
         }
+      }
+    } catch (err) {
+      // Not all messages are JSON - this is expected for some output
+    }
+  }, []);
+
+  // Listen for Claude messages on BOTH generic and session-specific channels
+  useEffect(() => {
+    let isMounted = true;
+    let unlistenGeneric: (() => void) | null = null;
+    let unlistenSpecific: (() => void) | null = null;
+
+    const setupListeners = async () => {
+      // Always listen on generic channel (catches early messages before session ID is set)
+      unlistenGeneric = await tauriListen('claude-output', (event: any) => {
+        if (!isMounted) return;
+        handleClaudeMessage(event);
       });
 
-      return unlisten;
+      // Also listen on session-specific channel if we have a session ID
+      if (claudeSessionId) {
+        unlistenSpecific = await tauriListen(`claude-output:${claudeSessionId}`, (event: any) => {
+          if (!isMounted) return;
+          handleClaudeMessage(event);
+        });
+      }
     };
 
-    let unlistenFn: (() => void) | null = null;
-    setupListener().then(fn => {
-      unlistenFn = fn;
-    });
+    setupListeners();
 
     return () => {
       isMounted = false;
-      unlistenFn?.();
+      unlistenGeneric?.();
+      unlistenSpecific?.();
     };
-  }, [claudeSessionId, planModeState]);
+  }, [claudeSessionId, handleClaudeMessage]);
 
   // Handle streaming state change from ClaudeCodeSession
   const handleStreamingChange = useCallback((streaming: boolean, sessionId: string | null) => {
@@ -257,7 +289,16 @@ ${element.html || '(HTML 없음)'}
   const handlePlanApprove = useCallback((items: PlanItem[]) => {
     console.log('[MaintenanceWorkspace] Plan approved:', items);
     setPlanModeState('executing');
-    // The plan continues executing - ClaudeCodeSession will handle this
+
+    // Create approval message with the approved plan items
+    const approvalMessage = `[PLAN APPROVED - PROCEED WITH EXECUTION]
+The user has reviewed and approved your plan. Execute these tasks now:
+
+${items.map((item, i) => `${i + 1}. ${item.content}`).join('\n')}
+
+Begin execution immediately. Do not use Plan Mode tools again - just execute the approved tasks.`;
+
+    claudeSessionRef.current?.sendPrompt(approvalMessage, 'sonnet');
   }, []);
 
   const handlePlanReject = useCallback(() => {
@@ -265,6 +306,8 @@ ${element.html || '(HTML 없음)'}
     setPlanModeState('rejected');
     // Clear plan items
     setPlanItems([]);
+    // Send rejection message to Claude
+    claudeSessionRef.current?.sendPrompt('계획을 거절합니다. 다른 방법을 제안해주세요.', 'sonnet');
     // After a delay, reset to idle
     setTimeout(() => {
       setPlanModeState('idle');
@@ -368,6 +411,7 @@ ${element.html || '(HTML 없음)'}
                 embedded={true}
                 tabType="maintenance"
                 onSessionCreated={handleSessionCreated}
+                promptPrefix={PLAN_MODE_SYSTEM_PROMPT}
               />
             </Suspense>
           }

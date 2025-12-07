@@ -6,6 +6,7 @@ mod checkpoint;
 mod claude_binary;
 mod commands;
 mod portable_deps;
+mod preview_server;
 mod process;
 
 use checkpoint::state::CheckpointState;
@@ -39,7 +40,11 @@ use commands::mcp::{
     mcp_serve, mcp_test_connection,
 };
 
-use commands::preview::scan_ports;
+use commands::preview::{
+    scan_ports, start_file_preview_server, stop_file_preview_server,
+    get_file_preview_server_status, get_file_preview_url,
+};
+use preview_server::PreviewServerHandle;
 use commands::proxy::{apply_proxy_settings, get_proxy_settings, save_proxy_settings};
 use commands::storage::{
     storage_delete_row, storage_execute_sql, storage_insert_row, storage_list_tables,
@@ -204,6 +209,12 @@ fn main() {
 
             // Initialize Claude process state
             app.manage(ClaudeProcessState::default());
+
+            // Initialize preview server state
+            let preview_server_state: PreviewServerHandle = std::sync::Arc::new(
+                tokio::sync::RwLock::new(preview_server::PreviewServerState::new())
+            );
+            app.manage(preview_server_state);
 
             // Start auth server in background
             let jwt_secret = std::env::var("JWT_SECRET")
@@ -373,8 +384,12 @@ fn main() {
             commands::dev_workflow::start_dev_workflow,
             commands::dev_workflow::stop_dev_workflow,
             commands::dev_workflow::get_dev_workflow_status,
-            // Preview (Port Scanning)
+            // Preview (Port Scanning & File Server)
             scan_ports,
+            start_file_preview_server,
+            stop_file_preview_server,
+            get_file_preview_server_status,
+            get_file_preview_url,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -322,6 +322,18 @@ export class SessionPersistenceService {
   }
 
   /**
+   * Clear last session for a tab
+   */
+  static clearLastSessionForTab(projectPath: string, tabType: TabType): void {
+    try {
+      const key = this.getLastSessionKey(projectPath, tabType);
+      localStorage.removeItem(key);
+    } catch (error) {
+      console.error('Failed to clear last session for tab:', error);
+    }
+  }
+
+  /**
    * Update first message for a session
    */
   static updateSessionFirstMessage(sessionId: string, firstMessage: string): void {

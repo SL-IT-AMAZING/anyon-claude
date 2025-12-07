@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { open } from '@tauri-apps/plugin-shell';
+import { ELEMENT_SELECTOR_SCRIPT } from '@/lib/previewSelector';
 import {
   RefreshCw,
   Maximize,
@@ -24,7 +25,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { api } from '@/lib/api';
+// api import removed - now using convertFileSrc directly
 import { cn } from '@/lib/utils';
 
 interface PortInfo {
@@ -74,121 +75,8 @@ const DEVICE_SIZES: DeviceSize[] = [
   { name: 'Desktop', width: 1920, height: 1080, icon: <Monitor className="w-4 h-4" />, frameType: 'desktop' },
 ];
 
-// Script to inject into iframe for element selection
-const SELECTOR_SCRIPT = `
-(function() {
-  let selectorMode = false;
-  let hoveredElement = null;
-  let selectedElement = null;
-
-  const overlay = document.createElement('div');
-  overlay.id = '__anyon_selector_overlay';
-  overlay.style.cssText = 'position:fixed;pointer-events:none;border:2px solid #3b82f6;background:rgba(59,130,246,0.1);z-index:999999;display:none;transition:all 0.1s;';
-  document.body.appendChild(overlay);
-
-  const actionBar = document.createElement('div');
-  actionBar.id = '__anyon_action_bar';
-  actionBar.style.cssText = 'position:fixed;z-index:999999;display:none;background:#1f2937;border-radius:8px;padding:4px;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
-  actionBar.innerHTML = '<button data-action="edit" style="padding:6px 12px;margin:2px;background:#3b82f6;color:white;border:none;border-radius:4px;cursor:pointer;font-size:12px;">수정</button><button data-action="remove" style="padding:6px 12px;margin:2px;background:#ef4444;color:white;border:none;border-radius:4px;cursor:pointer;font-size:12px;">삭제</button><button data-action="add" style="padding:6px 12px;margin:2px;background:#22c55e;color:white;border:none;border-radius:4px;cursor:pointer;font-size:12px;">추가</button>';
-  document.body.appendChild(actionBar);
-
-  function getSelector(el) {
-    if (el.id) return '#' + el.id;
-    let path = [];
-    while (el && el.nodeType === 1) {
-      let selector = el.tagName.toLowerCase();
-      if (el.className && typeof el.className === 'string') {
-        selector += '.' + el.className.trim().split(/\\s+/).join('.');
-      }
-      path.unshift(selector);
-      el = el.parentElement;
-      if (path.length > 3) break;
-    }
-    return path.join(' > ');
-  }
-
-  function updateOverlay(el) {
-    if (!el) { overlay.style.display = 'none'; return; }
-    const rect = el.getBoundingClientRect();
-    overlay.style.display = 'block';
-    overlay.style.left = rect.left + 'px';
-    overlay.style.top = rect.top + 'px';
-    overlay.style.width = rect.width + 'px';
-    overlay.style.height = rect.height + 'px';
-  }
-
-  function showActionBar(el) {
-    const rect = el.getBoundingClientRect();
-    actionBar.style.display = 'flex';
-    actionBar.style.left = Math.min(rect.left, window.innerWidth - 200) + 'px';
-    actionBar.style.top = Math.max(rect.top - 40, 10) + 'px';
-  }
-
-  document.addEventListener('mousemove', (e) => {
-    if (!selectorMode) return;
-    const el = document.elementFromPoint(e.clientX, e.clientY);
-    if (el && el !== overlay && el !== actionBar && !actionBar.contains(el)) {
-      hoveredElement = el;
-      updateOverlay(el);
-    }
-  });
-
-  document.addEventListener('click', (e) => {
-    if (!selectorMode) return;
-    if (actionBar.contains(e.target)) {
-      const action = e.target.dataset.action;
-      if (action && selectedElement) {
-        parent.postMessage({
-          type: 'elementAction',
-          action: action,
-          element: {
-            tag: selectedElement.tagName,
-            id: selectedElement.id || null,
-            classes: selectedElement.className || null,
-            selector: getSelector(selectedElement),
-            text: selectedElement.textContent?.substring(0, 100) || null,
-            html: selectedElement.outerHTML?.substring(0, 500) || null,
-          }
-        }, '*');
-      }
-      return;
-    }
-    e.preventDefault();
-    e.stopPropagation();
-    const el = document.elementFromPoint(e.clientX, e.clientY);
-    if (el && el !== overlay && el !== actionBar) {
-      selectedElement = el;
-      overlay.style.borderColor = '#22c55e';
-      overlay.style.background = 'rgba(34,197,94,0.1)';
-      showActionBar(el);
-      parent.postMessage({
-        type: 'elementSelected',
-        element: {
-          tag: el.tagName,
-          id: el.id || null,
-          classes: el.className || null,
-          selector: getSelector(el),
-          text: el.textContent?.substring(0, 100) || null,
-          html: el.outerHTML?.substring(0, 500) || null,
-        }
-      }, '*');
-    }
-  }, true);
-
-  window.addEventListener('message', (e) => {
-    if (e.data.type === 'enableSelector') {
-      selectorMode = true;
-      document.body.style.cursor = 'crosshair';
-    } else if (e.data.type === 'disableSelector') {
-      selectorMode = false;
-      document.body.style.cursor = '';
-      overlay.style.display = 'none';
-      actionBar.style.display = 'none';
-      selectedElement = null;
-    }
-  });
-})();
-`;
+// Using the enhanced selector script from previewSelector.ts
+// ELEMENT_SELECTOR_SCRIPT is imported at the top
 
 export const PreviewPanel: React.FC<PreviewPanelProps> = ({
   htmlFilePath,
@@ -205,7 +93,6 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
   const [urlPath, setUrlPath] = useState('/');
 
   // File mode state
-  const [_fileContent, setFileContent] = useState<string>('');
   const [currentFilePath, setCurrentFilePath] = useState<string>(htmlFilePath || '');
 
   // Common state
@@ -234,24 +121,28 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
 
   const loadHtmlFile = async (filePath: string) => {
     try {
-      const content = await api.readFileContent(filePath);
-      setFileContent(content);
-      // Create data URL with injected selector script
-      const htmlWithScript = injectSelectorScript(content);
-      const dataUrl = `data:text/html;charset=utf-8,${encodeURIComponent(htmlWithScript)}`;
-      setCurrentUrl(dataUrl);
+      // Get project path from the file path (use parent directory for simple HTML files)
+      // For proper project structure, the projectPath prop should be used
+      const projectPath = _projectPath || filePath.substring(0, filePath.lastIndexOf('/')) || filePath.substring(0, filePath.lastIndexOf('\\'));
+
+      console.log('[PreviewPanel] Starting file preview server for:', projectPath);
+
+      // Start the preview server for this project
+      await invoke('start_file_preview_server', { projectPath });
+
+      // Get the preview URL for this file
+      const previewUrl = await invoke<string>('get_file_preview_url', {
+        filePath,
+        projectPath,
+      });
+
+      console.log('[PreviewPanel] Preview URL:', previewUrl);
+      setCurrentUrl(previewUrl);
     } catch (err) {
       console.error('Failed to load HTML file:', err);
+      // Fallback: try direct file URL (might not work for relative resources)
+      setCurrentUrl(`file://${filePath}`);
     }
-  };
-
-  const injectSelectorScript = (html: string): string => {
-    const scriptTag = `<script>${SELECTOR_SCRIPT}</script>`;
-    // Insert before </body> or at the end
-    if (html.includes('</body>')) {
-      return html.replace('</body>', `${scriptTag}</body>`);
-    }
-    return html + scriptTag;
   };
 
   // Port scanning
@@ -283,34 +174,61 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
     }
   };
 
-  // Inject selector script when iframe loads (for port mode)
+  // Inject selector script when iframe loads
   const injectScriptIntoIframe = useCallback(() => {
-    if (iframeRef.current && previewMode === 'port') {
+    if (iframeRef.current) {
       try {
         const iframeDoc = iframeRef.current.contentDocument || iframeRef.current.contentWindow?.document;
         if (iframeDoc) {
+          // Remove any existing selector script
+          const existingScript = iframeDoc.getElementById('__anyon_selector_script');
+          if (existingScript) existingScript.remove();
+
           const script = iframeDoc.createElement('script');
-          script.textContent = SELECTOR_SCRIPT;
+          script.id = '__anyon_selector_script';
+          script.textContent = ELEMENT_SELECTOR_SCRIPT;
           iframeDoc.body?.appendChild(script);
+          console.log('[PreviewPanel] Selector script injected');
         }
       } catch (err) {
         // Cross-origin restriction - can't inject script
-        console.log('Cannot inject script due to cross-origin restriction');
+        console.log('[PreviewPanel] Cannot inject script due to cross-origin restriction');
       }
     }
-  }, [previewMode]);
+  }, []);
 
-  // Listen for messages from iframe
+  // Listen for messages from iframe (using new anyon-* message types)
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      if (event.data.type === 'elementSelected') {
-        const element = event.data.element as SelectedElement;
-        setSelectedElement(element);
-        onElementSelected?.(element);
-      } else if (event.data.type === 'elementAction') {
-        const action = event.data.action as ElementAction;
-        const element = event.data.element as SelectedElement;
-        onElementAction?.(action, element);
+      const { type, element } = event.data || {};
+
+      switch (type) {
+        case 'anyon-selector-ready':
+          console.log('[PreviewPanel] Selector script ready');
+          break;
+        case 'anyon-element-hover':
+          // Optional: could show hover info
+          break;
+        case 'anyon-element-selected':
+          if (element) {
+            setSelectedElement(element as SelectedElement);
+            onElementSelected?.(element as SelectedElement);
+          }
+          break;
+        case 'anyon-selector-activated':
+          console.log('[PreviewPanel] Selector activated');
+          break;
+        case 'anyon-selector-deactivated':
+          console.log('[PreviewPanel] Selector deactivated');
+          break;
+        // Legacy support for old message types
+        case 'elementSelected':
+          setSelectedElement(element as SelectedElement);
+          onElementSelected?.(element as SelectedElement);
+          break;
+        case 'elementAction':
+          onElementAction?.(event.data.action as ElementAction, element as SelectedElement);
+          break;
       }
     };
 
@@ -367,9 +285,9 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
       setSelectedElement(null);
       onElementSelected?.(null);
     }
-    // Send message to iframe
+    // Send message to iframe using new anyon-* message types
     iframeRef.current?.contentWindow?.postMessage(
-      { type: newMode ? 'enableSelector' : 'disableSelector' },
+      { type: newMode ? 'anyon-activate-selector' : 'anyon-deactivate-selector' },
       '*'
     );
   };
