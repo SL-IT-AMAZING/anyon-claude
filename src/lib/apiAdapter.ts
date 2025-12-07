@@ -143,24 +143,25 @@ async function restApiCall<T>(endpoint: string, params?: any): Promise<T> {
  * Unified API adapter that works in both Tauri and web environments
  */
 export async function apiCall<T>(command: string, params?: any): Promise<T> {
-  const streamingCommands = ['execute_claude_code', 'continue_claude_code', 'resume_claude_code'];
-  const isStreamingCommand = streamingCommands.includes(command);
+  const isWeb = !detectEnvironment();
 
-  // Always try Tauri invoke first, regardless of environment detection
-  // This fixes issues where detection fails in dev mode but we're actually in Tauri
-  try {
-    console.log(`[Tauri] Trying invoke: ${command}`, params);
-    return await invoke<T>(command, params);
-  } catch (error) {
-    console.warn(`[Tauri] invoke failed, falling back to web mode:`, error);
-    // Fall through to web mode
+  if (!isWeb) {
+    // Tauri environment - try invoke
+    console.log(`[Tauri] Calling: ${command}`, params);
+    try {
+      return await invoke<T>(command, params);
+    } catch (error) {
+      console.warn(`[Tauri] invoke failed, falling back to web mode:`, error);
+      // Fall through to web mode
+    }
   }
 
-  // Web environment fallback - use REST API or WebSocket
+  // Web environment - use REST API
   console.log(`[Web] Calling: ${command}`, params);
 
-  // Streaming commands use WebSocket
-  if (isStreamingCommand) {
+  // Special handling for commands that use streaming/events
+  const streamingCommands = ['execute_claude_code', 'continue_claude_code', 'resume_claude_code'];
+  if (streamingCommands.includes(command)) {
     return handleStreamingCommand<T>(command, params);
   }
 
