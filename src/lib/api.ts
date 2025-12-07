@@ -593,13 +593,13 @@ export const api = {
     try {
       const result = await apiCall<{ data: ClaudeSettings }>("get_claude_settings");
       console.log("Raw result from get_claude_settings:", result);
-      
+
       // The Rust backend returns ClaudeSettings { data: ... }
       // We need to extract the data field
       if (result && typeof result === 'object' && 'data' in result) {
         return result.data;
       }
-      
+
       // If the result is already the settings object, return it
       return result as ClaudeSettings;
     } catch (error) {
@@ -719,8 +719,22 @@ export const api = {
     }
   },
 
+  /**
+   * Checks if a file exists
+   * @param path - The absolute path to the file
+   * @returns Promise resolving to true if file exists
+   */
+  async checkFileExists(path: string): Promise<boolean> {
+    try {
+      return await apiCall<boolean>("check_file_exists", { path });
+    } catch (error) {
+      console.error("Failed to check file existence:", error);
+      return false;
+    }
+  },
+
   // Agent API methods
-  
+
   /**
    * Lists all CC agents
    * @returns Promise resolving to an array of agents
@@ -745,17 +759,17 @@ export const api = {
    * @returns Promise resolving to the created agent
    */
   async createAgent(
-    name: string, 
-    icon: string, 
-    system_prompt: string, 
-    default_task?: string, 
+    name: string,
+    icon: string,
+    system_prompt: string,
+    default_task?: string,
     model?: string,
     hooks?: string
   ): Promise<Agent> {
     try {
-      return await apiCall<Agent>('create_agent', { 
-        name, 
-        icon, 
+      return await apiCall<Agent>('create_agent', {
+        name,
+        icon,
         systemPrompt: system_prompt,
         defaultTask: default_task,
         model,
@@ -779,19 +793,19 @@ export const api = {
    * @returns Promise resolving to the updated agent
    */
   async updateAgent(
-    id: number, 
-    name: string, 
-    icon: string, 
-    system_prompt: string, 
-    default_task?: string, 
+    id: number,
+    name: string,
+    icon: string,
+    system_prompt: string,
+    default_task?: string,
     model?: string,
     hooks?: string
   ): Promise<Agent> {
     try {
-      return await apiCall<Agent>('update_agent', { 
-        id, 
-        name, 
-        icon, 
+      return await apiCall<Agent>('update_agent', {
+        id,
+        name,
+        icon,
         systemPrompt: system_prompt,
         defaultTask: default_task,
         model,
@@ -1445,9 +1459,9 @@ export const api = {
    * Tracks a batch of messages for a session for checkpointing
    */
   trackSessionMessages: (
-    sessionId: string, 
-    projectId: string, 
-    projectPath: string, 
+    sessionId: string,
+    projectId: string,
+    projectPath: string,
     messages: string[]
   ): Promise<void> =>
     apiCall("track_session_messages", { sessionId, projectId, projectPath, messages }),

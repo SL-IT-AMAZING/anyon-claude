@@ -34,14 +34,7 @@ export const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({ onSett
   };
 
   // Get user initials for avatar
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(word => word[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
+
 
   if (!user) return null;
 
@@ -54,19 +47,9 @@ export const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({ onSett
         className="flex items-center gap-2 p-1.5 pr-2.5 rounded-md hover:bg-accent transition-colors"
       >
         {/* Avatar */}
-        {user.profilePicture ? (
-          <img
-            src={user.profilePicture}
-            alt={user.name}
-            className="w-6 h-6 rounded-full object-cover"
-          />
-        ) : (
-          <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-            <span className="text-xs font-medium text-primary">
-              {getInitials(user.name)}
-            </span>
-          </div>
-        )}
+        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center border border-border">
+          <User className="w-4 h-4 text-primary" />
+        </div>
 
         {/* Chevron */}
         <ChevronDown
@@ -88,19 +71,9 @@ export const UserProfileDropdown: React.FC<UserProfileDropdownProps> = ({ onSett
             {/* User Info Section */}
             <div className="px-4 py-3 border-b border-border">
               <div className="flex items-center gap-3">
-                {user.profilePicture ? (
-                  <img
-                    src={user.profilePicture}
-                    alt={user.name}
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-sm font-medium text-primary">
-                      {getInitials(user.name)}
-                    </span>
-                  </div>
-                )}
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border border-border">
+                  <User className="w-5 h-5 text-primary" />
+                </div>
 
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{user.name}</p>

@@ -74,11 +74,11 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
       if (project?.path) {
         try {
           const isGitRepo = await api.checkIsGitRepo(project.path);
-          
+
           if (!isGitRepo) {
             console.log('Initializing git repository for project:', project.path);
             const gitResult = await api.initGitRepo(project.path);
-            
+
             if (gitResult.success) {
               console.log('Git repository initialized successfully');
             } else {
@@ -224,7 +224,7 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
                 session={currentSession || undefined}
                 initialProjectPath={project?.path}
                 onBack={handleBack}
-                onProjectPathChange={() => {}}
+                onProjectPathChange={() => { }}
                 onStreamingChange={handleStreamingChange}
                 embedded={true}
                 tabType="mvp"

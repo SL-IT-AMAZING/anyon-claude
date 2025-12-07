@@ -19,8 +19,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { 
-  api, 
+import {
+  api,
   type ClaudeSettings,
   type ClaudeInstallation
 } from "@/lib/api";
@@ -74,29 +74,29 @@ export const Settings: React.FC<SettingsProps> = ({
   const [selectedInstallation, setSelectedInstallation] = useState<ClaudeInstallation | null>(null);
   const [binaryPathChanged, setBinaryPathChanged] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
-  
+
   // Permission rules state
   const [allowRules, setAllowRules] = useState<PermissionRule[]>([]);
   const [denyRules, setDenyRules] = useState<PermissionRule[]>([]);
-  
+
   // Environment variables state
   const [envVars, setEnvVars] = useState<EnvironmentVariable[]>([]);
-  
+
   // Hooks state
   const [userHooksChanged, setUserHooksChanged] = useState(false);
   const getUserHooks = React.useRef<(() => any) | null>(null);
-  
+
   // Theme hook
   const { theme, setTheme, customColors, setCustomColors } = useTheme();
-  
+
   // Proxy state
   const [proxySettingsChanged, setProxySettingsChanged] = useState(false);
   const saveProxySettings = React.useRef<(() => Promise<void>) | null>(null);
-  
+
   // Analytics state
   const [analyticsEnabled, setAnalyticsEnabled] = useState(false);
   const trackEvent = useTrackEvent();
-  
+
   // Tab persistence state
   const [tabPersistenceEnabled, setTabPersistenceEnabled] = useState(true);
   // Startup intro preference
@@ -104,7 +104,7 @@ export const Settings: React.FC<SettingsProps> = ({
 
   // Auth store
   const { user, logout, getUserSettings, saveUserSettings, updateUserSetting } = useAuthStore();
-  
+
   // Load settings on mount
   useEffect(() => {
     loadSettings();
@@ -342,7 +342,7 @@ export const Settings: React.FC<SettingsProps> = ({
       id: `${type}-${Date.now()}`,
       value: "",
     };
-    
+
     if (type === "allow") {
       setAllowRules(prev => [...prev, newRule]);
     } else {
@@ -355,11 +355,11 @@ export const Settings: React.FC<SettingsProps> = ({
    */
   const updatePermissionRule = (type: "allow" | "deny", id: string, value: string) => {
     if (type === "allow") {
-      setAllowRules(prev => prev.map(rule => 
+      setAllowRules(prev => prev.map(rule =>
         rule.id === id ? { ...rule, value } : rule
       ));
     } else {
-      setDenyRules(prev => prev.map(rule => 
+      setDenyRules(prev => prev.map(rule =>
         rule.id === id ? { ...rule, value } : rule
       ));
     }
@@ -392,7 +392,7 @@ export const Settings: React.FC<SettingsProps> = ({
    * Updates an environment variable
    */
   const updateEnvVar = (id: string, field: "key" | "value", value: string) => {
-    setEnvVars(prev => prev.map(envVar => 
+    setEnvVars(prev => prev.map(envVar =>
       envVar.id === id ? { ...envVar, [field]: value } : envVar
     ));
   };
@@ -448,813 +448,805 @@ export const Settings: React.FC<SettingsProps> = ({
             </motion.div>
           </div>
         </div>
-      
-      {/* Error message */}
-      <AnimatePresence>
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.15 }}
-            className="mx-4 mt-4 p-3 rounded-lg bg-destructive/10 border border-destructive/50 flex items-center gap-2 text-body-small text-destructive"
-          >
-            <AlertCircle className="h-4 w-4" />
-            {error}
-          </motion.div>
-        )}
-      </AnimatePresence>
-      
-      {/* Content */}
-      {loading ? (
-        <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      ) : (
-        <div className="flex-1 overflow-y-auto p-6">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-9 w-full mb-6 h-auto p-1">
-              <TabsTrigger value="account" className="py-2.5 px-3">Account</TabsTrigger>
-              <TabsTrigger value="general" className="py-2.5 px-3">General</TabsTrigger>
-              <TabsTrigger value="permissions" className="py-2.5 px-3">Permissions</TabsTrigger>
-              <TabsTrigger value="environment" className="py-2.5 px-3">Environment</TabsTrigger>
-              <TabsTrigger value="advanced" className="py-2.5 px-3">Advanced</TabsTrigger>
-              <TabsTrigger value="hooks" className="py-2.5 px-3">Hooks</TabsTrigger>
-              <TabsTrigger value="commands" className="py-2.5 px-3">Commands</TabsTrigger>
-              <TabsTrigger value="storage" className="py-2.5 px-3">Storage</TabsTrigger>
-              <TabsTrigger value="proxy" className="py-2.5 px-3">Proxy</TabsTrigger>
-            </TabsList>
 
-            {/* Account Settings */}
-            <TabsContent value="account" className="space-y-6 mt-6">
-              <Card className="p-6 space-y-6">
-                <div>
-                  <h3 className="text-heading-4 mb-4">계정 정보</h3>
+        {/* Error message */}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.15 }}
+              className="mx-4 mt-4 p-3 rounded-lg bg-destructive/10 border border-destructive/50 flex items-center gap-2 text-body-small text-destructive"
+            >
+              <AlertCircle className="h-4 w-4" />
+              {error}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-                  <div className="space-y-6">
-                    {/* User Profile */}
-                    {user && (
-                      <div className="flex items-start gap-4 p-4 bg-muted/30 rounded-lg">
-                        {user.profilePicture ? (
-                          <img
-                            src={user.profilePicture}
-                            alt={user.name}
-                            className="w-16 h-16 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                            <User size={24} className="text-primary" />
-                          </div>
-                        )}
+        {/* Content */}
+        {loading ? (
+          <div className="flex-1 flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto p-6">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid grid-cols-9 w-full mb-6 h-auto p-1">
+                <TabsTrigger value="account" className="py-2.5 px-3">Account</TabsTrigger>
+                <TabsTrigger value="general" className="py-2.5 px-3">General</TabsTrigger>
+                <TabsTrigger value="permissions" className="py-2.5 px-3">Permissions</TabsTrigger>
+                <TabsTrigger value="environment" className="py-2.5 px-3">Environment</TabsTrigger>
+                <TabsTrigger value="advanced" className="py-2.5 px-3">Advanced</TabsTrigger>
+                <TabsTrigger value="hooks" className="py-2.5 px-3">Hooks</TabsTrigger>
+                <TabsTrigger value="commands" className="py-2.5 px-3">Commands</TabsTrigger>
+                <TabsTrigger value="storage" className="py-2.5 px-3">Storage</TabsTrigger>
+                <TabsTrigger value="proxy" className="py-2.5 px-3">Proxy</TabsTrigger>
+              </TabsList>
 
-                        <div className="flex-1 space-y-3">
-                          <div className="flex items-center gap-2">
-                            <User size={16} className="text-muted-foreground" />
-                            <div>
-                              <p className="text-caption text-muted-foreground">이름</p>
-                              <p className="text-body font-medium">{user.name}</p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            <Mail size={16} className="text-muted-foreground" />
-                            <div>
-                              <p className="text-caption text-muted-foreground">이메일</p>
-                              <p className="text-body font-medium">{user.email}</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </Card>
-
-              {/* Subscription Info */}
-              <Card className="p-6 space-y-6">
-                <div>
-                  <h3 className="text-heading-4 mb-4">구독 정보</h3>
-
-                  <div className="p-4 bg-muted/30 rounded-lg space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Crown size={20} className="text-yellow-500" />
-                        <span className="text-body font-medium">현재 플랜</span>
-                      </div>
-                      <div className="px-3 py-1 rounded-full bg-muted border border-border">
-                        <span className="text-sm font-medium">출시 예정</span>
-                      </div>
-                    </div>
-
-                    <div className="pt-4 border-t border-border">
-                      <p className="text-body-small text-muted-foreground">
-                        Pro 플랜이 곧 출시될 예정입니다.
-                        <br />
-                        프로젝트 무제한, 우선 지원 등 다양한 혜택을 누리실 수 있습니다.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-
-              {/* Logout Section */}
-              <Card className="p-6">
-                <div className="flex items-center justify-between">
+              {/* Account Settings */}
+              <TabsContent value="account" className="space-y-6 mt-6">
+                <Card className="p-6 space-y-6">
                   <div>
-                    <h3 className="text-heading-4">로그아웃</h3>
-                    <p className="text-body-small text-muted-foreground mt-1">
-                      계정에서 로그아웃합니다
-                    </p>
-                  </div>
-                  <Button
-                    onClick={logout}
-                    variant="destructive"
-                    className="flex items-center gap-2"
-                  >
-                    <LogOut size={16} />
-                    로그아웃
-                  </Button>
-                </div>
-              </Card>
-            </TabsContent>
+                    <h3 className="text-heading-4 mb-4">계정 정보</h3>
 
-            {/* General Settings */}
-            <TabsContent value="general" className="space-y-6 mt-6">
-              <Card className="p-6 space-y-6">
-                <div>
-                  <h3 className="text-heading-4 mb-4">General Settings</h3>
-                  
-                  <div className="space-y-4">
-                    {/* Theme Selector */}
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <Label>Theme</Label>
-                        <p className="text-caption text-muted-foreground mt-1">
-                          Choose your preferred color theme
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1 p-1 bg-muted/30 rounded-lg">
-                        <button
-                          onClick={() => setTheme('dark')}
-                          className={cn(
-                            "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all",
-                            theme === 'dark' 
-                              ? "bg-background shadow-sm" 
-                              : "hover:bg-background/50"
-                          )}
-                        >
-                          {theme === 'dark' && <Check className="h-3 w-3" />}
-                          Dark
-                        </button>
-                        <button
-                          onClick={() => setTheme('gray')}
-                          className={cn(
-                            "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all",
-                            theme === 'gray' 
-                              ? "bg-background shadow-sm" 
-                              : "hover:bg-background/50"
-                          )}
-                        >
-                          {theme === 'gray' && <Check className="h-3 w-3" />}
-                          Gray
-                        </button>
-                        <button
-                          onClick={() => setTheme('light')}
-                          className={cn(
-                            "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all",
-                            theme === 'light' 
-                              ? "bg-background shadow-sm" 
-                              : "hover:bg-background/50"
-                          )}
-                        >
-                          {theme === 'light' && <Check className="h-3 w-3" />}
-                          Light
-                        </button>
-                        <button
-                          onClick={() => setTheme('custom')}
-                          className={cn(
-                            "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all",
-                            theme === 'custom' 
-                              ? "bg-background shadow-sm" 
-                              : "hover:bg-background/50"
-                          )}
-                        >
-                          {theme === 'custom' && <Check className="h-3 w-3" />}
-                          Custom
-                        </button>
-                      </div>
-                    </div>
-                    
-                    {/* Custom Color Editor */}
-                    {theme === 'custom' && (
-                      <div className="space-y-4 p-4 border rounded-lg bg-muted/20">
-                        <h4 className="text-label">Custom Theme Colors</h4>
-                        
-                        <div className="grid grid-cols-2 gap-4">
-                          {/* Background Color */}
-                          <div className="space-y-2">
-                            <Label htmlFor="color-background" className="text-caption">Background</Label>
-                            <div className="flex gap-2">
-                              <Input
-                                id="color-background"
-                                type="text"
-                                value={customColors.background}
-                                onChange={(e) => setCustomColors({ background: e.target.value })}
-                                placeholder="oklch(0.12 0.01 240)"
-                                className="font-mono text-xs"
-                              />
-                              <div 
-                                className="w-10 h-10 rounded border"
-                                style={{ backgroundColor: customColors.background }}
-                              />
-                            </div>
+                    <div className="space-y-6">
+                      {/* User Profile */}
+                      {user && (
+                        <div className="flex items-start gap-4 p-4 bg-muted/30 rounded-lg">
+                          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center border border-border">
+                            <User size={32} className="text-primary" />
                           </div>
-                          
-                          {/* Foreground Color */}
-                          <div className="space-y-2">
-                            <Label htmlFor="color-foreground" className="text-caption">Foreground</Label>
-                            <div className="flex gap-2">
-                              <Input
-                                id="color-foreground"
-                                type="text"
-                                value={customColors.foreground}
-                                onChange={(e) => setCustomColors({ foreground: e.target.value })}
-                                placeholder="oklch(0.98 0.01 240)"
-                                className="font-mono text-xs"
-                              />
-                              <div 
-                                className="w-10 h-10 rounded border"
-                                style={{ backgroundColor: customColors.foreground }}
-                              />
+
+                          <div className="flex-1 space-y-3">
+                            <div className="flex items-center gap-2">
+                              <User size={16} className="text-muted-foreground" />
+                              <div>
+                                <p className="text-caption text-muted-foreground">이름</p>
+                                <p className="text-body font-medium">{user.name}</p>
+                              </div>
                             </div>
-                          </div>
-                          
-                          {/* Primary Color */}
-                          <div className="space-y-2">
-                            <Label htmlFor="color-primary" className="text-caption">Primary</Label>
-                            <div className="flex gap-2">
-                              <Input
-                                id="color-primary"
-                                type="text"
-                                value={customColors.primary}
-                                onChange={(e) => setCustomColors({ primary: e.target.value })}
-                                placeholder="oklch(0.98 0.01 240)"
-                                className="font-mono text-xs"
-                              />
-                              <div 
-                                className="w-10 h-10 rounded border"
-                                style={{ backgroundColor: customColors.primary }}
-                              />
-                            </div>
-                          </div>
-                          
-                          {/* Card Color */}
-                          <div className="space-y-2">
-                            <Label htmlFor="color-card" className="text-caption">Card</Label>
-                            <div className="flex gap-2">
-                              <Input
-                                id="color-card"
-                                type="text"
-                                value={customColors.card}
-                                onChange={(e) => setCustomColors({ card: e.target.value })}
-                                placeholder="oklch(0.14 0.01 240)"
-                                className="font-mono text-xs"
-                              />
-                              <div 
-                                className="w-10 h-10 rounded border"
-                                style={{ backgroundColor: customColors.card }}
-                              />
-                            </div>
-                          </div>
-                          
-                          {/* Accent Color */}
-                          <div className="space-y-2">
-                            <Label htmlFor="color-accent" className="text-caption">Accent</Label>
-                            <div className="flex gap-2">
-                              <Input
-                                id="color-accent"
-                                type="text"
-                                value={customColors.accent}
-                                onChange={(e) => setCustomColors({ accent: e.target.value })}
-                                placeholder="oklch(0.16 0.01 240)"
-                                className="font-mono text-xs"
-                              />
-                              <div 
-                                className="w-10 h-10 rounded border"
-                                style={{ backgroundColor: customColors.accent }}
-                              />
-                            </div>
-                          </div>
-                          
-                          {/* Destructive Color */}
-                          <div className="space-y-2">
-                            <Label htmlFor="color-destructive" className="text-caption">Destructive</Label>
-                            <div className="flex gap-2">
-                              <Input
-                                id="color-destructive"
-                                type="text"
-                                value={customColors.destructive}
-                                onChange={(e) => setCustomColors({ destructive: e.target.value })}
-                                placeholder="oklch(0.6 0.2 25)"
-                                className="font-mono text-xs"
-                              />
-                              <div 
-                                className="w-10 h-10 rounded border"
-                                style={{ backgroundColor: customColors.destructive }}
-                              />
+
+                            <div className="flex items-center gap-2">
+                              <Mail size={16} className="text-muted-foreground" />
+                              <div>
+                                <p className="text-caption text-muted-foreground">이메일</p>
+                                <p className="text-body font-medium">{user.email}</p>
+                              </div>
                             </div>
                           </div>
                         </div>
-                        
-                        <p className="text-caption text-muted-foreground">
-                          Use CSS color values (hex, rgb, oklch, etc.). Changes apply immediately.
-                        </p>
-                      </div>
-                    )}
-                    
-                    {/* Include Co-authored By */}
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5 flex-1">
-                        <Label htmlFor="coauthored">Include "Co-authored by Claude"</Label>
-                        <p className="text-caption text-muted-foreground">
-                          Add Claude attribution to git commits and pull requests
-                        </p>
-                      </div>
-                      <Switch
-                        id="coauthored"
-                        checked={settings?.includeCoAuthoredBy !== false}
-                        onCheckedChange={(checked) => updateSetting("includeCoAuthoredBy", checked)}
-                      />
+                      )}
                     </div>
-                    
-                    {/* Verbose Output */}
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5 flex-1">
-                        <Label htmlFor="verbose">Verbose Output</Label>
-                        <p className="text-caption text-muted-foreground">
-                          Show full bash and command outputs
-                        </p>
-                      </div>
-                      <Switch
-                        id="verbose"
-                        checked={settings?.verbose === true}
-                        onCheckedChange={(checked) => updateSetting("verbose", checked)}
-                      />
-                    </div>
-                    
-                    {/* Cleanup Period */}
-                    <div className="space-y-2">
+                  </div>
+                </Card>
+
+                {/* Subscription Info */}
+                <Card className="p-6 space-y-6">
+                  <div>
+                    <h3 className="text-heading-4 mb-4">구독 정보</h3>
+
+                    <div className="p-4 bg-muted/30 rounded-lg space-y-4">
                       <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <Label htmlFor="cleanup">Chat Transcript Retention (days)</Label>
-                          <p className="text-caption text-muted-foreground mt-1">
-                            How long to retain chat transcripts locally (default: 30 days)
-                          </p>
+                        <div className="flex items-center gap-2">
+                          <Crown size={20} className="text-yellow-500" />
+                          <span className="text-body font-medium">현재 플랜</span>
                         </div>
-                        <Input
-                          id="cleanup"
-                          type="number"
-                          min="1"
-                          placeholder="30"
-                          value={settings?.cleanupPeriodDays || ""}
-                          onChange={(e) => {
-                            const value = e.target.value ? parseInt(e.target.value) : undefined;
-                            updateSetting("cleanupPeriodDays", value);
-                          }}
-                          className="w-24"
-                        />
-                      </div>
-                    </div>
-                    
-                    {/* Claude Binary Path Selector */}
-                    <div className="space-y-3">
-                      <ClaudeVersionSelector
-                        selectedPath={currentBinaryPath}
-                        onSelect={handleClaudeInstallationSelect}
-                        simplified={true}
-                      />
-                      {binaryPathChanged && (
-                        <p className="text-caption text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                          <AlertCircle className="h-3 w-3" />
-                          Changes will be applied when you save settings.
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Separator */}
-                    <div className="border-t border-border pt-4 mt-6" />
-                    
-                    {/* Analytics Toggle */}
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <Label htmlFor="analytics-enabled">Enable Analytics</Label>
-                        <p className="text-caption text-muted-foreground">
-                          Help improve ANYON by sharing anonymous usage data
-                        </p>
-                      </div>
-                      <Switch
-                        id="analytics-enabled"
-                        checked={analyticsEnabled}
-                        onCheckedChange={async (checked) => {
-                          try {
-                            if (checked) {
-                              await analytics.enable();
-                              setAnalyticsEnabled(true);
-                              // Save to server
-                              await updateUserSetting('analytics_enabled', true);
-                              trackEvent.settingsChanged('analytics_enabled', true);
-                              setToast({ message: "Analytics enabled", type: "success" });
-                            } else {
-                              await analytics.disable();
-                              setAnalyticsEnabled(false);
-                              // Save to server
-                              await updateUserSetting('analytics_enabled', false);
-                              trackEvent.settingsChanged('analytics_enabled', false);
-                              setToast({ message: "Analytics disabled", type: "success" });
-                            }
-                          } catch (e) {
-                            setToast({ message: 'Failed to update analytics preference', type: 'error' });
-                          }
-                        }}
-                      />
-                    </div>
-                    
-                    {/* Privacy Info */}
-                    {analyticsEnabled && (
-                      <div className="rounded-lg border border-border bg-muted/50 p-3">
-                        <div className="flex gap-2">
-                          <Shield className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-                          <div className="space-y-1">
-                            <p className="text-xs font-medium text-foreground">Your privacy is protected</p>
-                            <ul className="text-xs text-muted-foreground space-y-0.5">
-                              <li>• No personal information or file contents collected</li>
-                              <li>• All data is anonymous with random IDs</li>
-                              <li>• You can disable analytics at any time</li>
-                            </ul>
-                          </div>
+                        <div className="px-3 py-1 rounded-full bg-muted border border-border">
+                          <span className="text-sm font-medium">출시 예정</span>
                         </div>
                       </div>
-                    )}
-                    
-                    {/* Tab Persistence Toggle */}
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <Label htmlFor="tab-persistence">Remember Open Tabs</Label>
-                        <p className="text-caption text-muted-foreground">
-                          Restore your tabs when you restart the app
-                        </p>
-                      </div>
-                      <Switch
-                        id="tab-persistence"
-                        checked={tabPersistenceEnabled}
-                        onCheckedChange={async (checked) => {
-                          TabPersistenceService.setEnabled(checked);
-                          setTabPersistenceEnabled(checked);
-                          try {
-                            // Save to server
-                            await updateUserSetting('tab_persistence_enabled', checked);
-                            trackEvent.settingsChanged('tab_persistence_enabled', checked);
-                            setToast({
-                              message: checked
-                                ? "Tab persistence enabled - your tabs will be restored on restart"
-                                : "Tab persistence disabled - tabs will not be saved",
-                              type: "success"
-                            });
-                          } catch (e) {
-                            setToast({ message: 'Failed to update preference', type: 'error' });
-                          }
-                        }}
-                      />
-                    </div>
 
-                    {/* Startup Intro Toggle */}
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <Label htmlFor="startup-intro">Show Welcome Intro on Startup</Label>
-                        <p className="text-caption text-muted-foreground">
-                          Display a brief welcome animation when the app launches
+                      <div className="pt-4 border-t border-border">
+                        <p className="text-body-small text-muted-foreground">
+                          Pro 플랜이 곧 출시될 예정입니다.
+                          <br />
+                          프로젝트 무제한, 우선 지원 등 다양한 혜택을 누리실 수 있습니다.
                         </p>
                       </div>
-                      <Switch
-                        id="startup-intro"
-                        checked={startupIntroEnabled}
-                        onCheckedChange={async (checked) => {
-                          setStartupIntroEnabled(checked);
-                          try {
-                            // Save to server
-                            await updateUserSetting('startup_intro_enabled', checked);
-                            // Also save to local for immediate use
-                            await api.saveSetting('startup_intro_enabled', checked ? 'true' : 'false');
-                            trackEvent.settingsChanged('startup_intro_enabled', checked);
-                            setToast({
-                              message: checked
-                                ? 'Welcome intro enabled'
-                                : 'Welcome intro disabled',
-                              type: 'success'
-                            });
-                          } catch (e) {
-                            setToast({ message: 'Failed to update preference', type: 'error' });
-                          }
-                        }}
-                      />
                     </div>
                   </div>
-                </div>
-              </Card>
-            </TabsContent>
-            
-            {/* Permissions Settings */}
-            <TabsContent value="permissions" className="space-y-6">
-              <Card className="p-6">
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-heading-4 mb-2">Permission Rules</h3>
-                    <p className="text-body-small text-muted-foreground mb-4">
-                      Control which tools Claude Code can use without manual approval
-                    </p>
-                  </div>
-                  
-                  {/* Allow Rules */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-label text-green-500">Allow Rules</Label>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => addPermissionRule("allow")}
-                        className="gap-2 hover:border-green-500/50 hover:text-green-500"
-                      >
-                        <Plus className="h-3 w-3" />
-                        Add Rule
-                      </Button>
-                    </div>
-                    <div className="space-y-2">
-                      {allowRules.length === 0 ? (
-                        <p className="text-xs text-muted-foreground py-2">
-                          No allow rules configured. Claude will ask for approval for all tools.
-                        </p>
-                      ) : (
-                        allowRules.map((rule) => (
-                          <motion.div
-                            key={rule.id}
-                            initial={{ opacity: 0, x: -8 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.15 }}
-                            className="flex items-center gap-2"
-                          >
-                            <Input
-                              placeholder="e.g., Bash(npm run test:*)"
-                              value={rule.value}
-                              onChange={(e) => updatePermissionRule("allow", rule.id, e.target.value)}
-                              className="flex-1"
-                            />
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removePermissionRule("allow", rule.id)}
-                              className="h-8 w-8"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </motion.div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Deny Rules */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-label text-red-500">Deny Rules</Label>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => addPermissionRule("deny")}
-                        className="gap-2 hover:border-red-500/50 hover:text-red-500"
-                      >
-                        <Plus className="h-3 w-3" />
-                        Add Rule
-                      </Button>
-                    </div>
-                    <div className="space-y-2">
-                      {denyRules.length === 0 ? (
-                        <p className="text-xs text-muted-foreground py-2">
-                          No deny rules configured.
-                        </p>
-                      ) : (
-                        denyRules.map((rule) => (
-                          <motion.div
-                            key={rule.id}
-                            initial={{ opacity: 0, x: -8 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.15 }}
-                            className="flex items-center gap-2"
-                          >
-                            <Input
-                              placeholder="e.g., Bash(curl:*)"
-                              value={rule.value}
-                              onChange={(e) => updatePermissionRule("deny", rule.id, e.target.value)}
-                              className="flex-1"
-                            />
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removePermissionRule("deny", rule.id)}
-                              className="h-8 w-8"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </motion.div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="pt-2 space-y-2">
-                    <p className="text-xs text-muted-foreground">
-                      <strong>Examples:</strong>
-                    </p>
-                    <ul className="text-caption text-muted-foreground space-y-1 ml-4">
-                      <li>• <code className="px-1 py-0.5 rounded bg-green-500/10 text-green-600 dark:text-green-400">Bash</code> - Allow all bash commands</li>
-                      <li>• <code className="px-1 py-0.5 rounded bg-green-500/10 text-green-600 dark:text-green-400">Bash(npm run build)</code> - Allow exact command</li>
-                      <li>• <code className="px-1 py-0.5 rounded bg-green-500/10 text-green-600 dark:text-green-400">Bash(npm run test:*)</code> - Allow commands with prefix</li>
-                      <li>• <code className="px-1 py-0.5 rounded bg-green-500/10 text-green-600 dark:text-green-400">Read(~/.zshrc)</code> - Allow reading specific file</li>
-                      <li>• <code className="px-1 py-0.5 rounded bg-green-500/10 text-green-600 dark:text-green-400">Edit(docs/**)</code> - Allow editing files in docs directory</li>
-                    </ul>
-                  </div>
-                </div>
-              </Card>
-            </TabsContent>
-            
-            {/* Environment Variables */}
-            <TabsContent value="environment" className="space-y-6">
-              <Card className="p-6">
-                <div className="space-y-6">
+                </Card>
+
+                {/* Logout Section */}
+                <Card className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-heading-4">Environment Variables</h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Environment variables applied to every Claude Code session
+                      <h3 className="text-heading-4">로그아웃</h3>
+                      <p className="text-body-small text-muted-foreground mt-1">
+                        계정에서 로그아웃합니다
                       </p>
                     </div>
                     <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={addEnvVar}
-                      className="gap-2"
+                      onClick={logout}
+                      variant="destructive"
+                      className="flex items-center gap-2"
                     >
-                      <Plus className="h-3 w-3" />
-                      Add Variable
+                      <LogOut size={16} />
+                      로그아웃
                     </Button>
                   </div>
-                  
-                  <div className="space-y-3">
-                    {envVars.length === 0 ? (
-                      <p className="text-xs text-muted-foreground py-2">
-                        No environment variables configured.
-                      </p>
-                    ) : (
-                      envVars.map((envVar) => (
-                        <motion.div
-                          key={envVar.id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          className="flex items-center gap-2"
-                        >
-                          <Input
-                            placeholder="KEY"
-                            value={envVar.key}
-                            onChange={(e) => updateEnvVar(envVar.id, "key", e.target.value)}
-                            className="flex-1 font-mono text-sm"
-                          />
-                          <span className="text-muted-foreground">=</span>
-                          <Input
-                            placeholder="value"
-                            value={envVar.value}
-                            onChange={(e) => updateEnvVar(envVar.id, "value", e.target.value)}
-                            className="flex-1 font-mono text-sm"
-                          />
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => removeEnvVar(envVar.id)}
-                            className="h-8 w-8 hover:text-destructive"
+                </Card>
+              </TabsContent>
+
+              {/* General Settings */}
+              <TabsContent value="general" className="space-y-6 mt-6">
+                <Card className="p-6 space-y-6">
+                  <div>
+                    <h3 className="text-heading-4 mb-4">General Settings</h3>
+
+                    <div className="space-y-4">
+                      {/* Theme Selector */}
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <Label>Theme</Label>
+                          <p className="text-caption text-muted-foreground mt-1">
+                            Choose your preferred color theme
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1 p-1 bg-muted/30 rounded-lg">
+                          <button
+                            onClick={() => setTheme('dark')}
+                            className={cn(
+                              "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all",
+                              theme === 'dark'
+                                ? "bg-background shadow-sm"
+                                : "hover:bg-background/50"
+                            )}
                           >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </motion.div>
-                      ))
-                    )}
-                  </div>
-                  
-                  <div className="pt-2 space-y-2">
-                    <p className="text-xs text-muted-foreground">
-                      <strong>Common variables:</strong>
-                    </p>
-                    <ul className="text-caption text-muted-foreground space-y-1 ml-4">
-                      <li>• <code className="px-1 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400">CLAUDE_CODE_ENABLE_TELEMETRY</code> - Enable/disable telemetry (0 or 1)</li>
-                      <li>• <code className="px-1 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400">ANTHROPIC_MODEL</code> - Custom model name</li>
-                      <li>• <code className="px-1 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400">DISABLE_COST_WARNINGS</code> - Disable cost warnings (1)</li>
-                    </ul>
-                  </div>
-                </div>
-              </Card>
-            </TabsContent>
-            {/* Advanced Settings */}
-            <TabsContent value="advanced" className="space-y-6">
-              <Card className="p-6">
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-base font-semibold mb-4">Advanced Settings</h3>
-                    <p className="text-sm text-muted-foreground mb-6">
-                      Additional configuration options for advanced users
-                    </p>
-                  </div>
-                  
-                  {/* API Key Helper */}
-                  <div className="space-y-2">
-                    <Label htmlFor="apiKeyHelper">API Key Helper Script</Label>
-                    <Input
-                      id="apiKeyHelper"
-                      placeholder="/path/to/generate_api_key.sh"
-                      value={settings?.apiKeyHelper || ""}
-                      onChange={(e) => updateSetting("apiKeyHelper", e.target.value || undefined)}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Custom script to generate auth values for API requests
-                    </p>
-                  </div>
-                  
-                  {/* Raw JSON Editor */}
-                  <div className="space-y-2">
-                    <Label>Raw Settings (JSON)</Label>
-                    <div className="p-3 rounded-md bg-muted font-mono text-xs overflow-x-auto whitespace-pre-wrap">
-                      <pre>{JSON.stringify(settings, null, 2)}</pre>
+                            {theme === 'dark' && <Check className="h-3 w-3" />}
+                            Dark
+                          </button>
+                          <button
+                            onClick={() => setTheme('gray')}
+                            className={cn(
+                              "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all",
+                              theme === 'gray'
+                                ? "bg-background shadow-sm"
+                                : "hover:bg-background/50"
+                            )}
+                          >
+                            {theme === 'gray' && <Check className="h-3 w-3" />}
+                            Gray
+                          </button>
+                          <button
+                            onClick={() => setTheme('light')}
+                            className={cn(
+                              "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all",
+                              theme === 'light'
+                                ? "bg-background shadow-sm"
+                                : "hover:bg-background/50"
+                            )}
+                          >
+                            {theme === 'light' && <Check className="h-3 w-3" />}
+                            Light
+                          </button>
+                          <button
+                            onClick={() => setTheme('custom')}
+                            className={cn(
+                              "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all",
+                              theme === 'custom'
+                                ? "bg-background shadow-sm"
+                                : "hover:bg-background/50"
+                            )}
+                          >
+                            {theme === 'custom' && <Check className="h-3 w-3" />}
+                            Custom
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Custom Color Editor */}
+                      {theme === 'custom' && (
+                        <div className="space-y-4 p-4 border rounded-lg bg-muted/20">
+                          <h4 className="text-label">Custom Theme Colors</h4>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            {/* Background Color */}
+                            <div className="space-y-2">
+                              <Label htmlFor="color-background" className="text-caption">Background</Label>
+                              <div className="flex gap-2">
+                                <Input
+                                  id="color-background"
+                                  type="text"
+                                  value={customColors.background}
+                                  onChange={(e) => setCustomColors({ background: e.target.value })}
+                                  placeholder="oklch(0.12 0.01 240)"
+                                  className="font-mono text-xs"
+                                />
+                                <div
+                                  className="w-10 h-10 rounded border"
+                                  style={{ backgroundColor: customColors.background }}
+                                />
+                              </div>
+                            </div>
+
+                            {/* Foreground Color */}
+                            <div className="space-y-2">
+                              <Label htmlFor="color-foreground" className="text-caption">Foreground</Label>
+                              <div className="flex gap-2">
+                                <Input
+                                  id="color-foreground"
+                                  type="text"
+                                  value={customColors.foreground}
+                                  onChange={(e) => setCustomColors({ foreground: e.target.value })}
+                                  placeholder="oklch(0.98 0.01 240)"
+                                  className="font-mono text-xs"
+                                />
+                                <div
+                                  className="w-10 h-10 rounded border"
+                                  style={{ backgroundColor: customColors.foreground }}
+                                />
+                              </div>
+                            </div>
+
+                            {/* Primary Color */}
+                            <div className="space-y-2">
+                              <Label htmlFor="color-primary" className="text-caption">Primary</Label>
+                              <div className="flex gap-2">
+                                <Input
+                                  id="color-primary"
+                                  type="text"
+                                  value={customColors.primary}
+                                  onChange={(e) => setCustomColors({ primary: e.target.value })}
+                                  placeholder="oklch(0.98 0.01 240)"
+                                  className="font-mono text-xs"
+                                />
+                                <div
+                                  className="w-10 h-10 rounded border"
+                                  style={{ backgroundColor: customColors.primary }}
+                                />
+                              </div>
+                            </div>
+
+                            {/* Card Color */}
+                            <div className="space-y-2">
+                              <Label htmlFor="color-card" className="text-caption">Card</Label>
+                              <div className="flex gap-2">
+                                <Input
+                                  id="color-card"
+                                  type="text"
+                                  value={customColors.card}
+                                  onChange={(e) => setCustomColors({ card: e.target.value })}
+                                  placeholder="oklch(0.14 0.01 240)"
+                                  className="font-mono text-xs"
+                                />
+                                <div
+                                  className="w-10 h-10 rounded border"
+                                  style={{ backgroundColor: customColors.card }}
+                                />
+                              </div>
+                            </div>
+
+                            {/* Accent Color */}
+                            <div className="space-y-2">
+                              <Label htmlFor="color-accent" className="text-caption">Accent</Label>
+                              <div className="flex gap-2">
+                                <Input
+                                  id="color-accent"
+                                  type="text"
+                                  value={customColors.accent}
+                                  onChange={(e) => setCustomColors({ accent: e.target.value })}
+                                  placeholder="oklch(0.16 0.01 240)"
+                                  className="font-mono text-xs"
+                                />
+                                <div
+                                  className="w-10 h-10 rounded border"
+                                  style={{ backgroundColor: customColors.accent }}
+                                />
+                              </div>
+                            </div>
+
+                            {/* Destructive Color */}
+                            <div className="space-y-2">
+                              <Label htmlFor="color-destructive" className="text-caption">Destructive</Label>
+                              <div className="flex gap-2">
+                                <Input
+                                  id="color-destructive"
+                                  type="text"
+                                  value={customColors.destructive}
+                                  onChange={(e) => setCustomColors({ destructive: e.target.value })}
+                                  placeholder="oklch(0.6 0.2 25)"
+                                  className="font-mono text-xs"
+                                />
+                                <div
+                                  className="w-10 h-10 rounded border"
+                                  style={{ backgroundColor: customColors.destructive }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          <p className="text-caption text-muted-foreground">
+                            Use CSS color values (hex, rgb, oklch, etc.). Changes apply immediately.
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Include Co-authored By */}
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5 flex-1">
+                          <Label htmlFor="coauthored">Include "Co-authored by Claude"</Label>
+                          <p className="text-caption text-muted-foreground">
+                            Add Claude attribution to git commits and pull requests
+                          </p>
+                        </div>
+                        <Switch
+                          id="coauthored"
+                          checked={settings?.includeCoAuthoredBy !== false}
+                          onCheckedChange={(checked) => updateSetting("includeCoAuthoredBy", checked)}
+                        />
+                      </div>
+
+                      {/* Verbose Output */}
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5 flex-1">
+                          <Label htmlFor="verbose">Verbose Output</Label>
+                          <p className="text-caption text-muted-foreground">
+                            Show full bash and command outputs
+                          </p>
+                        </div>
+                        <Switch
+                          id="verbose"
+                          checked={settings?.verbose === true}
+                          onCheckedChange={(checked) => updateSetting("verbose", checked)}
+                        />
+                      </div>
+
+                      {/* Cleanup Period */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <Label htmlFor="cleanup">Chat Transcript Retention (days)</Label>
+                            <p className="text-caption text-muted-foreground mt-1">
+                              How long to retain chat transcripts locally (default: 30 days)
+                            </p>
+                          </div>
+                          <Input
+                            id="cleanup"
+                            type="number"
+                            min="1"
+                            placeholder="30"
+                            value={settings?.cleanupPeriodDays || ""}
+                            onChange={(e) => {
+                              const value = e.target.value ? parseInt(e.target.value) : undefined;
+                              updateSetting("cleanupPeriodDays", value);
+                            }}
+                            className="w-24"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Claude Binary Path Selector */}
+                      <div className="space-y-3">
+                        <ClaudeVersionSelector
+                          selectedPath={currentBinaryPath}
+                          onSelect={handleClaudeInstallationSelect}
+                          simplified={true}
+                        />
+                        {binaryPathChanged && (
+                          <p className="text-caption text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                            <AlertCircle className="h-3 w-3" />
+                            Changes will be applied when you save settings.
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Separator */}
+                      <div className="border-t border-border pt-4 mt-6" />
+
+                      {/* Analytics Toggle */}
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-1">
+                          <Label htmlFor="analytics-enabled">Enable Analytics</Label>
+                          <p className="text-caption text-muted-foreground">
+                            Help improve ANYON by sharing anonymous usage data
+                          </p>
+                        </div>
+                        <Switch
+                          id="analytics-enabled"
+                          checked={analyticsEnabled}
+                          onCheckedChange={async (checked) => {
+                            try {
+                              if (checked) {
+                                await analytics.enable();
+                                setAnalyticsEnabled(true);
+                                // Save to server
+                                await updateUserSetting('analytics_enabled', true);
+                                trackEvent.settingsChanged('analytics_enabled', true);
+                                setToast({ message: "Analytics enabled", type: "success" });
+                              } else {
+                                await analytics.disable();
+                                setAnalyticsEnabled(false);
+                                // Save to server
+                                await updateUserSetting('analytics_enabled', false);
+                                trackEvent.settingsChanged('analytics_enabled', false);
+                                setToast({ message: "Analytics disabled", type: "success" });
+                              }
+                            } catch (e) {
+                              setToast({ message: 'Failed to update analytics preference', type: 'error' });
+                            }
+                          }}
+                        />
+                      </div>
+
+                      {/* Privacy Info */}
+                      {analyticsEnabled && (
+                        <div className="rounded-lg border border-border bg-muted/50 p-3">
+                          <div className="flex gap-2">
+                            <Shield className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                            <div className="space-y-1">
+                              <p className="text-xs font-medium text-foreground">Your privacy is protected</p>
+                              <ul className="text-xs text-muted-foreground space-y-0.5">
+                                <li>• No personal information or file contents collected</li>
+                                <li>• All data is anonymous with random IDs</li>
+                                <li>• You can disable analytics at any time</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Tab Persistence Toggle */}
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-1">
+                          <Label htmlFor="tab-persistence">Remember Open Tabs</Label>
+                          <p className="text-caption text-muted-foreground">
+                            Restore your tabs when you restart the app
+                          </p>
+                        </div>
+                        <Switch
+                          id="tab-persistence"
+                          checked={tabPersistenceEnabled}
+                          onCheckedChange={async (checked) => {
+                            TabPersistenceService.setEnabled(checked);
+                            setTabPersistenceEnabled(checked);
+                            try {
+                              // Save to server
+                              await updateUserSetting('tab_persistence_enabled', checked);
+                              trackEvent.settingsChanged('tab_persistence_enabled', checked);
+                              setToast({
+                                message: checked
+                                  ? "Tab persistence enabled - your tabs will be restored on restart"
+                                  : "Tab persistence disabled - tabs will not be saved",
+                                type: "success"
+                              });
+                            } catch (e) {
+                              setToast({ message: 'Failed to update preference', type: 'error' });
+                            }
+                          }}
+                        />
+                      </div>
+
+                      {/* Startup Intro Toggle */}
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-1">
+                          <Label htmlFor="startup-intro">Show Welcome Intro on Startup</Label>
+                          <p className="text-caption text-muted-foreground">
+                            Display a brief welcome animation when the app launches
+                          </p>
+                        </div>
+                        <Switch
+                          id="startup-intro"
+                          checked={startupIntroEnabled}
+                          onCheckedChange={async (checked) => {
+                            setStartupIntroEnabled(checked);
+                            try {
+                              // Save to server
+                              await updateUserSetting('startup_intro_enabled', checked);
+                              // Also save to local for immediate use
+                              await api.saveSetting('startup_intro_enabled', checked ? 'true' : 'false');
+                              trackEvent.settingsChanged('startup_intro_enabled', checked);
+                              setToast({
+                                message: checked
+                                  ? 'Welcome intro enabled'
+                                  : 'Welcome intro disabled',
+                                type: 'success'
+                              });
+                            } catch (e) {
+                              setToast({ message: 'Failed to update preference', type: 'error' });
+                            }
+                          }}
+                        />
+                      </div>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      This shows the raw JSON that will be saved to ~/.claude/settings.json
-                    </p>
                   </div>
-                </div>
-              </Card>
-            </TabsContent>
-            
-            {/* Hooks Settings */}
-            <TabsContent value="hooks" className="space-y-6">
-              <Card className="p-6">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-base font-semibold mb-2">User Hooks</h3>
-                    <p className="text-body-small text-muted-foreground mb-4">
-                      Configure hooks that apply to all Claude Code sessions for your user account.
-                      These are stored in <code className="mx-1 px-2 py-1 bg-muted rounded text-xs">~/.claude/settings.json</code>
-                    </p>
+                </Card>
+              </TabsContent>
+
+              {/* Permissions Settings */}
+              <TabsContent value="permissions" className="space-y-6">
+                <Card className="p-6">
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-heading-4 mb-2">Permission Rules</h3>
+                      <p className="text-body-small text-muted-foreground mb-4">
+                        Control which tools Claude Code can use without manual approval
+                      </p>
+                    </div>
+
+                    {/* Allow Rules */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-label text-green-500">Allow Rules</Label>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => addPermissionRule("allow")}
+                          className="gap-2 hover:border-green-500/50 hover:text-green-500"
+                        >
+                          <Plus className="h-3 w-3" />
+                          Add Rule
+                        </Button>
+                      </div>
+                      <div className="space-y-2">
+                        {allowRules.length === 0 ? (
+                          <p className="text-xs text-muted-foreground py-2">
+                            No allow rules configured. Claude will ask for approval for all tools.
+                          </p>
+                        ) : (
+                          allowRules.map((rule) => (
+                            <motion.div
+                              key={rule.id}
+                              initial={{ opacity: 0, x: -8 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ duration: 0.15 }}
+                              className="flex items-center gap-2"
+                            >
+                              <Input
+                                placeholder="e.g., Bash(npm run test:*)"
+                                value={rule.value}
+                                onChange={(e) => updatePermissionRule("allow", rule.id, e.target.value)}
+                                className="flex-1"
+                              />
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => removePermissionRule("allow", rule.id)}
+                                className="h-8 w-8"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </motion.div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Deny Rules */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-label text-red-500">Deny Rules</Label>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => addPermissionRule("deny")}
+                          className="gap-2 hover:border-red-500/50 hover:text-red-500"
+                        >
+                          <Plus className="h-3 w-3" />
+                          Add Rule
+                        </Button>
+                      </div>
+                      <div className="space-y-2">
+                        {denyRules.length === 0 ? (
+                          <p className="text-xs text-muted-foreground py-2">
+                            No deny rules configured.
+                          </p>
+                        ) : (
+                          denyRules.map((rule) => (
+                            <motion.div
+                              key={rule.id}
+                              initial={{ opacity: 0, x: -8 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ duration: 0.15 }}
+                              className="flex items-center gap-2"
+                            >
+                              <Input
+                                placeholder="e.g., Bash(curl:*)"
+                                value={rule.value}
+                                onChange={(e) => updatePermissionRule("deny", rule.id, e.target.value)}
+                                className="flex-1"
+                              />
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => removePermissionRule("deny", rule.id)}
+                                className="h-8 w-8"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </motion.div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="pt-2 space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        <strong>Examples:</strong>
+                      </p>
+                      <ul className="text-caption text-muted-foreground space-y-1 ml-4">
+                        <li>• <code className="px-1 py-0.5 rounded bg-green-500/10 text-green-600 dark:text-green-400">Bash</code> - Allow all bash commands</li>
+                        <li>• <code className="px-1 py-0.5 rounded bg-green-500/10 text-green-600 dark:text-green-400">Bash(npm run build)</code> - Allow exact command</li>
+                        <li>• <code className="px-1 py-0.5 rounded bg-green-500/10 text-green-600 dark:text-green-400">Bash(npm run test:*)</code> - Allow commands with prefix</li>
+                        <li>• <code className="px-1 py-0.5 rounded bg-green-500/10 text-green-600 dark:text-green-400">Read(~/.zshrc)</code> - Allow reading specific file</li>
+                        <li>• <code className="px-1 py-0.5 rounded bg-green-500/10 text-green-600 dark:text-green-400">Edit(docs/**)</code> - Allow editing files in docs directory</li>
+                      </ul>
+                    </div>
                   </div>
-                  
-                  <HooksEditor
-                    key={activeTab}
-                    scope="user"
-                    className="border-0"
-                    hideActions={true}
-                    onChange={(hasChanges, getHooks) => {
-                      setUserHooksChanged(hasChanges);
-                      getUserHooks.current = getHooks;
+                </Card>
+              </TabsContent>
+
+              {/* Environment Variables */}
+              <TabsContent value="environment" className="space-y-6">
+                <Card className="p-6">
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-heading-4">Environment Variables</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Environment variables applied to every Claude Code session
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={addEnvVar}
+                        className="gap-2"
+                      >
+                        <Plus className="h-3 w-3" />
+                        Add Variable
+                      </Button>
+                    </div>
+
+                    <div className="space-y-3">
+                      {envVars.length === 0 ? (
+                        <p className="text-xs text-muted-foreground py-2">
+                          No environment variables configured.
+                        </p>
+                      ) : (
+                        envVars.map((envVar) => (
+                          <motion.div
+                            key={envVar.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className="flex items-center gap-2"
+                          >
+                            <Input
+                              placeholder="KEY"
+                              value={envVar.key}
+                              onChange={(e) => updateEnvVar(envVar.id, "key", e.target.value)}
+                              className="flex-1 font-mono text-sm"
+                            />
+                            <span className="text-muted-foreground">=</span>
+                            <Input
+                              placeholder="value"
+                              value={envVar.value}
+                              onChange={(e) => updateEnvVar(envVar.id, "value", e.target.value)}
+                              className="flex-1 font-mono text-sm"
+                            />
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeEnvVar(envVar.id)}
+                              className="h-8 w-8 hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </motion.div>
+                        ))
+                      )}
+                    </div>
+
+                    <div className="pt-2 space-y-2">
+                      <p className="text-xs text-muted-foreground">
+                        <strong>Common variables:</strong>
+                      </p>
+                      <ul className="text-caption text-muted-foreground space-y-1 ml-4">
+                        <li>• <code className="px-1 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400">CLAUDE_CODE_ENABLE_TELEMETRY</code> - Enable/disable telemetry (0 or 1)</li>
+                        <li>• <code className="px-1 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400">ANTHROPIC_MODEL</code> - Custom model name</li>
+                        <li>• <code className="px-1 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400">DISABLE_COST_WARNINGS</code> - Disable cost warnings (1)</li>
+                      </ul>
+                    </div>
+                  </div>
+                </Card>
+              </TabsContent>
+              {/* Advanced Settings */}
+              <TabsContent value="advanced" className="space-y-6">
+                <Card className="p-6">
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-base font-semibold mb-4">Advanced Settings</h3>
+                      <p className="text-sm text-muted-foreground mb-6">
+                        Additional configuration options for advanced users
+                      </p>
+                    </div>
+
+                    {/* API Key Helper */}
+                    <div className="space-y-2">
+                      <Label htmlFor="apiKeyHelper">API Key Helper Script</Label>
+                      <Input
+                        id="apiKeyHelper"
+                        placeholder="/path/to/generate_api_key.sh"
+                        value={settings?.apiKeyHelper || ""}
+                        onChange={(e) => updateSetting("apiKeyHelper", e.target.value || undefined)}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Custom script to generate auth values for API requests
+                      </p>
+                    </div>
+
+                    {/* Raw JSON Editor */}
+                    <div className="space-y-2">
+                      <Label>Raw Settings (JSON)</Label>
+                      <div className="p-3 rounded-md bg-muted font-mono text-xs overflow-x-auto whitespace-pre-wrap">
+                        <pre>{JSON.stringify(settings, null, 2)}</pre>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        This shows the raw JSON that will be saved to ~/.claude/settings.json
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              </TabsContent>
+
+              {/* Hooks Settings */}
+              <TabsContent value="hooks" className="space-y-6">
+                <Card className="p-6">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-base font-semibold mb-2">User Hooks</h3>
+                      <p className="text-body-small text-muted-foreground mb-4">
+                        Configure hooks that apply to all Claude Code sessions for your user account.
+                        These are stored in <code className="mx-1 px-2 py-1 bg-muted rounded text-xs">~/.claude/settings.json</code>
+                      </p>
+                    </div>
+
+                    <HooksEditor
+                      key={activeTab}
+                      scope="user"
+                      className="border-0"
+                      hideActions={true}
+                      onChange={(hasChanges, getHooks) => {
+                        setUserHooksChanged(hasChanges);
+                        getUserHooks.current = getHooks;
+                      }}
+                    />
+                  </div>
+                </Card>
+              </TabsContent>
+
+              {/* Commands Tab */}
+              <TabsContent value="commands">
+                <Card className="p-6">
+                  <SlashCommandsManager className="p-0" />
+                </Card>
+              </TabsContent>
+
+              {/* Storage Tab */}
+              <TabsContent value="storage">
+                <StorageTab />
+              </TabsContent>
+
+              {/* Proxy Settings */}
+              <TabsContent value="proxy">
+                <Card className="p-6">
+                  <ProxySettings
+                    setToast={setToast}
+                    onChange={(hasChanges, _getSettings, save) => {
+                      setProxySettingsChanged(hasChanges);
+                      saveProxySettings.current = save;
                     }}
                   />
-                </div>
-              </Card>
-            </TabsContent>
-            
-            {/* Commands Tab */}
-            <TabsContent value="commands">
-              <Card className="p-6">
-                <SlashCommandsManager className="p-0" />
-              </Card>
-            </TabsContent>
-            
-            {/* Storage Tab */}
-            <TabsContent value="storage">
-              <StorageTab />
-            </TabsContent>
-            
-            {/* Proxy Settings */}
-            <TabsContent value="proxy">
-              <Card className="p-6">
-                <ProxySettings 
-                  setToast={setToast}
-                  onChange={(hasChanges, _getSettings, save) => {
-                    setProxySettingsChanged(hasChanges);
-                    saveProxySettings.current = save;
-                  }}
-                />
-              </Card>
-            </TabsContent>
-            
-          </Tabs>
-        </div>
-      )}
+                </Card>
+              </TabsContent>
+
+            </Tabs>
+          </div>
+        )}
       </div>
-      
+
       {/* Toast Notification */}
       <ToastContainer>
         {toast && (
@@ -1265,8 +1257,8 @@ export const Settings: React.FC<SettingsProps> = ({
           />
         )}
       </ToastContainer>
-      
-      
+
+
     </div>
   );
 }; 

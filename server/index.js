@@ -86,41 +86,44 @@ function authenticate(req, res, next) {
 
 // Routes
 
-// Get Google OAuth URL
-app.get('/auth/google/url', (req, res) => {
-  // Development mode: Return mock user with token
-  if (NODE_ENV === 'development') {
-    console.log('🔧 Development mode: Creating mock user');
-    const userId = uuidv4();
-    const user = {
-      id: userId,
-      email: 'dev@example.com',
-      name: 'Dev User',
-      profilePicture: 'https://ui-avatars.com/api/?name=Dev+User&background=6366f1&color=fff&size=150',
-      subscription: {
-        planType: 'FREE',
-        status: 'ACTIVE',
-      },
-    };
-
-    users.set(userId, user);
-    const token = generateToken(userId);
-
-    return res.json({
-      url: null,
-      devMode: true,
-      token: token,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        profilePicture: user.profilePicture,
-      },
-      subscription: user.subscription,
-    });
+// Dev Login endpoint
+app.post('/auth/dev/login', (req, res) => {
+  // Only allow in development mode
+  if (NODE_ENV !== 'development') {
+    return res.status(403).json({ error: 'Not allowed in production' });
   }
 
-  // Production mode: Generate Google OAuth URL
+  console.log('🔧 Dev Login: Creating mock user');
+  const userId = uuidv4();
+  const user = {
+    id: userId,
+    email: 'dev@example.com',
+    name: 'Dev User',
+    profilePicture: null, // Use default icon
+    subscription: {
+      planType: 'FREE',
+      status: 'ACTIVE',
+    },
+  };
+
+  users.set(userId, user);
+  const token = generateToken(userId);
+
+  return res.json({
+    token: token,
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      profilePicture: user.profilePicture,
+    },
+    subscription: user.subscription,
+  });
+});
+
+// Get Google OAuth URL
+app.get('/auth/google/url', (req, res) => {
+  // Always return Google OAuth URL
   const scopes = [
     'https://www.googleapis.com/auth/userinfo.email',
     'https://www.googleapis.com/auth/userinfo.profile',
@@ -134,7 +137,7 @@ app.get('/auth/google/url', (req, res) => {
 
   res.json({
     url: authUrl,
-    devMode: false,
+    devMode: false, // Always false for this endpoint to force redirect
   });
 });
 
@@ -189,8 +192,40 @@ app.get('/auth/google/callback', async (req, res) => {
     // Generate JWT token
     const jwtToken = generateToken(user.id);
 
-    // Redirect to deep link with token
-    res.redirect(`anyon://auth/callback?token=${jwtToken}`);
+    // res.redirect(`anyon://auth/callback?token=${jwtToken}`);
+
+    // Serve a simple HTML page to trigger the deep link
+    const deepLink = `anyon://auth/callback?token=${jwtToken}`;
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Login Successful</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f2f5; margin: 0; }
+            .card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); text-align: center; max-width: 400px; width: 90%; }
+            h1 { font-size: 1.5rem; color: #111827; margin-bottom: 1rem; }
+            p { color: #6b7280; margin-bottom: 1.5rem; }
+            .button { display: inline-block; background: #2563eb; color: white; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 500; transition: background 0.2s; }
+            .button:hover { background: #1d4ed8; }
+          </style>
+        </head>
+        <body>
+          <div class="card">
+            <h1>로그인 성공!</h1>
+            <p>ANYON 앱으로 이동합니다.<br>자동으로 열리지 않으면 아래 버튼을 눌러주세요.</p>
+            <a href="${deepLink}" class="button">ANYON 앱 열기</a>
+          </div>
+          <script>
+            // Try to open deep link automatically
+            setTimeout(() => {
+              window.location.href = "${deepLink}";
+            }, 100);
+          </script>
+        </body>
+      </html>
+    `;
+    res.send(html);
   } catch (error) {
     console.error('❌ OAuth callback error:', error);
     res.status(500).send('Authentication failed');

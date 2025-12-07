@@ -5,7 +5,7 @@ import { fetch as tauriFetch } from '@tauri-apps/plugin-http';
 import { useAuthStore } from '@/stores/authStore';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Chrome, Loader2, Crown } from 'lucide-react';
+import { Chrome, Loader2, Crown, Terminal } from 'lucide-react';
 
 const API_URL = 'http://localhost:4000';
 
@@ -70,15 +70,6 @@ export const LoginPage: React.FC = () => {
 
       const data = await response.json();
 
-      // 개발 모드: 토큰이 직접 반환되면 바로 로그인
-      if (data.devMode && data.token) {
-        console.log('Dev mode: logging in with token');
-        await login(data.token);
-        console.log('Login successful!');
-        setIsLoading(false);
-        return;
-      }
-
       // 프로덕션 모드: OAuth URL로 리다이렉트
       const { url } = data as { url: string };
       if (url) {
@@ -88,6 +79,32 @@ export const LoginPage: React.FC = () => {
     } catch (error) {
       console.error('Failed to open Google login:', error);
       setError('로그인에 실패했습니다. 다시 시도해주세요.');
+      setIsLoading(false);
+    }
+  };
+
+  const handleDevLogin = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const response = await tauriFetch(`${API_URL}/auth/dev/login`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error('Dev login failed');
+      }
+
+      const data = await response.json();
+      if (data.token) {
+        console.log('Dev Login successful!');
+        await login(data.token);
+      }
+    } catch (error) {
+      console.error('Dev login failed:', error);
+      setError('Dev 로그인에 실패했습니다.');
+    } finally {
       setIsLoading(false);
     }
   };
@@ -130,6 +147,24 @@ export const LoginPage: React.FC = () => {
               </>
             )}
           </Button>
+
+          {/* Dev Login Button (Development Only) */}
+          {import.meta.env.DEV && (
+            <Button
+              onClick={handleDevLogin}
+              disabled={isLoading}
+              variant="outline"
+              className="w-full h-12 flex items-center justify-center gap-3 text-base border-dashed"
+              size="lg"
+            >
+              {isLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Terminal className="w-5 h-5 text-muted-foreground" />
+              )}
+              Dev Login
+            </Button>
+          )}
 
           <p className="text-center text-xs text-muted-foreground">
             로그인하면{' '}
