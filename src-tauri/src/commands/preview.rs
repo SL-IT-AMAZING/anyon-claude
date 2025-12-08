@@ -2,9 +2,10 @@ use std::net::TcpStream;
 use std::path::PathBuf;
 use std::time::Duration;
 use serde::{Deserialize, Serialize};
-use tauri::State;
+use tauri::{AppHandle, State};
 
-use crate::preview_server::{self, PreviewServerHandle};
+use super::super::dev_server::{self, DevServerManagerHandle, DevServerInfoResponse};
+use super::super::preview_server::{self, PreviewServerHandle};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PortInfo {
@@ -59,6 +60,24 @@ pub async fn start_file_preview_server(
     }
 
     let port = 4001u16;
+
+    // Check if server is already running for the same project
+    {
+        let state_guard = state.read().await;
+        if state_guard.is_running() {
+            if let Some(current_path) = state_guard.get_current_path() {
+                if current_path == &path {
+                    // Already running for this project, just return the info
+                    return Ok(PreviewServerInfo {
+                        running: true,
+                        port: state_guard.get_port(),
+                        project_path: Some(project_path),
+                        base_url: Some(format!("http://localhost:{}", state_guard.get_port())),
+                    });
+                }
+            }
+        }
+    }
 
     preview_server::start_preview_server(state.inner().clone(), path, port)
         .await
@@ -129,4 +148,78 @@ pub async fn get_file_preview_url(
 
     let port = state_guard.get_port();
     Ok(format!("http://localhost:{}/{}", port, url_path))
+}
+
+// ============================================================================
+// Dev Server Commands
+// ============================================================================
+
+/// Start a dev server for a project (npm run dev, yarn dev, etc.)
+#[tauri::command]
+pub async fn start_dev_server(
+    app_handle: AppHandle,
+    state: State<'_, DevServerManagerHandle>,
+    project_path: String,
+) -> Result<(), String> {
+    let path = PathBuf::from(&project_path);
+
+    if !path.exists() {
+        return Err(format!("Project path does not exist: {}", project_path));
+    }
+
+    // Check if package.json exists
+    if !path.join("package.json").exists() {
+        return Err("No package.json found in project directory".to_string());
+    }
+
+    dev_server::start_dev_server(state.inner().clone(), path, app_handle)
+        .await
+        .map_err(|e| format!("Failed to start dev server: {}", e))?;
+
+    Ok(())
+}
+
+/// Stop a dev server for a project
+#[tauri::command]
+pub async fn stop_dev_server(
+    state: State<'_, DevServerManagerHandle>,
+    project_path: String,
+) -> Result<(), String> {
+    let path = PathBuf::from(&project_path);
+
+    dev_server::stop_dev_server(state.inner().clone(), path)
+        .await
+        .map_err(|e| format!("Failed to stop dev server: {}", e))
+}
+
+/// Get dev server info for a project
+#[tauri::command]
+pub async fn get_dev_server_info(
+    state: State<'_, DevServerManagerHandle>,
+    project_path: String,
+) -> Result<Option<DevServerInfoResponse>, String> {
+    let path = PathBuf::from(&project_path);
+    Ok(dev_server::get_dev_server_info(state.inner().clone(), path).await)
+}
+
+/// Check if a dev server is running for a project
+#[tauri::command]
+pub async fn is_dev_server_running(
+    state: State<'_, DevServerManagerHandle>,
+    project_path: String,
+) -> Result<bool, String> {
+    let path = PathBuf::from(&project_path);
+    Ok(dev_server::is_dev_server_running(state.inner().clone(), path).await)
+}
+
+/// Detect package manager for a project
+#[tauri::command]
+pub fn detect_package_manager(project_path: String) -> Result<String, String> {
+    let path = PathBuf::from(&project_path);
+
+    if !path.exists() {
+        return Err(format!("Project path does not exist: {}", project_path));
+    }
+
+    Ok(dev_server::detect_package_manager(&path))
 }

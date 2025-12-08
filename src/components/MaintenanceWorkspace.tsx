@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { SplitPane } from '@/components/ui/split-pane';
 import { FileExplorer } from '@/components/FileExplorer';
-import { PreviewPanel, type SelectedElement, type ElementAction } from '@/components/PreviewPanel';
+import { EnhancedPreviewPanel } from '@/components/preview';
 import { PlanModePanel, type PlanItem, type PlanModeState } from '@/components/PlanModePanel';
+import type { SelectedElement, ElementAction } from '@/types/preview';
 import { SessionDropdown } from '@/components/SessionDropdown';
 import { useProjects, useProjectsNavigation } from '@/components/ProjectRoutes';
 import type { Project, Session } from '@/lib/api';
@@ -173,6 +174,25 @@ export const MaintenanceWorkspace: React.FC<MaintenanceWorkspaceProps> = ({ proj
               console.log('[MaintenanceWorkspace] ExitPlanMode detected - waiting for user approval');
               setPlanModeState('awaiting_approval');
               setActiveTab('plan');
+            }
+
+            // Write tool - detect file creation for auto preview
+            if (toolName === 'write' && content.input?.file_path) {
+              const filePath = content.input.file_path as string;
+              console.log('[MaintenanceWorkspace] Write tool detected:', filePath);
+
+              // Check if it's an HTML file - show in preview immediately
+              if (filePath.endsWith('.html')) {
+                console.log('[MaintenanceWorkspace] HTML file created, setting preview:', filePath);
+                setSelectedHtmlFile(filePath);
+                setActiveTab('preview');
+              }
+              // Check if package.json was created - might need to start dev server
+              else if (filePath.endsWith('package.json')) {
+                console.log('[MaintenanceWorkspace] package.json created, switching to preview for dev server');
+                setSelectedHtmlFile(undefined); // Clear HTML file to use port mode
+                setActiveTab('preview');
+              }
             }
           }
         }
@@ -447,11 +467,12 @@ Begin execution immediately. Do not use Plan Mode tools again - just execute the
                     <FileExplorer rootPath={project?.path} onFileClick={handleFileSelect} />
                   )}
                   {activeTab === 'preview' && (
-                    <PreviewPanel
+                    <EnhancedPreviewPanel
                       htmlFilePath={selectedHtmlFile}
                       projectPath={project?.path}
                       onElementSelected={handleElementSelected}
                       onElementAction={handleElementAction}
+                      onAIFix={(prompt) => claudeSessionRef.current?.sendPrompt(prompt, 'sonnet')}
                     />
                   )}
                   {activeTab === 'plan' && (

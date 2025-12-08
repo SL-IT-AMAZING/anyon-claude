@@ -134,6 +134,8 @@ dependencies = [
  "futures",
  "futures-util",
  "glob",
+ "http-body-util",
+ "hyper-util",
  "image",
  "jsonwebtoken",
  "libc",

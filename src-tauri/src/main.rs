@@ -5,6 +5,7 @@ mod auth_server;
 mod checkpoint;
 mod claude_binary;
 mod commands;
+mod dev_server;
 mod portable_deps;
 mod preview_server;
 mod process;
@@ -43,6 +44,8 @@ use commands::mcp::{
 use commands::preview::{
     scan_ports, start_file_preview_server, stop_file_preview_server,
     get_file_preview_server_status, get_file_preview_url,
+    start_dev_server, stop_dev_server, get_dev_server_info,
+    is_dev_server_running, detect_package_manager,
 };
 use preview_server::PreviewServerHandle;
 use commands::proxy::{apply_proxy_settings, get_proxy_settings, save_proxy_settings};
@@ -215,6 +218,10 @@ fn main() {
                 tokio::sync::RwLock::new(preview_server::PreviewServerState::new())
             );
             app.manage(preview_server_state);
+
+            // Initialize dev server manager state
+            let dev_server_state = dev_server::create_dev_server_manager();
+            app.manage(dev_server_state);
 
             // Start auth server in background
             let jwt_secret = std::env::var("JWT_SECRET")
@@ -390,6 +397,12 @@ fn main() {
             stop_file_preview_server,
             get_file_preview_server_status,
             get_file_preview_url,
+            // Dev Server Management
+            start_dev_server,
+            stop_dev_server,
+            get_dev_server_info,
+            is_dev_server_running,
+            detect_package_manager,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
