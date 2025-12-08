@@ -37,7 +37,7 @@ interface AuthState {
   updateUserSetting: (key: string, value: any) => Promise<void>;
 }
 
-const API_URL = 'http://localhost:4000';
+const API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:4000';
 
 export const useAuthStore = create<AuthState>()(
   persist(

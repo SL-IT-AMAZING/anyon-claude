@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Chrome, Loader2, Crown, Terminal } from 'lucide-react';
 
-const API_URL = 'http://localhost:4000';
+const API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:4000';
 
 export const LoginPage: React.FC = () => {
   const login = useAuthStore((state) => state.login);
