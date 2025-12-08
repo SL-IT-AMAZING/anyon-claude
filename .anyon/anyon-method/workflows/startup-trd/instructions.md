@@ -1164,29 +1164,14 @@ Create concise list of all selected technologies with their purpose
 This will be used by Architecture workflow
 </action>
 
-<template-output>trd_complete</template-output>
-</step>
-
-<step n="18" goal="Auto-chain to Architecture Workflow">
-<critical>Automatically invoke Architecture workflow</critical>
-
-<action>Confirm TRD saved to {default_output_file}</action>
-
 <action>Notify user:
 "TRD 작성이 완료되었습니다!
 
-이제 자동으로 **Architecture 워크플로우**를 시작합니다.
-
-Architecture에서는 지금까지 선택한 모든 기술들을
-어떻게 연결하고 구성할지 시스템 설계를 할 거예요.
-
-그리고 비슷한 서비스의 아키텍처를 참고해서
-검증된 패턴을 적용할 거예요!
-
-시작할게요! 🚀"
+다음 단계는 **Architecture 워크플로우**입니다.
+준비가 되면 기획문서 패널에서 'Architecture 작성하기' 버튼을 눌러주세요!"
 </action>
 
-<invoke-workflow>{next_workflow}</invoke-workflow>
+<template-output>trd_complete</template-output>
 </step>
 
 </workflow>

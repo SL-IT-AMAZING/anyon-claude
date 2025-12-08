@@ -753,28 +753,11 @@ Present to user for confirmation
 
 이 문서는 나중에 UX 설계, 기술 스택 선정, 시스템 아키텍처의 기반이 됩니다.
 
-잠시 후 자동으로 다음 단계인 **UX Design 워크플로우**가 시작됩니다!"
+다음 단계는 **UX Design 워크플로우**입니다.
+준비가 되면 기획문서 패널에서 'UX Design 작성하기' 버튼을 눌러주세요!"
 </action>
 
 <template-output>prd_complete</template-output>
-</step>
-
-<step n="11" goal="Auto-chain to Next Workflow">
-<critical>Automatically invoke the next workflow in the chain when PRD is saved</critical>
-
-<action>Confirm PRD document is saved to {default_output_file}</action>
-
-<action>Notify user:
-"PRD 작성이 완료되었습니다!
-
-이제 자동으로 **UX Design 워크플로우**를 시작합니다.
-UX Design에서는 PRD에서 정의한 기능들을 바탕으로
-화면 구조, 사용자 플로우, 인터랙션을 매우 구체적으로 설계합니다.
-
-시작할게요! 🚀"
-</action>
-
-<invoke-workflow>{next_workflow}</invoke-workflow>
 </step>
 
 </workflow>

@@ -4,7 +4,17 @@ import {
   User, 
   Bot, 
   AlertCircle, 
-  CheckCircle2
+  CheckCircle2,
+  FileEdit,
+  FileText,
+  FolderOpen,
+  Search,
+  ListChecks,
+  ListPlus,
+  Globe,
+  Globe2,
+  Package2,
+  Sparkles
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -38,8 +48,37 @@ import {
   LSResultWidget,
   ThinkingWidget,
   WebSearchWidget,
-  WebFetchWidget
+  WebFetchWidget,
+  CollapsibleToolWidget
 } from "./ToolWidgets";
+import { getPromptDisplayInfo, isAnyonWorkflowCommand, type PromptIconType } from "@/lib/promptDisplay";
+import { 
+  FileText as FileTextIcon, 
+  Palette, 
+  Paintbrush, 
+  Settings, 
+  Boxes, 
+  Database, 
+  LayoutList, 
+  Rocket, 
+  CheckCircle 
+} from "lucide-react";
+
+// Icon mapping for workflow prompts
+const WorkflowIcon: React.FC<{ icon: PromptIconType | null; className?: string }> = ({ icon, className = "h-4 w-4" }) => {
+  switch (icon) {
+    case 'file-text': return <FileTextIcon className={className} />;
+    case 'palette': return <Palette className={className} />;
+    case 'paintbrush': return <Paintbrush className={className} />;
+    case 'settings': return <Settings className={className} />;
+    case 'boxes': return <Boxes className={className} />;
+    case 'database': return <Database className={className} />;
+    case 'layout-list': return <LayoutList className={className} />;
+    case 'rocket': return <Rocket className={className} />;
+    case 'check-circle': return <CheckCircle className={className} />;
+    default: return null;
+  }
+};
 
 interface StreamMessageProps {
   message: ClaudeStreamMessage;
@@ -97,12 +136,18 @@ const StreamMessageComponent: React.FC<StreamMessageProps> = ({ message, classNa
     // System initialization message
     if (message.type === "system" && message.subtype === "init") {
       return (
-        <SystemInitializedWidget
-          sessionId={message.session_id}
-          model={message.model}
-          cwd={message.cwd}
-          tools={message.tools}
-        />
+        <CollapsibleToolWidget
+          icon={<Bot className="h-4 w-4 text-blue-500" />}
+          title="System Initialized"
+          summary={message.model || ''}
+        >
+          <SystemInitializedWidget
+            sessionId={message.session_id}
+            model={message.model}
+            cwd={message.cwd}
+            tools={message.tools}
+          />
+        </CollapsibleToolWidget>
       );
     }
 
@@ -184,85 +229,212 @@ const StreamMessageComponent: React.FC<StreamMessageProps> = ({ message, classNa
                       // Task tool - for sub-agent tasks
                       if (toolName === "task" && input) {
                         renderedSomething = true;
-                        return <TaskWidget description={input.description} prompt={input.prompt} result={toolResult} />;
+                        return (
+                          <CollapsibleToolWidget
+                            icon={<><Bot className="h-4 w-4 text-purple-500" /><Sparkles className="h-2 w-2 text-purple-400 -ml-2 -mt-2" /></>}
+                            title="Sub-Agent Task"
+                            summary={input.description}
+                          >
+                            <TaskWidget description={input.description} prompt={input.prompt} result={toolResult} />
+                          </CollapsibleToolWidget>
+                        );
                       }
                       
                       // Edit tool
                       if (toolName === "edit" && input?.file_path) {
                         renderedSomething = true;
-                        return <EditWidget {...input} result={toolResult} />;
+                        const fileName = input.file_path.split('/').pop() || input.file_path;
+                        return (
+                          <CollapsibleToolWidget
+                            icon={<FileEdit className="h-4 w-4 text-amber-500" />}
+                            title="Edit"
+                            summary={fileName}
+                          >
+                            <EditWidget {...input} result={toolResult} />
+                          </CollapsibleToolWidget>
+                        );
                       }
                       
                       // MultiEdit tool
                       if (toolName === "multiedit" && input?.file_path && input?.edits) {
                         renderedSomething = true;
-                        return <MultiEditWidget {...input} result={toolResult} />;
+                        const fileName = input.file_path.split('/').pop() || input.file_path;
+                        return (
+                          <CollapsibleToolWidget
+                            icon={<FileEdit className="h-4 w-4 text-amber-500" />}
+                            title="MultiEdit"
+                            summary={`${fileName} (${input.edits?.length || 0} edits)`}
+                          >
+                            <MultiEditWidget {...input} result={toolResult} />
+                          </CollapsibleToolWidget>
+                        );
                       }
                       
                       // MCP tools (starting with mcp__)
                       if (content.name?.startsWith("mcp__")) {
                         renderedSomething = true;
-                        return <MCPWidget toolName={content.name} input={input} result={toolResult} />;
+                        const parts = content.name.split('__');
+                        const namespace = parts[1] || '';
+                        const method = parts[2] || '';
+                        return (
+                          <CollapsibleToolWidget
+                            icon={<><Package2 className="h-4 w-4 text-violet-500" /><Sparkles className="h-2 w-2 text-violet-400 -ml-2 -mt-2" /></>}
+                            title="MCP"
+                            summary={`${namespace} → ${method}`}
+                          >
+                            <MCPWidget toolName={content.name} input={input} result={toolResult} />
+                          </CollapsibleToolWidget>
+                        );
                       }
                       
                       // TodoWrite tool
                       if (toolName === "todowrite" && input?.todos) {
                         renderedSomething = true;
-                        return <TodoWidget todos={input.todos} result={toolResult} />;
+                        const todoCount = input.todos?.length || 0;
+                        const inProgress = input.todos?.filter((t: any) => t.status === 'in_progress').length || 0;
+                        return (
+                          <CollapsibleToolWidget
+                            icon={<ListPlus className="h-4 w-4 text-blue-500" />}
+                            title="Todo List"
+                            summary={`${todoCount} items${inProgress > 0 ? `, ${inProgress} in progress` : ''}`}
+                          >
+                            <TodoWidget todos={input.todos} result={toolResult} />
+                          </CollapsibleToolWidget>
+                        );
                       }
                       
                       // TodoRead tool
                       if (toolName === "todoread") {
                         renderedSomething = true;
-                        return <TodoReadWidget todos={input?.todos} result={toolResult} />;
+                        return (
+                          <CollapsibleToolWidget
+                            icon={<ListChecks className="h-4 w-4 text-blue-500" />}
+                            title="Read Todos"
+                          >
+                            <TodoReadWidget todos={input?.todos} result={toolResult} />
+                          </CollapsibleToolWidget>
+                        );
                       }
                       
                       // LS tool
                       if (toolName === "ls" && input?.path) {
                         renderedSomething = true;
-                        return <LSWidget path={input.path} result={toolResult} />;
+                        const dirName = input.path.split('/').pop() || input.path;
+                        return (
+                          <CollapsibleToolWidget
+                            icon={<FolderOpen className="h-4 w-4 text-yellow-500" />}
+                            title="List Directory"
+                            summary={dirName}
+                          >
+                            <LSWidget path={input.path} result={toolResult} />
+                          </CollapsibleToolWidget>
+                        );
                       }
                       
                       // Read tool
                       if (toolName === "read" && input?.file_path) {
                         renderedSomething = true;
-                        return <ReadWidget filePath={input.file_path} result={toolResult} />;
+                        const fileName = input.file_path.split('/').pop() || input.file_path;
+                        return (
+                          <CollapsibleToolWidget
+                            icon={<FileText className="h-4 w-4 text-green-500" />}
+                            title="Read"
+                            summary={fileName}
+                          >
+                            <ReadWidget filePath={input.file_path} result={toolResult} />
+                          </CollapsibleToolWidget>
+                        );
                       }
                       
                       // Glob tool
                       if (toolName === "glob" && input?.pattern) {
                         renderedSomething = true;
-                        return <GlobWidget pattern={input.pattern} result={toolResult} />;
+                        return (
+                          <CollapsibleToolWidget
+                            icon={<Search className="h-4 w-4 text-cyan-500" />}
+                            title="Glob"
+                            summary={input.pattern}
+                          >
+                            <GlobWidget pattern={input.pattern} result={toolResult} />
+                          </CollapsibleToolWidget>
+                        );
                       }
                       
                       // Bash tool
                       if (toolName === "bash" && input?.command) {
                         renderedSomething = true;
-                        return <BashWidget command={input.command} description={input.description} result={toolResult} />;
+                        const cmdPreview = input.command.length > 40 
+                          ? input.command.substring(0, 40) + '...' 
+                          : input.command;
+                        return (
+                          <CollapsibleToolWidget
+                            icon={<Terminal className="h-4 w-4 text-green-500" />}
+                            title="Bash"
+                            summary={input.description || cmdPreview}
+                          >
+                            <BashWidget command={input.command} description={input.description} result={toolResult} />
+                          </CollapsibleToolWidget>
+                        );
                       }
                       
                       // Write tool
                       if (toolName === "write" && input?.file_path && input?.content) {
                         renderedSomething = true;
-                        return <WriteWidget filePath={input.file_path} content={input.content} result={toolResult} />;
+                        const fileName = input.file_path.split('/').pop() || input.file_path;
+                        return (
+                          <CollapsibleToolWidget
+                            icon={<FileEdit className="h-4 w-4 text-emerald-500" />}
+                            title="Write"
+                            summary={fileName}
+                          >
+                            <WriteWidget filePath={input.file_path} content={input.content} result={toolResult} />
+                          </CollapsibleToolWidget>
+                        );
                       }
                       
                       // Grep tool
                       if (toolName === "grep" && input?.pattern) {
                         renderedSomething = true;
-                        return <GrepWidget pattern={input.pattern} include={input.include} path={input.path} exclude={input.exclude} result={toolResult} />;
+                        return (
+                          <CollapsibleToolWidget
+                            icon={<Search className="h-4 w-4 text-emerald-500" />}
+                            title="Grep"
+                            summary={input.pattern}
+                          >
+                            <GrepWidget pattern={input.pattern} include={input.include} path={input.path} exclude={input.exclude} result={toolResult} />
+                          </CollapsibleToolWidget>
+                        );
                       }
                       
                       // WebSearch tool
                       if (toolName === "websearch" && input?.query) {
                         renderedSomething = true;
-                        return <WebSearchWidget query={input.query} result={toolResult} />;
+                        return (
+                          <CollapsibleToolWidget
+                            icon={<Globe2 className="h-4 w-4 text-blue-500" />}
+                            title="Web Search"
+                            summary={input.query}
+                          >
+                            <WebSearchWidget query={input.query} result={toolResult} />
+                          </CollapsibleToolWidget>
+                        );
                       }
                       
                       // WebFetch tool
                       if (toolName === "webfetch" && input?.url) {
                         renderedSomething = true;
-                        return <WebFetchWidget url={input.url} prompt={input.prompt} result={toolResult} />;
+                        const urlPreview = input.url.length > 50 
+                          ? input.url.substring(0, 50) + '...' 
+                          : input.url;
+                        return (
+                          <CollapsibleToolWidget
+                            icon={<Globe className="h-4 w-4 text-blue-500" />}
+                            title="Web Fetch"
+                            summary={urlPreview}
+                          >
+                            <WebFetchWidget url={input.url} prompt={input.prompt} result={toolResult} />
+                          </CollapsibleToolWidget>
+                        );
                       }
                       
                       // Default - return null
@@ -356,6 +528,17 @@ const StreamMessageComponent: React.FC<StreamMessageProps> = ({ message, classNa
                     if (stdoutMatch) {
                       const [, output] = stdoutMatch;
                       return <CommandOutputWidget output={output} onLinkDetected={onLinkDetected} />;
+                    }
+                    
+                    // Check if it's an anyon workflow command - show friendly display text with icon
+                    if (isAnyonWorkflowCommand(contentStr.trim())) {
+                      const { text, icon } = getPromptDisplayInfo(contentStr.trim());
+                      return (
+                        <div className="flex items-center gap-2 text-sm font-medium text-primary">
+                          <WorkflowIcon icon={icon} className="h-4 w-4" />
+                          <span>{text}</span>
+                        </div>
+                      );
                     }
                     
                     // Otherwise render as plain text
@@ -612,10 +795,22 @@ const StreamMessageComponent: React.FC<StreamMessageProps> = ({ message, classNa
                   // Text content
                   if (content.type === "text") {
                     // Handle both string and object formats
-                    const textContent = typeof content.text === 'string' 
-                      ? content.text 
+                    const textContent = typeof content.text === 'string'
+                      ? content.text
                       : (content.text?.text || JSON.stringify(content.text));
-                    
+
+                    // Check if it's an anyon workflow command - show friendly display text with icon
+                    if (isAnyonWorkflowCommand(textContent.trim())) {
+                      const { text, icon } = getPromptDisplayInfo(textContent.trim());
+                      renderedSomething = true;
+                      return (
+                        <div key={idx} className="flex items-center gap-2 text-sm font-medium text-primary">
+                          <WorkflowIcon icon={icon} className="h-4 w-4" />
+                          <span>{text}</span>
+                        </div>
+                      );
+                    }
+
                     renderedSomething = true;
                     return (
                       <div key={idx} className="text-sm">
@@ -635,81 +830,51 @@ const StreamMessageComponent: React.FC<StreamMessageProps> = ({ message, classNa
       return renderedCard;
     }
 
-    // Result message - render with markdown
+    // Result message - show only metadata (text content already shown in assistant message)
     if (message.type === "result") {
       const isError = message.is_error || message.subtype?.includes("error");
+      const hasMetadata = message.cost_usd !== undefined || 
+                          message.total_cost_usd !== undefined || 
+                          message.duration_ms !== undefined || 
+                          message.num_turns !== undefined || 
+                          message.usage !== undefined ||
+                          message.error;
       
+      // Skip if no metadata and no error
+      if (!hasMetadata && !isError) {
+        return null;
+      }
+      
+      // Show compact metadata bar
       return (
-        <Card className={cn(
-          isError ? "border-destructive/20 bg-destructive/5" : "border-green-500/20 bg-green-500/5",
+        <div className={cn(
+          "flex items-center gap-4 px-3 py-2 rounded-lg text-xs",
+          isError ? "bg-destructive/10 text-destructive" : "bg-muted/50 text-muted-foreground",
           className
         )}>
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
-              {isError ? (
-                <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
-              ) : (
-                <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5" />
-              )}
-              <div className="flex-1 space-y-2">
-                <h4 className="font-semibold text-sm">
-                  {isError ? "Execution Failed" : "Execution Complete"}
-                </h4>
-                
-                {message.result && (
-                  <div className="prose prose-sm dark:prose-invert max-w-none">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      components={{
-                        code({ node, inline, className, children, ...props }: any) {
-                          const match = /language-(\w+)/.exec(className || '');
-                          return !inline && match ? (
-                            <SyntaxHighlighter
-                              style={syntaxTheme}
-                              language={match[1]}
-                              PreTag="div"
-                              {...props}
-                            >
-                              {String(children).replace(/\n$/, '')}
-                            </SyntaxHighlighter>
-                          ) : (
-                            <code className={className} {...props}>
-                              {children}
-                            </code>
-                          );
-                        }
-                      }}
-                    >
-                      {message.result}
-                    </ReactMarkdown>
-                  </div>
-                )}
-                
-                {message.error && (
-                  <div className="text-sm text-destructive">{message.error}</div>
-                )}
-                
-                <div className="text-xs text-muted-foreground space-y-1 mt-2">
-                  {(message.cost_usd !== undefined || message.total_cost_usd !== undefined) && (
-                    <div>Cost: ${((message.cost_usd || message.total_cost_usd)!).toFixed(4)} USD</div>
-                  )}
-                  {message.duration_ms !== undefined && (
-                    <div>Duration: {(message.duration_ms / 1000).toFixed(2)}s</div>
-                  )}
-                  {message.num_turns !== undefined && (
-                    <div>Turns: {message.num_turns}</div>
-                  )}
-                  {message.usage && (
-                    <div>
-                      Total tokens: {message.usage.input_tokens + message.usage.output_tokens} 
-                      ({message.usage.input_tokens} in, {message.usage.output_tokens} out)
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          {isError ? (
+            <AlertCircle className="h-3.5 w-3.5" />
+          ) : (
+            <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+          )}
+          
+          {message.error && (
+            <span className="text-destructive">{message.error}</span>
+          )}
+          
+          {(message.cost_usd !== undefined || message.total_cost_usd !== undefined) && (
+            <span>${((message.cost_usd || message.total_cost_usd)!).toFixed(4)}</span>
+          )}
+          {message.duration_ms !== undefined && (
+            <span>{(message.duration_ms / 1000).toFixed(1)}s</span>
+          )}
+          {message.num_turns !== undefined && (
+            <span>{message.num_turns} turns</span>
+          )}
+          {message.usage && (
+            <span>{message.usage.input_tokens + message.usage.output_tokens} tokens</span>
+          )}
+        </div>
       );
     }
 

@@ -1,8 +1,13 @@
 import { apiCall } from './apiAdapter';
 import type { HooksConfiguration } from '@/types/hooks';
 
+// Normalize project paths for cross-platform comparisons (slashes + casing)
+const normalizeProjectPath = (projectPath: string): string =>
+  projectPath.replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase();
+
+
 /** Process type for tracking in ProcessRegistry */
-export type ProcessType = 
+export type ProcessType =
   | { AgentRun: { agent_id: number; agent_name: string } }
   | { ClaudeSession: { session_id: string } };
 
@@ -15,6 +20,17 @@ export interface ProcessInfo {
   project_path: string;
   task: string;
   model: string;
+}
+
+/** Development workflow session */
+export interface DevSession {
+  id: number;
+  project_path: string;
+  last_prompt: string;
+  cycle_count: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
 }
 
 /**
@@ -577,13 +593,13 @@ export const api = {
     try {
       const result = await apiCall<{ data: ClaudeSettings }>("get_claude_settings");
       console.log("Raw result from get_claude_settings:", result);
-      
+
       // The Rust backend returns ClaudeSettings { data: ... }
       // We need to extract the data field
       if (result && typeof result === 'object' && 'data' in result) {
         return result.data;
       }
-      
+
       // If the result is already the settings object, return it
       return result as ClaudeSettings;
     } catch (error) {
@@ -703,8 +719,22 @@ export const api = {
     }
   },
 
+  /**
+   * Checks if a file exists
+   * @param path - The absolute path to the file
+   * @returns Promise resolving to true if file exists
+   */
+  async checkFileExists(path: string): Promise<boolean> {
+    try {
+      return await apiCall<boolean>("check_file_exists", { path });
+    } catch (error) {
+      console.error("Failed to check file existence:", error);
+      return false;
+    }
+  },
+
   // Agent API methods
-  
+
   /**
    * Lists all CC agents
    * @returns Promise resolving to an array of agents
@@ -729,17 +759,17 @@ export const api = {
    * @returns Promise resolving to the created agent
    */
   async createAgent(
-    name: string, 
-    icon: string, 
-    system_prompt: string, 
-    default_task?: string, 
+    name: string,
+    icon: string,
+    system_prompt: string,
+    default_task?: string,
     model?: string,
     hooks?: string
   ): Promise<Agent> {
     try {
-      return await apiCall<Agent>('create_agent', { 
-        name, 
-        icon, 
+      return await apiCall<Agent>('create_agent', {
+        name,
+        icon,
         systemPrompt: system_prompt,
         defaultTask: default_task,
         model,
@@ -763,19 +793,19 @@ export const api = {
    * @returns Promise resolving to the updated agent
    */
   async updateAgent(
-    id: number, 
-    name: string, 
-    icon: string, 
-    system_prompt: string, 
-    default_task?: string, 
+    id: number,
+    name: string,
+    icon: string,
+    system_prompt: string,
+    default_task?: string,
     model?: string,
     hooks?: string
   ): Promise<Agent> {
     try {
-      return await apiCall<Agent>('update_agent', { 
-        id, 
-        name, 
-        icon, 
+      return await apiCall<Agent>('update_agent', {
+        id,
+        name,
+        icon,
         systemPrompt: system_prompt,
         defaultTask: default_task,
         model,
@@ -1419,9 +1449,9 @@ export const api = {
    * Tracks a batch of messages for a session for checkpointing
    */
   trackSessionMessages: (
-    sessionId: string, 
-    projectId: string, 
-    projectPath: string, 
+    sessionId: string,
+    projectId: string,
+    projectPath: string,
     messages: string[]
   ): Promise<void> =>
     apiCall("track_session_messages", { sessionId, projectId, projectPath, messages }),
@@ -1773,17 +1803,13 @@ export const api = {
    */
   async getSetting(key: string): Promise<string | null> {
     try {
-      // Fast path: check localStorage mirror to avoid startup flicker
-      if (typeof window !== 'undefined' && 'localStorage' in window) {
-        const cached = window.localStorage.getItem(`app_setting:${key}`);
-        if (cached !== null) {
-          return cached;
-        }
-      }
-      // Use storageReadTable to safely query the app_settings table
+      // Always read from DB to ensure we have the latest data
+      // (localStorage is updated by saveSetting, not used for reading)
       const result = await this.storageReadTable('app_settings', 1, 1000);
-      const setting = result?.data?.find((row: any) => row.key === key);
-      return setting?.value || null;
+      const setting = result?.rows?.find((row: any) => row.key === key);
+      const value = setting?.value || null;
+
+      return value;
     } catch (error) {
       console.error(`Failed to get setting ${key}:`, error);
       return null;
@@ -1798,25 +1824,37 @@ export const api = {
    */
   async saveSetting(key: string, value: string): Promise<void> {
     try {
+      console.log('[api] saveSetting called:', key, 'value length:', value.length);
       // Mirror to localStorage for instant availability on next startup
       if (typeof window !== 'undefined' && 'localStorage' in window) {
         try {
           window.localStorage.setItem(`app_setting:${key}`, value);
+          console.log('[api] Saved to localStorage');
         } catch (_ignore) {
           // best-effort; continue to persist in DB
         }
       }
-      // Try to update first
-      try {
-        await this.storageUpdateRow(
+      // Check if row exists first (don't use getSetting as it would cause recursion)
+      const checkResult = await this.storageReadTable('app_settings', 1, 1000);
+      const exists = checkResult?.rows?.some((row: any) => row.key === key);
+      console.log('[api] Row exists:', exists);
+
+      if (exists) {
+        // Update existing row
+        console.log('[api] Trying updateRow...');
+        const updateResult = await this.storageUpdateRow(
           'app_settings',
           { key },
           { value }
         );
-      } catch (updateError) {
-        // If update fails (row doesn't exist), insert new row
-        await this.storageInsertRow('app_settings', { key, value });
+        console.log('[api] updateRow result:', updateResult);
+      } else {
+        // Insert new row
+        console.log('[api] Row does not exist, trying insertRow...');
+        const insertResult = await this.storageInsertRow('app_settings', { key, value });
+        console.log('[api] insertRow result:', insertResult);
       }
+      console.log('[api] saveSetting completed successfully');
     } catch (error) {
       console.error(`Failed to save setting ${key}:`, error);
       throw error;
@@ -1986,10 +2024,16 @@ export const api = {
   async getRegisteredProjects(): Promise<string[]> {
     try {
       const setting = await this.getSetting('registered_projects');
-      if (!setting) {
+      console.log('[api] getRegisteredProjects - raw setting:', setting);
+      if (!setting || setting === '""' || setting === 'null') {
         return [];
       }
-      return JSON.parse(setting) as string[];
+      const parsed = JSON.parse(setting) as string[];
+      console.log('[api] getRegisteredProjects - parsed:', parsed);
+      // Filter out empty strings
+      const filtered = parsed.filter(p => p && p.trim().length > 0);
+      console.log('[api] getRegisteredProjects - filtered:', filtered);
+      return filtered;
     } catch (error) {
       console.error('Failed to get registered projects:', error);
       return [];
@@ -2003,11 +2047,31 @@ export const api = {
    */
   async registerProject(projectPath: string): Promise<void> {
     try {
+      console.log('[api] registerProject called with:', projectPath);
       const registered = await this.getRegisteredProjects();
-      // Avoid duplicates
-      if (!registered.includes(projectPath)) {
+      console.log('[api] Current registered projects:', registered);
+
+      // Avoid duplicates (normalize slashes + casing for Windows/macOS)
+      const normalizedProjectPath = normalizeProjectPath(projectPath);
+      const registeredNormalized = registered.map(normalizeProjectPath);
+      console.log('[api] registeredNormalized:', registeredNormalized);
+      console.log('[api] Checking if includes:', normalizedProjectPath);
+
+      if (!registeredNormalized.includes(normalizedProjectPath)) {
+        console.log('[api] NOT a duplicate, adding to list');
         registered.push(projectPath);
+        console.log('[api] About to save:', registered);
         await this.saveSetting('registered_projects', JSON.stringify(registered));
+        console.log('[api] Successfully saved! Registered project:', projectPath);
+        console.log('[api] New registered list:', registered);
+
+        // Verify it was actually saved
+        const verify = await this.getRegisteredProjects();
+        console.log('[api] Verification - projects after save:', verify);
+      } else {
+        console.log('[api] IS a duplicate! Project already registered:', projectPath);
+        console.log('[api] registeredNormalized:', registeredNormalized);
+        console.log('[api] normalizedProjectPath:', normalizedProjectPath);
       }
     } catch (error) {
       console.error('Failed to register project:', error);
@@ -2023,7 +2087,11 @@ export const api = {
   async unregisterProject(projectPath: string): Promise<void> {
     try {
       const registered = await this.getRegisteredProjects();
-      const filtered = registered.filter(p => p !== projectPath);
+      // Use normalized comparison for cross-platform compatibility
+      const normalizedProjectPath = normalizeProjectPath(projectPath);
+      const filtered = registered.filter(
+        p => normalizeProjectPath(p) !== normalizedProjectPath
+      );
       await this.saveSetting('registered_projects', JSON.stringify(filtered));
     } catch (error) {
       console.error('Failed to unregister project:', error);
@@ -2042,12 +2110,13 @@ export const api = {
       if (registeredPaths.length === 0) {
         return [];
       }
-      
+
       // Get all projects from ~/.claude/projects
       const allProjects = await this.listProjects();
-      
-      // Filter to only registered ones
-      return allProjects.filter(p => registeredPaths.includes(p.path));
+
+      // Filter to only registered ones (normalized comparison for Windows/macOS paths)
+      const registeredNormalized = registeredPaths.map(normalizeProjectPath);
+      return allProjects.filter(p => registeredNormalized.includes(normalizeProjectPath(p.path)));
     } catch (error) {
       console.error('Failed to list registered projects:', error);
       return [];
@@ -2088,6 +2157,54 @@ export const api = {
     }
   },
 
+  /**
+   * Check if a directory is a git repository
+   * @param projectPath - The absolute path to the project
+   * @returns Promise resolving to true if it's a git repo
+   */
+  async checkIsGitRepo(projectPath: string): Promise<boolean> {
+    try {
+      return await apiCall<boolean>('check_is_git_repo', { projectPath });
+    } catch (error) {
+      console.error('Failed to check git repo:', error);
+      return false;
+    }
+  },
+
+  /**
+   * Initialize a git repository in the specified directory
+   * @param projectPath - The absolute path to the project
+   * @returns Promise resolving to the command result
+   */
+  async initGitRepo(projectPath: string): Promise<NpxRunResult> {
+    try {
+      return await apiCall<NpxRunResult>('init_git_repo', { projectPath });
+    } catch (error) {
+      console.error('Failed to init git repo:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Start development workflow
+   */
+  async startDevWorkflow(projectPath: string, model: string): Promise<void> {
+    return apiCall("start_dev_workflow", { projectPath, model });
+  },
+
+  /**
+   * Stop development workflow
+   */
+  async stopDevWorkflow(projectPath: string): Promise<void> {
+    return apiCall("stop_dev_workflow", { projectPath });
+  },
+
+  /**
+   * Get development workflow status
+   */
+  async getDevWorkflowStatus(projectPath: string): Promise<DevSession> {
+    return apiCall("get_dev_workflow_status", { projectPath });
+  },
 };
 
 /**

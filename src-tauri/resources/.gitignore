@@ -1,0 +1,7 @@
+# Ignore portable binaries (too large for git)
+git-portable/
+node-portable/
+
+# Keep this README
+!README.md
+!.gitignore

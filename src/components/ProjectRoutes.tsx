@@ -35,12 +35,20 @@ interface ProjectsNavigationContextType {
 
 const ProjectsNavigationContext = createContext<ProjectsNavigationContextType | null>(null);
 
+// Default navigation functions for when context is not available
+const defaultNavigationContext: ProjectsNavigationContextType = {
+  currentRoute: { type: 'list' },
+  navigate: () => console.warn('Navigation not available outside ProjectRoutes'),
+  goToProjectList: () => console.warn('Navigation not available outside ProjectRoutes'),
+  goToProject: () => console.warn('Navigation not available outside ProjectRoutes'),
+  goToMvp: () => console.warn('Navigation not available outside ProjectRoutes'),
+  goToMaintenance: () => console.warn('Navigation not available outside ProjectRoutes'),
+};
+
 export const useProjectsNavigation = () => {
   const context = useContext(ProjectsNavigationContext);
-  if (!context) {
-    throw new Error('useProjectsNavigation must be used within ProjectRoutes');
-  }
-  return context;
+  // Return default context if not within provider (e.g., during lazy loading)
+  return context || defaultNavigationContext;
 };
 
 // Context for sharing projects data across routes
@@ -48,13 +56,13 @@ export const ProjectsContext = createContext<{
   projects: Project[];
   loading: boolean;
   error: string | null;
-  refreshProjects: () => Promise<void>;
+  refreshProjects: () => Promise<Project[]>;
   getProjectById: (id: string) => Project | undefined;
 }>({
   projects: [],
   loading: false,
   error: null,
-  refreshProjects: async () => {},
+  refreshProjects: async () => [],
   getProjectById: () => undefined,
 });
 
@@ -162,16 +170,18 @@ export const ProjectRoutes: React.FC<ProjectRoutesProps> = ({ tabId }) => {
     navigate({ type: 'maintenance', projectId });
   }, [navigate]);
 
-  const loadProjects = async () => {
+  const loadProjects = async (): Promise<Project[]> => {
     try {
       setLoading(true);
       setError(null);
       // Only load registered projects (user-added projects)
       const projectList = await api.listRegisteredProjects();
       setProjects(projectList);
+      return projectList;
     } catch (err) {
       console.error("Failed to load projects:", err);
       setError("Failed to load projects. Please ensure ~/.claude directory exists.");
+      return [];
     } finally {
       setLoading(false);
     }

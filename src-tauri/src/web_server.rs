@@ -108,7 +108,14 @@ impl<T> ApiResponse<T> {
 
 /// Serve the React frontend
 async fn serve_frontend() -> Html<&'static str> {
-    Html(include_str!("../../dist/index.html"))
+    #[cfg(not(dev))]
+    {
+        Html(include_str!("../../dist/index.html"))
+    }
+    #[cfg(dev)]
+    {
+        Html("<html><body>Development mode - frontend served by Vite at http://localhost:1420</body></html>")
+    }
 }
 
 /// API endpoint to get projects (equivalent to Tauri command)

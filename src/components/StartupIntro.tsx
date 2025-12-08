@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
-import opcodeLogo from "../../src-tauri/icons/icon.png";
+import anyonLogo from "../../src-tauri/icons/icon.png";
 import type { CSSProperties } from "react";
+import { useThemeContext } from "../contexts/ThemeContext";
 
 /**
  * StartupIntro - a lightweight startup overlay shown on app launch.
@@ -8,6 +9,10 @@ import type { CSSProperties } from "react";
  * - Uses existing shimmer/rotating-symbol styles from shimmer.css.
  */
 export function StartupIntro({ visible }: { visible: boolean }) {
+  const { theme } = useThemeContext();
+  // 다크모드(dark, gray, custom)에서는 로고를 흰색으로 반전
+  const isDarkMode = theme !== 'light';
+
   // Simple entrance animations only
   return (
     <AnimatePresence>
@@ -50,7 +55,7 @@ export function StartupIntro({ visible }: { visible: boolean }) {
             className="relative flex flex-col items-center justify-center gap-1"
           >
 
-            {/* opcode logo slides left; brand text reveals to the right */}
+            {/* ANYON logo slides left; brand text reveals to the right */}
             <div className="relative flex items-center justify-center">
               {/* Logo wrapper that gently slides left */}
               <motion.div
@@ -66,9 +71,12 @@ export function StartupIntro({ visible }: { visible: boolean }) {
                   transition={{ duration: 0.9, ease: "easeOut" }}
                 />
                 <motion.img
-                  src={opcodeLogo}
-                  alt="opcode"
+                  src={anyonLogo}
+                  alt="ANYON"
                   className="h-20 w-20 rounded-lg shadow-sm"
+                  style={{
+                    filter: isDarkMode ? 'invert(1) brightness(2)' : 'none',
+                  }}
                   transition={{ repeat: Infinity, repeatType: "loop", ease: "linear", duration: 0.5 }}
                 />
               </motion.div>
@@ -97,8 +105,8 @@ export default StartupIntro;
 function BrandText() {
   return (
     <div className="text-5xl font-extrabold tracking-tight brand-text">
-      <span className="brand-text-solid">opcode</span>
-      <span aria-hidden="true" className="brand-text-shimmer">opcode</span>
+      <span className="brand-text-solid">ANYON</span>
+      <span aria-hidden="true" className="brand-text-shimmer">ANYON</span>
     </div>
   );
 }

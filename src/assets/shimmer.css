@@ -65,30 +65,11 @@
 }
 
 @keyframes symbol-rotate {
-  0% {
-    content: '◐';
-    opacity: 1;
-    transform: translateY(0) scale(1);
+  from {
+    transform: rotate(0deg);
   }
-  25% {
-    content: '◓';
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  50% {
-    content: '◑';
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  75% {
-    content: '◒';
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  100% {
-    content: '◐';
-    opacity: 1;
-    transform: translateY(0) scale(1);
+  to {
+    transform: rotate(360deg);
   }
 }
 
@@ -145,23 +126,16 @@
 
 .rotating-symbol {
   display: inline-block;
-  color: #8B5CF6;
-  font-size: 1.5rem; /* Make it bigger! */
+  width: 1.25rem;
+  height: 1.25rem;
   margin-right: 0.5rem;
-  font-weight: bold;
   vertical-align: middle;
   position: relative;
-  line-height: 1;
   top: -2px;
-}
-
-.rotating-symbol::before {
-  content: '◐';
-  display: inline-block;
-  animation: symbol-rotate 2s linear infinite;
-  font-size: inherit;
-  line-height: inherit;
-  vertical-align: baseline;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: symbol-rotate 1s linear infinite;
 }
 
 /* Allow pausing the rotating symbol via an extra class */

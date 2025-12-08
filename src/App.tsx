@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import { HashRouter } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Bot, FolderCode } from "lucide-react";
+import { Bot, FolderCode, Loader2 } from "lucide-react";
+import { useAuthStore } from "@/stores/authStore";
+import { LoginPage } from "@/components/LoginPage";
 import { api, type Project, type Session, type ClaudeMdFile } from "@/lib/api";
 import { initializeWebMode } from "@/lib/apiAdapter";
 import { OutputCacheProvider } from "@/lib/outputCache";
@@ -28,11 +30,11 @@ import { useTabState } from "@/hooks/useTabState";
 import { useAppLifecycle, useTrackEvent } from "@/hooks";
 import { StartupIntro } from "@/components/StartupIntro";
 
-type View = 
-  | "welcome" 
-  | "projects" 
-  | "editor" 
-  | "claude-file-editor" 
+type View =
+  | "welcome"
+  | "projects"
+  | "editor"
+  | "claude-file-editor"
   | "settings"
   | "cc-agents"
   | "create-agent"
@@ -63,15 +65,15 @@ function AppContent() {
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
   const [projectForSettings, setProjectForSettings] = useState<Project | null>(null);
   const [previousView] = useState<View>("welcome");
-  
+
   // Initialize analytics lifecycle tracking
   useAppLifecycle();
   const trackEvent = useTrackEvent();
-  
+
   // Track user journey milestones
   const [hasTrackedFirstChat] = useState(false);
   // const [hasTrackedFirstAgent] = useState(false);
-  
+
   // Track when user reaches different journey stages
   useEffect(() => {
     if (view === "projects" && projects.length > 0 && !hasTrackedFirstChat) {
@@ -102,11 +104,11 @@ function AppContent() {
   // Keyboard shortcuts for tab navigation
   useEffect(() => {
     if (view !== "tabs") return;
-    
+
     const handleKeyDown = (e: KeyboardEvent) => {
       const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
       const modKey = isMac ? e.metaKey : e.ctrlKey;
-      
+
       if (modKey) {
         switch (e.key) {
           case 't':
@@ -248,7 +250,7 @@ function AppContent() {
               >
                 <h1 className="text-4xl font-bold tracking-tight">
                   <span className="rotating-symbol"></span>
-                  Welcome to opcode
+                  Welcome to ANYON
                 </h1>
               </motion.div>
 
@@ -260,7 +262,7 @@ function AppContent() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.15, delay: 0.05 }}
                 >
-                  <Card 
+                  <Card
                     className="h-64 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg border border-border/50 shimmer-hover trailing-border"
                     onClick={() => handleViewChange("cc-agents")}
                   >
@@ -277,7 +279,7 @@ function AppContent() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.15, delay: 0.1 }}
                 >
-                  <Card 
+                  <Card
                     className="h-64 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg border border-border/50 shimmer-hover trailing-border"
                     onClick={() => handleViewChange("projects")}
                   >
@@ -295,8 +297,8 @@ function AppContent() {
 
       case "cc-agents":
         return (
-          <CCAgents 
-            onBack={() => handleViewChange("welcome")} 
+          <CCAgents
+            onBack={() => handleViewChange("welcome")}
           />
         );
 
@@ -306,10 +308,10 @@ function AppContent() {
             <MarkdownEditor onBack={() => handleViewChange("welcome")} />
           </div>
         );
-      
+
       case "settings":
         return <Settings onBack={() => handleViewChange("welcome")} />;
-      
+
       case "projects":
         if (selectedProject) {
           return (
@@ -328,7 +330,7 @@ function AppContent() {
             loading={loading}
           />
         );
-      
+
       case "claude-file-editor":
         return editingClaudeFile ? (
           <ClaudeFileEditor
@@ -336,7 +338,7 @@ function AppContent() {
             onBack={handleBackFromClaudeFileEditor}
           />
         ) : null;
-      
+
       case "tabs":
         return (
           <div className="h-full flex flex-col">
@@ -346,17 +348,17 @@ function AppContent() {
             </div>
           </div>
         );
-      
+
       case "usage-dashboard":
         return (
           <UsageDashboard onBack={() => handleViewChange("welcome")} />
         );
-      
+
       case "mcp":
         return (
           <MCPManager onBack={() => handleViewChange("welcome")} />
         );
-      
+
       case "project-settings":
         if (projectForSettings) {
           return (
@@ -370,7 +372,7 @@ function AppContent() {
           );
         }
         break;
-      
+
       default:
         return null;
     }
@@ -387,7 +389,7 @@ function AppContent() {
         onSettingsClick={() => createSettingsTab()}
         onInfoClick={() => setShowNFO(true)}
       />
-      
+
       {/* Topbar - Commented out since navigation moved to titlebar */}
       {/* <Topbar
         onClaudeClick={() => createClaudeMdTab()}
@@ -397,18 +399,18 @@ function AppContent() {
         onInfoClick={() => setShowNFO(true)}
         onAgentsClick={() => setShowAgentsModal(true)}
       /> */}
-      
-      
-      
+
+
+
       {/* Main Content */}
       <div className="flex-1 overflow-hidden">
         {renderContent()}
       </div>
-      
+
       {/* NFO Credits Modal */}
       {showNFO && <NFOCredits onClose={() => setShowNFO(false)} />}
-      
-      
+
+
       {/* Claude Binary Dialog */}
       <ClaudeBinaryDialog
         open={showClaudeBinaryDialog}
@@ -448,7 +450,7 @@ function AppContent() {
           </div>
         </div>
       )}
-      
+
       {/* Toast Container */}
       <ToastContainer>
         {toast && (
@@ -493,9 +495,11 @@ function AppContent() {
 }
 
 /**
- * Main App component - Wraps the app with providers
+ * Main App component - Wraps the app with providers and auth gate
  */
 function App() {
+  const { isAuthenticated, checkAuth } = useAuthStore();
+  const [isChecking, setIsChecking] = useState(true);
   const [showIntro, setShowIntro] = useState(() => {
     // Read cached preference synchronously to avoid any initial flash
     try {
@@ -504,9 +508,25 @@ function App() {
         : null;
       if (cached === 'true') return true;
       if (cached === 'false') return false;
-    } catch (_ignore) {}
+    } catch (_ignore) { }
     return true; // default if no cache
   });
+
+  // Check authentication on mount
+  useEffect(() => {
+    const verifyAuth = async () => {
+      try {
+        const result = await checkAuth();
+        console.log('Auth check result:', result);
+      } catch (error) {
+        console.error('Auth check failed:', error);
+      } finally {
+        setIsChecking(false);
+      }
+    };
+
+    verifyAuth();
+  }, [checkAuth]);
 
   useEffect(() => {
     let timer: number | undefined;
@@ -531,6 +551,30 @@ function App() {
     };
   }, []);
 
+  // Show loading while checking auth
+  if (isChecking) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-12 h-12 animate-spin text-primary" />
+          <p className="text-muted-foreground">로딩 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login page if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <HashRouter>
+        <ThemeProvider>
+          <LoginPage />
+        </ThemeProvider>
+      </HashRouter>
+    );
+  }
+
+  // Show main app
   return (
     <HashRouter>
       <ThemeProvider>

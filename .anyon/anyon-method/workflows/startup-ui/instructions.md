@@ -1100,28 +1100,11 @@ npm install @fontsource/{{body_font}}
 개발자에게 이 문서를 전달하면
 바로 설치하고 구현할 수 있어요.
 
-이제 자동으로 **TRD (기술 요구사항) 워크플로우**가 시작됩니다!"
+다음 단계는 **TRD (기술 요구사항) 워크플로우**입니다.
+준비가 되면 기획문서 패널에서 'TRD 작성하기' 버튼을 눌러주세요!"
 </action>
 
 <template-output>ui_design_guide_complete</template-output>
-</step>
-
-<step n="15" goal="Auto-chain to Next Workflow">
-<critical>Automatically invoke TRD workflow</critical>
-
-<action>Confirm UI Design Guide saved to {default_output_file}</action>
-
-<action>Notify user:
-"UI Design Guide 작성이 완료되었습니다!
-
-이제 자동으로 **TRD (Technical Requirements Document) 워크플로우**를 시작합니다.
-TRD에서는 지금까지 정의한 기능과 UI를 실제로 구현할
-기술 스택과 오픈소스를 선택할 거예요.
-
-시작할게요! 🚀"
-</action>
-
-<invoke-workflow>{next_workflow}</invoke-workflow>
 </step>
 
 </workflow>

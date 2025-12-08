@@ -10,6 +10,11 @@ use tauri::{AppHandle, Emitter, Manager};
 use tokio::process::{Child, Command};
 use tokio::sync::Mutex;
 
+// Windows-specific imports for hiding console window
+#[cfg(target_os = "windows")]
+#[allow(unused_imports)]
+use std::os::windows::process::CommandExt;
+
 /// Global state to track current Claude process
 pub struct ClaudeProcessState {
     pub current_process: Arc<Mutex<Option<Child>>>,
@@ -286,6 +291,15 @@ fn create_command_with_env(program: &str) -> Command {
         }
     }
 
+    // Windows: Hide console window when spawning child process
+    // This prevents a separate terminal window from appearing when Claude CLI is executed
+    #[cfg(target_os = "windows")]
+    {
+        const CREATE_NO_WINDOW: u32 = 0x08000000;
+        const DETACHED_PROCESS: u32 = 0x00000008;
+        tokio_cmd.creation_flags(CREATE_NO_WINDOW | DETACHED_PROCESS);
+    }
+
     tokio_cmd
 }
 
@@ -299,8 +313,16 @@ fn create_system_command(claude_path: &str, args: Vec<String>, project_path: &st
     }
 
     cmd.current_dir(project_path)
+        .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
+
+    // Windows: Hide console window
+    #[cfg(target_os = "windows")]
+    {
+        const CREATE_NO_WINDOW: u32 = 0x08000000;
+        cmd.creation_flags(CREATE_NO_WINDOW);
+    }
 
     cmd
 }
@@ -354,14 +376,58 @@ pub async fn list_projects() -> Result<Vec<Project>, String> {
                 .unwrap_or_default()
                 .as_secs();
 
-            // Get the actual project path from JSONL files
-            let project_path = match get_project_path_from_sessions(&path) {
-                Ok(path) => path,
-                Err(e) => {
-                    log::warn!("Failed to get project path from sessions for {}: {}, falling back to decode", dir_name, e);
-                    decode_project_path(dir_name)
+            // Try to get project path from metadata file first (for new projects without sessions)
+            let meta_file = path.join(".project_meta.json");
+            let project_path = if meta_file.exists() {
+                // Read from metadata file
+                match fs::read_to_string(&meta_file) {
+                    Ok(content) => {
+                        match serde_json::from_str::<serde_json::Value>(&content) {
+                            Ok(meta) => {
+                                meta.get("path")
+                                    .and_then(|p| p.as_str())
+                                    .map(|s| s.to_string())
+                                    .unwrap_or_else(|| {
+                                        log::warn!("Invalid metadata file format, falling back to sessions");
+                                        match get_project_path_from_sessions(&path) {
+                                            Ok(path) => path,
+                                            Err(_) => decode_project_path(dir_name)
+                                        }
+                                    })
+                            }
+                            Err(_) => {
+                                log::warn!("Failed to parse metadata file, falling back to sessions");
+                                match get_project_path_from_sessions(&path) {
+                                    Ok(path) => path,
+                                    Err(_) => decode_project_path(dir_name)
+                                }
+                            }
+                        }
+                    }
+                    Err(_) => {
+                        log::warn!("Failed to read metadata file, falling back to sessions");
+                        match get_project_path_from_sessions(&path) {
+                            Ok(path) => path,
+                            Err(_) => decode_project_path(dir_name)
+                        }
+                    }
+                }
+            } else {
+                // No metadata file, try to get from JSONL sessions
+                match get_project_path_from_sessions(&path) {
+                    Ok(path) => path,
+                    Err(e) => {
+                        log::warn!("Failed to get project path from sessions for {}: {}, falling back to decode", dir_name, e);
+                        decode_project_path(dir_name)
+                    }
                 }
             };
+
+            // Check if the actual project folder still exists
+            if !PathBuf::from(&project_path).exists() {
+                log::warn!("Project folder no longer exists: {}, skipping", project_path);
+                continue;
+            }
 
             // List all JSONL files (sessions) in this project directory
             let mut sessions = Vec::new();
@@ -397,7 +463,7 @@ pub async fn list_projects() -> Result<Vec<Project>, String> {
             }
 
             projects.push(Project {
-                id: dir_name.to_string(),
+                id: dir_name.to_lowercase(),
                 path: project_path,
                 sessions,
                 created_at,
@@ -427,7 +493,13 @@ pub async fn create_project(path: String) -> Result<Project, String> {
     log::info!("Creating project for path: {}", path);
 
     // Encode the path to create a project ID
-    let project_id = path.replace('/', "-");
+    // Replace both forward and backward slashes, and colons (for Windows drive letters)
+    // Use lowercase for Windows case-insensitivity
+    let project_id = path
+        .to_lowercase()
+        .replace('/', "-")
+        .replace('\\', "-")
+        .replace(':', "-");
 
     // Get claude directory
     let claude_dir = get_claude_dir().map_err(|e| e.to_string())?;
@@ -445,6 +517,16 @@ pub async fn create_project(path: String) -> Result<Project, String> {
         fs::create_dir_all(&project_dir)
             .map_err(|e| format!("Failed to create project directory: {}", e))?;
     }
+
+    // Save project metadata file with the original path
+    // This allows us to retrieve the correct path even when there are no sessions yet
+    let meta_file = project_dir.join(".project_meta.json");
+    let meta_data = serde_json::json!({
+        "path": path,
+        "project_id": project_id,
+    });
+    fs::write(&meta_file, serde_json::to_string_pretty(&meta_data).unwrap())
+        .map_err(|e| format!("Failed to write project metadata: {}", e))?;
 
     // Get creation time
     let metadata = fs::metadata(&project_dir)
@@ -1294,6 +1376,9 @@ async fn spawn_claude_process(
     let session_id_holder_clone3 = session_id_holder.clone();
     let run_id_holder_clone2 = run_id_holder.clone();
     let registry_clone2 = registry.0.clone();
+    let project_path_for_routing = project_path.clone();
+    let prompt_for_routing = prompt.clone();
+    let model_for_routing = model.clone();
     tokio::spawn(async move {
         let _ = stdout_task.await;
         let _ = stderr_task.await;
@@ -1304,6 +1389,31 @@ async fn spawn_claude_process(
             match child.wait().await {
                 Ok(status) => {
                     log::info!("Claude process exited with status: {}", status);
+
+                    // === Dev workflow auto-routing ===
+                    // Use a blocking thread spawn to avoid Send trait issues
+                    let app_for_routing = app_handle_wait.clone();
+                    let project_for_routing = project_path_for_routing.clone();
+                    let prompt_str = prompt_for_routing.clone();
+                    let model_str = model_for_routing.clone();
+                    let success = status.success();
+                    std::thread::spawn(move || {
+                        tauri::async_runtime::block_on(async move {
+                            if let Err(e) = super::dev_workflow::on_claude_complete(
+                                &app_for_routing,
+                                &project_for_routing,
+                                &prompt_str,
+                                success,
+                                &model_str,
+                            )
+                            .await
+                            {
+                                log::error!("Dev workflow auto-routing failed: {}", e);
+                            }
+                        });
+                    });
+                    // === End auto-routing ===
+
                     // Add a small delay to ensure all messages are processed
                     tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
                     if let Some(ref session_id) = *session_id_holder_clone3.lock().unwrap() {
@@ -2328,14 +2438,23 @@ pub async fn run_npx_anyon_agents(
     
     // Emit start event
     let _ = app_handle.emit("anyon-install-start", &project_path);
-    
-    // Run npx anyon-agents@latest with stdin piped for auto-confirmation
-    let mut child = Command::new("npx")
-        .arg("anyon-agents@latest")
+
+    log::info!("[Rust] Using system npx command");
+
+    // Windows: Use npx.cmd explicitly
+    #[cfg(target_os = "windows")]
+    let npx_cmd = "npx.cmd";
+    #[cfg(not(target_os = "windows"))]
+    let npx_cmd = "npx";
+
+    let mut cmd = Command::new(npx_cmd);
+    cmd.arg("anyon-agents@latest")
         .current_dir(&path)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
+        .stderr(Stdio::piped());
+
+    let mut child = cmd
         .spawn()
         .map_err(|e| format!("Failed to spawn npx command: {}", e))?;
     
@@ -2365,6 +2484,77 @@ pub async fn run_npx_anyon_agents(
     
     // Emit completion event
     let _ = app_handle.emit("anyon-install-complete", &result);
+    
+    Ok(result)
+}
+
+/// Check if a directory is a git repository
+#[tauri::command]
+pub async fn check_is_git_repo(project_path: String) -> Result<bool, String> {
+    log::info!("[Rust] Checking if {} is a git repo", project_path);
+    let path = PathBuf::from(&project_path);
+    
+    if !path.exists() {
+        log::error!("[Rust] Project path does not exist: {}", project_path);
+        return Err(format!("Project path does not exist: {}", project_path));
+    }
+    
+    let git_dir = path.join(".git");
+    let is_git = git_dir.exists() && git_dir.is_dir();
+    log::info!("[Rust] Is git repo: {}", is_git);
+    Ok(is_git)
+}
+
+/// Initialize a git repository in the specified directory
+#[tauri::command]
+pub async fn init_git_repo(
+    project_path: String,
+    app_handle: AppHandle,
+) -> Result<NpxRunResult, String> {
+    log::info!("[Rust] Initializing git repo at: {}", project_path);
+    let path = PathBuf::from(&project_path);
+    
+    if !path.exists() {
+        log::error!("[Rust] Project path does not exist: {}", project_path);
+        return Err(format!("Project path does not exist: {}", project_path));
+    }
+    
+    // Emit start event
+    let _ = app_handle.emit("git-init-start", &project_path);
+    
+    // Run git init
+    log::info!("[Rust] Running 'git init' command...");
+
+    let mut cmd = Command::new("git");
+    cmd.arg("init")
+        .current_dir(&path)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    
+    let output = cmd
+        .output()
+        .await
+        .map_err(|e| {
+            log::error!("[Rust] Failed to run git init: {}", e);
+            format!("Failed to run git init: {}", e)
+        })?;
+    
+    let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+    let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+    let success = output.status.success();
+    let exit_code = output.status.code();
+    
+    log::info!("[Rust] Git init result - success: {}, stdout: {}, stderr: {}", success, stdout, stderr);
+    
+    let result = NpxRunResult {
+        success,
+        stdout,
+        stderr,
+        exit_code,
+    };
+    
+    // Emit completion event
+    let _ = app_handle.emit("git-init-complete", &result);
     
     Ok(result)
 }

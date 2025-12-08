@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Opcode
+Comment=GUI app and Toolkit for Claude Code
+Exec=env GTK_IM_MODULE=ibus QT_IM_MODULE=ibus XMODIFIERS=@im=ibus IBUS_ENABLE_SYNC_MODE=1 IBUS_USE_PORTAL=0 GDK_BACKEND=x11 opcode %u
+Icon=opcode
+Terminal=false
+Categories=Development;
+Keywords=claude;ai;development;
+StartupWMClass=opcode

@@ -13,6 +13,10 @@ dist-ssr
 *.local
 *.bun-build
 
+# Vite cache
+node_modules/.vite
+.parcel-cache
+
 # Tauri binaries (built executables)
 src-tauri/binaries/
 

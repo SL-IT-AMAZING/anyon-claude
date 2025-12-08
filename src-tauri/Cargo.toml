@@ -1,24 +1,24 @@
 [package]
-name = "opcode"
+name = "anyon"
 version = "0.2.1"
-description = "GUI app and Toolkit for Claude Code"
+description = "AI-Powered Development Platform"
 authors = ["mufeedvh", "123vviekr"]
 license = "AGPL-3.0"
 edition = "2021"
-default-run = "opcode"
+default-run = "anyon"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [[bin]]
-name = "opcode"
+name = "anyon"
 path = "src/main.rs"
 
 [lib]
-name = "opcode_lib"
+name = "anyon_lib"
 crate-type = ["lib", "cdylib", "staticlib"]
 
 [[bin]]
-name = "opcode-web"
+name = "anyon-web"
 path = "src/web_main.rs"
 
 [build-dependencies]
@@ -35,6 +35,8 @@ tauri-plugin-notification = "2"
 tauri-plugin-clipboard-manager = "2"
 tauri-plugin-global-shortcut = "2"
 tauri-plugin-http = "2"
+tauri-plugin-deep-link = "2.0"
+tauri-plugin-single-instance = "2.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["full"] }
@@ -63,6 +65,8 @@ tower = "0.5"
 tower-http = { version = "0.6", features = ["fs", "cors"] }
 clap = { version = "4.0", features = ["derive"] }
 futures-util = "0.3"
+jsonwebtoken = "9"
+yup-oauth2 = "11"
 # Pin image to avoid edition2024 requirement
 image = "=0.25.1"
 

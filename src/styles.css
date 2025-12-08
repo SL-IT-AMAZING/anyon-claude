@@ -610,6 +610,16 @@ html.is-macos body {
   padding-left: 1.625em;
 }
 
+.prose ol {
+  list-style-type: decimal;
+  list-style-position: outside;
+}
+
+.prose ul {
+  list-style-type: disc;
+  list-style-position: outside;
+}
+
 .prose li {
   margin-top: 0.5em;
   margin-bottom: 0.5em;
@@ -745,11 +755,12 @@ html.is-macos body {
 
 /* Rotating symbol animation */
 @keyframes rotate-symbol {
-  0%   { content: "◐"; transform: scale(1); }
-  25%  { content: "◓"; transform: scale(1); }
-  50%  { content: "◑"; transform: scale(1); }
-  75%  { content: "◒"; transform: scale(1); }
-  100% { content: "◐"; transform: scale(1); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes fade-in {
@@ -765,23 +776,15 @@ html.is-macos body {
 
 .rotating-symbol {
   display: inline-block;
+  width: 1.25rem;
+  height: 1.25rem;
   vertical-align: middle;
-  line-height: 1;
-  animation: fade-in 0.2s ease-out;
-  font-weight: normal;
-  font-size: 1.5rem; /* Make it bigger! */
   position: relative;
   top: -2px;
-}
-
-.rotating-symbol::before {
-  content: "◐";
-  animation: rotate-symbol 1.6s steps(4, end) infinite;
-  display: inline-block;
-  font-size: inherit;
-  line-height: 1;
-  vertical-align: baseline;
-  transform-origin: center;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: rotate-symbol 1s linear infinite;
 }
 
 /* Removed special font-weight for larger sizes to maintain consistency */

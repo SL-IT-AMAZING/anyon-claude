@@ -7,7 +7,16 @@ import {
   ChevronUp,
   X,
   Hash,
-  Wrench
+  Wrench,
+  FileText as FileTextIcon,
+  Palette,
+  Paintbrush,
+  Settings,
+  Boxes,
+  Database,
+  LayoutList,
+  Rocket,
+  CheckCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,7 +45,24 @@ import { WebviewPreview } from "./WebviewPreview";
 import type { ClaudeStreamMessage } from "./AgentExecution";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useTrackEvent, useComponentMetrics, useWorkflowTracking } from "@/hooks";
-import { SessionPersistenceService } from "@/services/sessionPersistence";
+import { SessionPersistenceService, type TabType } from "@/services/sessionPersistence";
+import { getPromptDisplayInfo, isAnyonWorkflowCommand, type PromptIconType } from "@/lib/promptDisplay";
+
+// Icon mapping for workflow prompts
+const WorkflowIcon: React.FC<{ icon: PromptIconType | null; className?: string }> = ({ icon, className = "h-4 w-4" }) => {
+  switch (icon) {
+    case 'file-text': return <FileTextIcon className={className} />;
+    case 'palette': return <Palette className={className} />;
+    case 'paintbrush': return <Paintbrush className={className} />;
+    case 'settings': return <Settings className={className} />;
+    case 'boxes': return <Boxes className={className} />;
+    case 'database': return <Database className={className} />;
+    case 'layout-list': return <LayoutList className={className} />;
+    case 'rocket': return <Rocket className={className} />;
+    case 'check-circle': return <CheckCircle className={className} />;
+    default: return null;
+  }
+};
 
 interface ClaudeCodeSessionProps {
   /**
@@ -72,6 +98,14 @@ interface ClaudeCodeSessionProps {
    * When true, the input will be positioned within its container instead of fixed at bottom
    */
   embedded?: boolean;
+  /**
+   * Tab type for session persistence (mvp or maintenance)
+   */
+  tabType?: TabType;
+  /**
+   * Callback when a new session is created
+   */
+  onSessionCreated?: (sessionId: string, firstMessage?: string) => void;
 }
 
 /**
@@ -80,6 +114,7 @@ interface ClaudeCodeSessionProps {
  */
 export interface ClaudeCodeSessionRef {
   sendPrompt: (prompt: string, model?: "sonnet" | "opus") => void;
+  startNewSession: (initialPrompt: string) => void;
   isLoading: boolean;
 }
 
@@ -98,6 +133,8 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
   onStreamingChange,
   onProjectPathChange,
   embedded = false,
+  tabType,
+  onSessionCreated,
 }, ref) => {
   const [projectPath] = useState(initialProjectPath || session?.project_path || "");
   const [messages, setMessages] = useState<ClaudeStreamMessage[]>([]);
@@ -118,7 +155,7 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
   const [forkSessionName, setForkSessionName] = useState("");
   
   // Queued prompts state
-  const [queuedPrompts, setQueuedPrompts] = useState<Array<{ id: string; prompt: string; model: "sonnet" | "opus" }>>([]);
+  const [queuedPrompts, setQueuedPrompts] = useState<Array<{ id: string; prompt: string; displayText?: string; icon?: PromptIconType | null; model: "sonnet" | "opus" }>>([]);
   
   // New state for preview feature
   const [showPreview, setShowPreview] = useState(false);
@@ -134,7 +171,7 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
   const unlistenRefs = useRef<UnlistenFn[]>([]);
   const hasActiveSessionRef = useRef(false);
   const floatingPromptRef = useRef<FloatingPromptInputRef>(null);
-  const queuedPromptsRef = useRef<Array<{ id: string; prompt: string; model: "sonnet" | "opus" }>>([]);
+  const queuedPromptsRef = useRef<Array<{ id: string; prompt: string; displayText?: string; icon?: PromptIconType | null; model: "sonnet" | "opus" }>>([]);
   const isMountedRef = useRef(true);
   const isListeningRef = useRef(false);
   const sessionStartTime = useRef<number>(Date.now());
@@ -485,6 +522,16 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
     sendPrompt: (prompt: string, model: "sonnet" | "opus" = "sonnet") => {
       handleSendPrompt(prompt, model);
     },
+    startNewSession: (initialPrompt: string) => {
+      // Clear current session and start a new one
+      setMessages([]);
+      setRawJsonlOutput([]);
+      setError(null);
+      setIsFirstPrompt(true);
+      setTotalTokens(0);
+      // Send the initial prompt
+      handleSendPrompt(initialPrompt, "sonnet");
+    },
     isLoading,
   }), [isLoading]);
 
@@ -498,9 +545,12 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
 
     // If already loading, queue the prompt
     if (isLoading) {
+      const displayInfo = isAnyonWorkflowCommand(prompt) ? getPromptDisplayInfo(prompt) : null;
       const newPrompt = {
         id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         prompt,
+        displayText: displayInfo?.text,
+        icon: displayInfo?.icon,
         model
       };
       setQueuedPrompts(prev => [...prev, newPrompt]);
@@ -583,14 +633,29 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
                 if (!extractedSessionInfo) {
                   const projectId = projectPath.replace(/[^a-zA-Z0-9]/g, '-');
                   setExtractedSessionInfo({ sessionId: msg.session_id, projectId });
-                  
-                  // Save session data for restoration
-                  SessionPersistenceService.saveSession(
-                    msg.session_id,
-                    projectId,
-                    projectPath,
-                    messages.length
-                  );
+
+                  // Save session data for restoration (tab-specific if tabType provided)
+                  if (tabType) {
+                    SessionPersistenceService.saveSessionForTab(
+                      msg.session_id,
+                      projectId,
+                      projectPath,
+                      tabType,
+                      undefined, // firstMessage will be updated later
+                      messages.length
+                    );
+                    SessionPersistenceService.saveLastSessionForTab(projectPath, tabType, msg.session_id);
+                  } else {
+                    SessionPersistenceService.saveSession(
+                      msg.session_id,
+                      projectId,
+                      projectPath,
+                      messages.length
+                    );
+                  }
+
+                  // Notify parent about new session
+                  onSessionCreated?.(msg.session_id);
                 }
 
                 // Switch to session-specific listeners
@@ -828,7 +893,14 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
           }
         };
         setMessages(prev => [...prev, userMessage]);
-        
+
+        // Update first message for session if this is the first prompt
+        if (isFirstPrompt && tabType && claudeSessionId) {
+          const truncatedPrompt = prompt.length > 100 ? prompt.substring(0, 100) + '...' : prompt;
+          SessionPersistenceService.updateSessionFirstMessage(claudeSessionId, truncatedPrompt);
+          onSessionCreated?.(claudeSessionId, truncatedPrompt);
+        }
+
         // Update session metrics
         sessionMetrics.current.promptsSent += 1;
         sessionMetrics.current.lastActivityTime = Date.now();
@@ -1415,7 +1487,10 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
                             {queuedPrompt.model === "opus" ? "Opus" : "Sonnet"}
                           </span>
                         </div>
-                        <p className="text-sm line-clamp-2 break-words">{queuedPrompt.prompt}</p>
+                        <div className="flex items-center gap-2 text-sm line-clamp-2 break-words">
+                          {queuedPrompt.icon && <WorkflowIcon icon={queuedPrompt.icon} className="h-3.5 w-3.5 flex-shrink-0 text-primary" />}
+                          <span>{queuedPrompt.displayText || queuedPrompt.prompt}</span>
+                        </div>
                       </div>
                       <motion.div
                         whileTap={{ scale: 0.97 }}

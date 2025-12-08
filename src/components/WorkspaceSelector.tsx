@@ -15,6 +15,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
+// Cross-platform project name extractor (handles / and \\)
+const getProjectName = (path: string): string => {
+  const segments = path.split(/[/\\\\]+/);
+  return segments[segments.length - 1] || 'Project';
+};
+
 interface WorkspaceSelectorProps {
   projectId: string;
 }
@@ -35,23 +41,55 @@ export const WorkspaceSelector: React.FC<WorkspaceSelectorProps> = ({ projectId 
   const [installMessage, setInstallMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
 
   useEffect(() => {
-    if (projectId && projects.length > 0) {
+    console.log('[WorkspaceSelector] useEffect triggered', {
+      projectId,
+      projectsLength: projects.length,
+      loading,
+      projects: projects.map(p => ({ id: p.id, path: p.path }))
+    });
+
+    if (projectId) {
       const found = getProjectById(projectId);
+      console.log('[WorkspaceSelector] Found project:', found);
       setProject(found);
     }
-  }, [projectId, projects, getProjectById]);
+  }, [projectId, projects, loading, getProjectById]);
 
-  // Check anyon installation when project is loaded
+  // Check git repo and anyon installation when project is loaded
   useEffect(() => {
-    const checkAnyonInstallation = async () => {
+    const checkProjectSetup = async () => {
       if (project?.path) {
+        // First, check if it's a git repository and initialize if not
+        try {
+          const isGitRepo = await api.checkIsGitRepo(project.path);
+          
+          if (!isGitRepo) {
+            setInstallMessage({ type: 'info', text: 'Initializing git repository...' });
+            const gitResult = await api.initGitRepo(project.path);
+            
+            if (gitResult.success) {
+              setInstallMessage({ type: 'success', text: 'Git repository initialized!' });
+              setTimeout(() => setInstallMessage(null), 2000);
+            } else {
+              console.warn('Git init failed:', gitResult.stderr);
+              setInstallMessage({ type: 'info', text: 'Git initialization failed, but continuing...' });
+              setTimeout(() => setInstallMessage(null), 2000);
+            }
+            await new Promise(resolve => setTimeout(resolve, 1500));
+          }
+        } catch (gitErr) {
+          console.error('Failed to check/init git repo:', gitErr);
+          // Continue even if git check/init fails
+        }
+        
+        // Then check anyon installation
         const status = await api.checkAnyonInstalled(project.path);
         if (!status.is_installed) {
           setShowInstallDialog(true);
         }
       }
     };
-    checkAnyonInstallation();
+    checkProjectSetup();
   }, [project?.path]);
 
   const handleInstallAnyon = async () => {
@@ -96,24 +134,13 @@ export const WorkspaceSelector: React.FC<WorkspaceSelectorProps> = ({ projectId 
   };
 
   // Get project name from path
-  const projectName = project?.path.split('/').pop() || 'Project';
+  const projectName = project?.path ? getProjectName(project.path) : 'Project';
 
-  if (loading) {
+  // Show loading while initially fetching projects OR while project is undefined
+  if (loading || !project) {
     return (
       <div className="flex items-center justify-center h-full">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  if (!project && !loading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full gap-4">
-        <p className="text-muted-foreground">Project not found</p>
-        <Button variant="outline" onClick={handleBack}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Projects
-        </Button>
       </div>
     );
   }

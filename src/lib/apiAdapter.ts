@@ -37,15 +37,26 @@ function detectEnvironment(): boolean {
 
   // Check for Tauri-specific indicators
   const isTauri = !!(
-    window.__TAURI__ || 
+    window.__TAURI__ ||
     window.__TAURI_METADATA__ ||
     window.__TAURI_INTERNALS__ ||
     // Check user agent for Tauri
-    navigator.userAgent.includes('Tauri')
+    navigator.userAgent.includes('Tauri') ||
+    // Check for tauri:// protocol
+    window.location.protocol === 'tauri:' ||
+    // Additional check: try to detect if running in a Tauri webview
+    (window.location.hostname === 'tauri.localhost' ||
+     window.location.protocol.startsWith('tauri'))
   );
 
-  console.log('[detectEnvironment] isTauri:', isTauri, 'userAgent:', navigator.userAgent);
-  
+  console.log('[detectEnvironment] isTauri:', isTauri);
+  console.log('[detectEnvironment] __TAURI__:', !!window.__TAURI__);
+  console.log('[detectEnvironment] __TAURI_METADATA__:', !!window.__TAURI_METADATA__);
+  console.log('[detectEnvironment] __TAURI_INTERNALS__:', !!window.__TAURI_INTERNALS__);
+  console.log('[detectEnvironment] userAgent:', navigator.userAgent);
+  console.log('[detectEnvironment] protocol:', window.location.protocol);
+  console.log('[detectEnvironment] hostname:', window.location.hostname);
+
   isTauriEnvironment = isTauri;
   return isTauri;
 }
@@ -257,6 +268,38 @@ function mapCommandToEndpoint(command: string, _params?: any): string {
     'slash_command_get': '/api/slash-commands/{commandId}',
     'slash_command_save': '/api/slash-commands',
     'slash_command_delete': '/api/slash-commands/{commandId}',
+
+    // Project creation and management
+    'create_project': '/api/projects/create',
+    'get_home_directory': '/api/home',
+    'run_npx_anyon_agents': '/api/projects/install-anyon',
+    'check_anyon_installed': '/api/projects/check-anyon',
+    'list_directory_contents': '/api/files/list',
+    'read_file_content': '/api/files/read',
+    'check_file_exists': '/api/files/exists',
+    'search_files': '/api/files/search',
+    'get_recently_modified_files': '/api/files/recent',
+
+    // Checkpoint management
+    'create_checkpoint': '/api/checkpoints/create',
+    'list_checkpoints': '/api/checkpoints',
+    'restore_checkpoint': '/api/checkpoints/{checkpointId}/restore',
+    'fork_from_checkpoint': '/api/checkpoints/{checkpointId}/fork',
+    'get_checkpoint_diff': '/api/checkpoints/{checkpointId}/diff',
+    'track_checkpoint_message': '/api/checkpoints/track-message',
+    'track_session_messages': '/api/sessions/track-messages',
+    'get_checkpoint_settings': '/api/checkpoints/settings',
+    'update_checkpoint_settings': '/api/checkpoints/settings',
+    'check_auto_checkpoint': '/api/checkpoints/auto-check',
+    'cleanup_old_checkpoints': '/api/checkpoints/cleanup',
+    'clear_checkpoint_manager': '/api/checkpoints/clear',
+    'get_checkpoint_state_stats': '/api/checkpoints/stats',
+    'get_session_timeline': '/api/sessions/{sessionId}/timeline',
+    'list_anyon_docs': '/api/anyon/docs',
+
+    // Proxy settings
+    'get_proxy_settings': '/api/proxy/settings',
+    'save_proxy_settings': '/api/proxy/settings',
   };
 
   const endpoint = commandToEndpoint[command];

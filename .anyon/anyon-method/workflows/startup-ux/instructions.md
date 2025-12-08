@@ -1624,28 +1624,11 @@ UI 요소:
 - 모든 화면과 상태 명시
 - AI가 이대로 구현할 수 있는 수준
 
-이 문서를 기반으로 다음 단계인 **UI Design Guide 워크플로우**가 시작됩니다!"
+다음 단계는 **UI Design Guide 워크플로우**입니다.
+준비가 되면 기획문서 패널에서 'Design Guide 작성하기' 버튼을 눌러주세요!"
 </action>
 
 <template-output>ux_design_complete</template-output>
-</step>
-
-<step n="15" goal="Auto-chain to Next Workflow">
-<critical>Automatically invoke the next workflow when UX Design is saved</critical>
-
-<action>Confirm UX Design document saved to {default_output_file}</action>
-
-<action>Notify user:
-"UX Design 작성이 완료되었습니다!
-
-이제 자동으로 **UI Design Guide 워크플로우**를 시작합니다.
-UI Design에서는 지금 정의한 화면과 컴포넌트에 맞는
-디자인 시스템과 UI 컴포넌트 라이브러리를 찾아드릴게요.
-
-시작할게요! 🚀"
-</action>
-
-<invoke-workflow>{next_workflow}</invoke-workflow>
 </step>
 
 </workflow>

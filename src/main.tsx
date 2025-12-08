@@ -9,6 +9,15 @@ import "./assets/shimmer.css";
 import "./styles.css";
 import AppIcon from "./assets/nfo/asterisk-logo.png";
 
+// PostHog configuration (guard against missing env to avoid noisy warnings)
+const posthogKey = import.meta.env.VITE_PUBLIC_POSTHOG_KEY;
+const posthogHost = import.meta.env.VITE_PUBLIC_POSTHOG_HOST;
+const hasPosthogConfig = Boolean(posthogKey && posthogHost);
+
+if (!hasPosthogConfig) {
+  console.warn("[PostHog] Skipping PostHogProvider: missing VITE_PUBLIC_POSTHOG_KEY or VITE_PUBLIC_POSTHOG_HOST");
+}
+
 // Initialize analytics before rendering
 analytics.initialize();
 
@@ -42,22 +51,30 @@ resourceMonitor.startMonitoring(120000);
   }
 })();
 
+const AppShell = (
+  <ErrorBoundary>
+    <AnalyticsErrorBoundary>
+      <App />
+    </AnalyticsErrorBoundary>
+  </ErrorBoundary>
+);
+
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <PostHogProvider
-      apiKey={import.meta.env.VITE_PUBLIC_POSTHOG_KEY}
-      options={{
-        api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST,
-        defaults: '2025-05-24',
-        capture_exceptions: true,
-        debug: import.meta.env.MODE === "development",
-      }}
-    >
-      <ErrorBoundary>
-        <AnalyticsErrorBoundary>
-          <App />
-        </AnalyticsErrorBoundary>
-      </ErrorBoundary>
-    </PostHogProvider>
+    {hasPosthogConfig ? (
+      <PostHogProvider
+        apiKey={posthogKey}
+        options={{
+          api_host: posthogHost,
+          defaults: "2025-05-24",
+          capture_exceptions: true,
+          debug: import.meta.env.MODE === "development",
+        }}
+      >
+        {AppShell}
+      </PostHogProvider>
+    ) : (
+      AppShell
+    )}
   </React.StrictMode>,
 );

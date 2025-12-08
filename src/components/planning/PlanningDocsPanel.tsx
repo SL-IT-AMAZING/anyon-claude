@@ -8,7 +8,7 @@ import { PlanningDocViewer } from './PlanningDocViewer';
 
 interface PlanningDocsPanelProps {
   projectPath: string | undefined;
-  onSendPrompt: (prompt: string) => void;
+  onStartNewWorkflow: (workflowPrompt: string) => void;
   isSessionLoading?: boolean;
 }
 
@@ -18,11 +18,25 @@ interface PlanningDocsPanelProps {
  */
 export const PlanningDocsPanel: React.FC<PlanningDocsPanelProps> = ({
   projectPath,
-  onSendPrompt,
+  onStartNewWorkflow,
   isSessionLoading = false,
 }) => {
   const { documents, isLoading, progress } = usePlanningDocs(projectPath);
   const [activeDocId, setActiveDocId] = useState<string>('prd');
+  const [activeWorkflows, setActiveWorkflows] = useState<Set<string>>(new Set());
+
+  // Clear active workflows when documents are created
+  React.useEffect(() => {
+    setActiveWorkflows(prev => {
+      const updated = new Set(prev);
+      documents.forEach(doc => {
+        if (doc.exists) {
+          updated.delete(doc.id);
+        }
+      });
+      return updated;
+    });
+  }, [documents]);
 
   const activeDoc = documents.find(d => d.id === activeDocId);
   const activeStep = WORKFLOW_SEQUENCE.find(s => s.id === activeDocId);
@@ -54,11 +68,17 @@ export const PlanningDocsPanel: React.FC<PlanningDocsPanelProps> = ({
     setActiveDocId(stepId);
   }, [isTabEnabled]);
 
-  // Start workflow for a step
+  // Start workflow for a step - starts a new conversation in the same tab
   const handleStartWorkflow = useCallback((step: WorkflowStep) => {
-    onSendPrompt(step.workflow);
+    // Mark this workflow as active (disable button)
+    setActiveWorkflows(prev => new Set(prev).add(step.id));
+
+    // Call the parent to start a new workflow
+    onStartNewWorkflow(step.workflow);
+
+    // Keep the current document selected in the planning panel
     setActiveDocId(step.id);
-  }, [onSendPrompt]);
+  }, [onStartNewWorkflow]);
 
   if (!projectPath) {
     return (
@@ -191,12 +211,21 @@ export const PlanningDocsPanel: React.FC<PlanningDocsPanelProps> = ({
                       </p>
                       <Button
                         onClick={() => handleStartWorkflow(activeStep)}
-                        disabled={isSessionLoading}
+                        disabled={isSessionLoading || activeWorkflows.has(activeStep.id)}
                         size="lg"
                         className="gap-2"
                       >
-                        <PlayCircle className="h-5 w-5" />
-                        {activeStep.title} 작성 시작
+                        {activeWorkflows.has(activeStep.id) ? (
+                          <>
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                            작성 중...
+                          </>
+                        ) : (
+                          <>
+                            <PlayCircle className="h-5 w-5" />
+                            {activeStep.title} 작성 시작
+                          </>
+                        )}
                       </Button>
                     </>
                   ) : isTabEnabled(WORKFLOW_SEQUENCE.findIndex(s => s.id === activeDocId)) ? (
@@ -210,13 +239,22 @@ export const PlanningDocsPanel: React.FC<PlanningDocsPanelProps> = ({
                       </p>
                       <Button
                         onClick={() => handleStartWorkflow(activeStep)}
-                        disabled={isSessionLoading}
+                        disabled={isSessionLoading || activeWorkflows.has(activeStep.id)}
                         variant="outline"
                         size="lg"
                         className="gap-2"
                       >
-                        <PlayCircle className="h-5 w-5" />
-                        {activeStep.title} 작성하기
+                        {activeWorkflows.has(activeStep.id) ? (
+                          <>
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                            작성 중...
+                          </>
+                        ) : (
+                          <>
+                            <PlayCircle className="h-5 w-5" />
+                            {activeStep.title} 작성하기
+                          </>
+                        )}
                       </Button>
                     </>
                   ) : (
@@ -241,10 +279,19 @@ export const PlanningDocsPanel: React.FC<PlanningDocsPanelProps> = ({
               <Button
                 className="w-full gap-2"
                 onClick={() => handleStartWorkflow(progress.nextStep!)}
-                disabled={isSessionLoading}
+                disabled={isSessionLoading || activeWorkflows.has(progress.nextStep.id)}
               >
-                <ArrowRight className="h-4 w-4" />
-                다음: {progress.nextStep.title} 작성하기
+                {activeWorkflows.has(progress.nextStep.id) ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    작성 중...
+                  </>
+                ) : (
+                  <>
+                    <ArrowRight className="h-4 w-4" />
+                    다음: {progress.nextStep.title} 작성하기
+                  </>
+                )}
               </Button>
             </div>
           )}

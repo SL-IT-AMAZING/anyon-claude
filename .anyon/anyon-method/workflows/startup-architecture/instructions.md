@@ -1188,10 +1188,8 @@ If any checklist items are incomplete, add them now before proceeding.
 이제 마지막 단계인 **ERD (Entity Relationship Diagram)** 문서를 생성합니다.
 ERD는 데이터베이스 스키마를 상세히 설계하는 문서입니다.
 
-자동으로 `startup-erd` 워크플로우를 시작합니다...
+준비가 되면 기획문서 패널에서 'ERD 작성하기' 버튼을 눌러주세요!
 </template-output>
-
-<invoke-workflow>{next_workflow}</invoke-workflow>
 </action>
 
 ---

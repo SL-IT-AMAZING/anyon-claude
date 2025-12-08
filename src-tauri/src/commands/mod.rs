@@ -1,6 +1,8 @@
 pub mod agents;
 pub mod claude;
+pub mod dev_workflow;
 pub mod mcp;
+pub mod preview;
 pub mod proxy;
 pub mod slash_commands;
 pub mod storage;

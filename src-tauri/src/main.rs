@@ -1,9 +1,12 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+// Temporarily hide console in dev mode too
+#![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
 
+mod auth_server;
 mod checkpoint;
 mod claude_binary;
 mod commands;
+mod portable_deps;
 mod process;
 
 use checkpoint::state::CheckpointState;
@@ -27,7 +30,7 @@ use commands::claude::{
     list_checkpoints, list_directory_contents, list_projects, list_running_claude_sessions,
     load_session_history, open_new_session, read_claude_md_file, read_file_content,
     check_file_exists, list_anyon_docs, restore_checkpoint, resume_claude_code,
-    run_npx_anyon_agents, save_claude_md_file, save_claude_settings, save_system_prompt,
+    run_npx_anyon_agents, check_is_git_repo, init_git_repo, save_claude_md_file, save_claude_settings, save_system_prompt,
     search_files, track_checkpoint_message, track_session_messages, update_checkpoint_settings,
     update_hooks_config, validate_hook_command, ClaudeProcessState,
 };
@@ -37,6 +40,7 @@ use commands::mcp::{
     mcp_serve, mcp_test_connection,
 };
 
+use commands::preview::scan_ports;
 use commands::proxy::{apply_proxy_settings, get_proxy_settings, save_proxy_settings};
 use commands::storage::{
     storage_delete_row, storage_execute_sql, storage_insert_row, storage_list_tables,
@@ -47,7 +51,7 @@ use commands::usage::{
 };
 use process::ProcessRegistryState;
 use std::sync::Mutex;
-use tauri::Manager;
+use tauri::{Manager, Emitter};
 
 #[cfg(target_os = "macos")]
 use window_vibrancy::{apply_vibrancy, NSVisualEffectMaterial};
@@ -56,10 +60,103 @@ fn main() {
     // Initialize logger
     env_logger::init();
 
+    // Set IME environment variables for Linux
+    // This must be done before any GTK initialization
+    #[cfg(target_os = "linux")]
+    {
+        // Try multiple IME backends for better compatibility
+        // Priority: fcitx5 > fcitx > ibus > xim
+        let ime_module = if std::process::Command::new("which")
+            .arg("fcitx5")
+            .output()
+            .map(|o| o.status.success())
+            .unwrap_or(false)
+        {
+            "fcitx5"
+        } else if std::process::Command::new("which")
+            .arg("fcitx")
+            .output()
+            .map(|o| o.status.success())
+            .unwrap_or(false)
+        {
+            "fcitx"
+        } else if std::process::Command::new("which")
+            .arg("ibus")
+            .output()
+            .map(|o| o.status.success())
+            .unwrap_or(false)
+        {
+            "ibus"
+        } else {
+            "xim" // fallback to X Input Method
+        };
+
+        log::info!("Using IME module: {}", ime_module);
+
+        std::env::set_var("GTK_IM_MODULE", ime_module);
+        std::env::set_var("QT_IM_MODULE", ime_module);
+        std::env::set_var("XMODIFIERS", format!("@im={}", ime_module));
+
+        if ime_module == "ibus" {
+            std::env::set_var("IBUS_ENABLE_SYNC_MODE", "1");
+            std::env::set_var("IBUS_USE_PORTAL", "0");
+        }
+
+        std::env::set_var("GDK_BACKEND", "x11");
+        log::info!("IME environment variables set for Linux with {}", ime_module);
+    }
+
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_http::init())
+        .plugin(tauri_plugin_deep_link::init())
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            eprintln!("🔄 [SINGLE-INSTANCE] Triggered with args: {:?}", args);
+            log::info!("🔄 Single instance triggered with args: {:?}", args);
+
+            // Forward Deep Link URLs to existing instance
+            for arg in args {
+                if arg.starts_with("anyon://") {
+                    eprintln!("📥 [SINGLE-INSTANCE] Received deep link: {}", arg);
+                    log::info!("📥 Received deep link via single-instance: {}", arg);
+
+                    // Emit the deep link event to the frontend
+                    let urls = vec![arg.clone()];
+                    if let Err(e) = app.emit("plugin:deep-link://urls", urls) {
+                        eprintln!("❌ [SINGLE-INSTANCE] Failed to emit deep link event: {}", e);
+                        log::error!("Failed to emit deep link event: {}", e);
+                    } else {
+                        eprintln!("✅ [SINGLE-INSTANCE] Emitted deep link event successfully");
+                        log::info!("✅ Emitted deep link event successfully");
+                    }
+
+                    // Focus the main window
+                    if let Some(window) = app.get_webview_window("main") {
+                        let _ = window.set_focus();
+                        let _ = window.unminimize();
+                    }
+                }
+            }
+        }))
         .setup(|app| {
+            use tauri_plugin_deep_link::DeepLinkExt;
+
+            // Deep Link runtime registration - ALWAYS attempt for debugging
+            eprintln!("🔧 [SETUP] Starting Deep Link registration...");
+            log::info!("🔧 [SETUP] Starting Deep Link registration...");
+
+            match app.deep_link().register_all() {
+                Ok(_) => {
+                    eprintln!("✅ [SETUP] Deep link protocols registered successfully");
+                    log::info!("✅ Deep link protocols registered successfully");
+                },
+                Err(e) => {
+                    eprintln!("⚠️ [SETUP] Failed to register deep link protocols: {}", e);
+                    log::warn!("⚠️ Failed to register deep link protocols: {}", e);
+                }
+            }
+
             // Initialize agents database
             let conn = init_database(&app.handle()).expect("Failed to initialize agents database");
 
@@ -119,6 +216,11 @@ fn main() {
 
             // Re-open the connection for the app to manage
             let conn = init_database(&app.handle()).expect("Failed to initialize agents database");
+
+            // Initialize dev_workflow table
+            commands::dev_workflow::init_dev_workflow_db(&conn)
+                .expect("Failed to initialize dev_workflow database");
+
             app.manage(AgentDb(Mutex::new(conn)));
 
             // Initialize checkpoint state
@@ -147,6 +249,18 @@ fn main() {
 
             // Initialize Claude process state
             app.manage(ClaudeProcessState::default());
+
+            // Start auth server in background
+            let jwt_secret = std::env::var("JWT_SECRET")
+                .unwrap_or_else(|_| "dev-secret-key-change-in-production".to_string());
+            let node_env = std::env::var("NODE_ENV")
+                .unwrap_or_else(|_| "development".to_string());
+
+            tauri::async_runtime::spawn(async move {
+                if let Err(e) = auth_server::start_auth_server(4000, jwt_secret, node_env).await {
+                    log::error!("Failed to start auth server: {}", e);
+                }
+            });
 
             // Apply window vibrancy with rounded corners on macOS
             #[cfg(target_os = "macos")]
@@ -218,6 +332,9 @@ fn main() {
             // Anyon Agents
             check_anyon_installed,
             run_npx_anyon_agents,
+            // Git Integration
+            check_is_git_repo,
+            init_git_repo,
             // Checkpoint Management
             create_checkpoint,
             restore_checkpoint,
@@ -296,6 +413,12 @@ fn main() {
             // Proxy Settings
             get_proxy_settings,
             save_proxy_settings,
+            // Dev Workflow
+            commands::dev_workflow::start_dev_workflow,
+            commands::dev_workflow::stop_dev_workflow,
+            commands::dev_workflow::get_dev_workflow_status,
+            // Preview (Port Scanning)
+            scan_ports,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

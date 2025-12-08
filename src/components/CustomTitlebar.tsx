@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Settings, Minus, Square, X, Bot, BarChart3, FileText, Network, Info, MoreVertical } from 'lucide-react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { TooltipProvider, TooltipSimple } from '@/components/ui/tooltip-modern';
+import { UserProfileDropdown } from '@/components/UserProfileDropdown';
 
 interface CustomTitlebarProps {
   onSettingsClick?: () => void;
@@ -151,7 +152,7 @@ export const CustomTitlebar: React.FC<CustomTitlebarProps> = ({
               </motion.button>
             </TooltipSimple>
           )}
-          
+
           {onUsageClick && (
             <TooltipSimple content="Usage Dashboard" side="bottom">
               <motion.button
@@ -165,6 +166,12 @@ export const CustomTitlebar: React.FC<CustomTitlebarProps> = ({
             </TooltipSimple>
           )}
         </div>
+
+        {/* Visual separator */}
+        <div className="w-px h-5 bg-border/50" />
+
+        {/* User Profile */}
+        <UserProfileDropdown onSettingsClick={onSettingsClick} />
 
         {/* Visual separator */}
         <div className="w-px h-5 bg-border/50" />
