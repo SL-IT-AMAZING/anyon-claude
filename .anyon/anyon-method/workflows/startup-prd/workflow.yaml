@@ -1,6 +1,6 @@
 # Startup PRD Workflow Configuration
 name: startup-prd
-description: "Create Product Requirements Document for startups. Defines service type, platform, target users, core features, and business model. Auto-chains to startup-ux when complete."
+description: "AI 개발에 필요한 PRD 작성. 서비스 유형, 플랫폼, 타겟 사용자, 핵심 기능, 라이선스 정책 정의. 비즈니스 모델/수익화 제외."
 author: "Anyon"
 
 # Critical variables from config
@@ -10,8 +10,8 @@ communication_language: "{config_source}:communication_language"
 document_output_language: "{config_source}:document_output_language"
 date: system-generated
 
-# Output folder - conversation subfolder in anyon-docs
-output_folder: "{project-root}/anyon-docs/conversation"
+# Output folder - planning subfolder in anyon-docs
+output_folder: "{project-root}/anyon-docs/planning"
 
 # Module path and component files
 installed_path: "{project-root}/.anyon/anyon-method/workflows/startup-prd"
@@ -21,8 +21,5 @@ validation: "{installed_path}/checklist.md"
 
 # Output file
 default_output_file: "{output_folder}/prd.md"
-
-# Next workflow in chain
-next_workflow: "{project-root}/.anyon/anyon-method/workflows/startup-ux/workflow.yaml"
 
 standalone: true

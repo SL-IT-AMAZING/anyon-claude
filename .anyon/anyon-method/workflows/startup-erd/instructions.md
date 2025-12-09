@@ -9,6 +9,32 @@ Create a comprehensive Entity Relationship Diagram (ERD) document that:
 4. **Consistency**: Aligns with all previous documents (PRD, UX, UI, TRD, Architecture)
 5. **Final Step**: This is the last workflow in the chain - completes the entire documentation suite
 
+<critical>💡 SKILL CHECK
+작업을 수행할 때마다 사용 가능한 스킬 중 현재 상황에 적합한 스킬이 있는지 검토하고, 있으면 사용하세요.
+</critical>
+
+<critical>💡 SKILL RECOMMENDATION: postgresql-design
+Use the `postgresql-design` skill throughout this workflow for:
+- PostgreSQL-specific best practices
+- Optimal data types for each field
+- Indexing strategies (B-tree, GIN, GiST)
+- Constraint patterns and validation
+- Performance optimization patterns
+- JSONB usage for flexible data
+
+This skill provides comprehensive PostgreSQL schema design guidance.</critical>
+
+<critical>QUESTION FORMAT RULE:
+모든 질문은 반드시 객관식으로 제시하세요.
+- 번호로 선택지를 제공 (1, 2, 3, 4...)
+- 마지막 번호는 항상 "기타 (직접 입력)" 또는 주관식 옵션
+- 예시:
+  1. 옵션 A
+  2. 옵션 B
+  3. 옵션 C
+  4. 기타 (직접 설명해주세요)
+</critical>
+
 ---
 
 ## 📚 Step 0: Load All Previous Documents
@@ -45,48 +71,49 @@ The ERD MUST expand on the table previews from Architecture.
 
 ---
 
-## 🔍 Step 1: Search Similar Service ERDs
+## 🔍 Step 1: Analyze Data Requirements
 
-<action>Use WebSearch to find 4-8 ERD examples from similar services.
+<action>UX 목업과 PRD를 기반으로 데이터 요구사항을 분석합니다.
 
-**Search strategy:**
-1. Identify service category from PRD (e.g., "social media", "marketplace", "SaaS", "booking")
-2. Search for: "[service_type] database schema", "[similar_service] ERD", "[service_category] database design 2024", "PostgreSQL schema for [service_type]"
-3. Look for: blog posts with schema diagrams, GitHub repos with schema.sql, database design case studies
+**분석 항목:**
+1. **UX 목업 (핵심)** - 화면에 표시되는 데이터 → 필요한 테이블/컬럼
+   - 목록 화면 → 어떤 데이터가 나열되는지
+   - 상세 화면 → 어떤 필드들이 있는지
+   - 입력 폼 → 사용자가 입력하는 데이터
+   - 관계 → 화면 간 연결 (예: 목록 → 상세)
+2. PRD의 핵심 기능에서 필요한 데이터 식별
+3. Architecture의 API 엔드포인트에서 데이터 구조 파악
 
-**What to search for:**
-- If PRD mentions "Instagram-like" → search "Instagram database schema", "photo sharing app ERD"
-- If PRD mentions "Notion-like" → search "Notion database design", "collaborative docs ERD"
-- If PRD mentions "Airbnb-like" → search "Airbnb database schema", "booking platform ERD"
+**AI 내장 지식 활용:**
+- 일반적인 ERD 패턴 (정규화, 관계 설계)
+- 서비스 유형별 표준 스키마 패턴
+- PostgreSQL/Supabase 베스트 프랙티스
 
-**Present findings in {communication_language}:**
+**서비스 유형별 표준 패턴 적용:**
+| 서비스 유형 | 표준 테이블 패턴 |
+|------------|-----------------|
+| 소셜/커뮤니티 | users, posts, comments, likes, follows |
+| 이커머스 | users, products, orders, order_items, reviews |
+| SaaS/도구 | users, workspaces, projects, items |
+| 예약/부킹 | users, resources, bookings, time_slots |
+| 콘텐츠/미디어 | users, content, categories, tags, content_tags |
 
-For each of 4-8 similar services found:
+**Present analysis in {communication_language}:**
 
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-**유사 서비스 [N]: [Service Name]**
+"{{project_name}}의 데이터 요구사항을 분석했어요.
 
-🔗 **참고 자료 링크**
-- [Link 1 title](url)
-- [Link 2 title](url)
+**UX 목업에서 파악한 데이터:**
+- [화면명]: [표시되는 데이터 목록]
+- [입력 폼]: [사용자가 입력하는 필드들]
 
-📊 **데이터베이스 구조**
-- 주요 테이블: [list key tables]
-- 핵심 관계: [key relationships]
+**PRD에서 파악한 핵심 데이터:**
+- [데이터 1]: [어떤 기능에서 필요한지]
+- [데이터 2]: [어떤 기능에서 필요한지]
 
-💡 **우리 프로젝트에 적용 가능한 점**
-- [배울 수 있는 패턴 1]
-- [배울 수 있는 패턴 2]
+**적용할 표준 패턴:**
+- [패턴명]: [이유]
 
-⚠️ **우리와 다른 점**
-- [차이점과 이유]
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
-
-**After presenting all options:**
-
-"위 사례들을 참고하여 {{project_name}}의 데이터베이스 스키마를 설계하겠습니다."
+이제 스키마를 설계할게요."
 </action>
 
 ---

@@ -10,28 +10,32 @@ communication_language: "Korean"
 date: system-generated
 
 # Module path and component files
-installed_path: "{project-root}/.anyon/anyon-method/workflows/pm-executor"
 template: false  # Action workflow - 코드 생성 및 실행
-instructions: "{installed_path}/instructions.md"
-validation: "{installed_path}/checklist.md"
+instructions: "{project-root}/.anyon/anyon-method/workflows/pm-executor/instructions.md"
+validation: "{project-root}/.anyon/anyon-method/workflows/pm-executor/checklist.md"
 
 # PM Orchestrator 출력물 경로 (수정: 2025-11-29)
 # ✓ tickets_folder → epics_folder로 변경 (Epic별 통합 파일 위치)
-# ✓ output_folder 명시적 정의 (모든 파일의 기준 경로)
+# ✓ 모든 경로는 {project-root} 기반 전체 경로로 명시
 # ✓ api_spec_file 추가 (API 명세서)
 # ✓ claude_context_file 추가 (프로젝트 컨텍스트)
 # ✓ execution_progress_template 추가 (진행 추적 템플릿)
-# ✓ 중복 정의 제거 (명시적 정의로 통일)
 
-output_folder: "{project-root}/anyon-docs/conversation"
-epics_folder: "{output_folder}/epics"
-execution_plan_file: "{output_folder}/execution-plan.md"
-dependency_graph_file: "{output_folder}/dependency-graph.md"
-api_spec_file: "{output_folder}/api-spec.md"
+epics_folder: "{project-root}/anyon-docs/dev-plan/epics"
+execution_plan_file: "{project-root}/anyon-docs/dev-plan/execution-plan.md"
+dependency_graph_file: "{project-root}/anyon-docs/dev-plan/dependency-graph.md"
+api_spec_file: "{project-root}/anyon-docs/dev-plan/api-spec.md"
 agents_folder: "{project-root}/.claude/agents"
 claude_context_file: "{project-root}/CLAUDE.md"
-progress_file: "{output_folder}/execution-progress.md"
-execution_progress_template: "{installed_path}/execution-progress-template.md"
+progress_file: "{project-root}/anyon-docs/dev-plan/execution-progress.md"
+execution_progress_template: "{project-root}/.anyon/anyon-method/workflows/pm-executor/execution-progress-template.md"
+
+# 설계 문서 경로 (티켓의 wireframe_source, erd_reference 참조용)
+wireframe_doc: "{project-root}/anyon-docs/planning/ui-ux.html"
+design_guide_doc: "{project-root}/anyon-docs/planning/design-guide.md"
+erd_doc: "{project-root}/anyon-docs/planning/erd.md"
+trd_doc: "{project-root}/anyon-docs/planning/trd.md"
+architecture_doc: "{project-root}/anyon-docs/planning/architecture.md"
 
 # 프로젝트 소스 코드 루트
 project_src: "{project-root}"

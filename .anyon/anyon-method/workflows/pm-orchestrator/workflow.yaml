@@ -10,82 +10,85 @@ communication_language: "Korean"
 date: system-generated
 
 # Module path and component files
-installed_path: "{project-root}/.anyon/anyon-method/workflows/pm-orchestrator"
 template: false  # 문서 생성이지만 동적 생성이므로 template 불필요
-instructions: "{installed_path}/instructions.md"
-validation: "{installed_path}/checklist.md"
+instructions: "{project-root}/.anyon/anyon-method/workflows/pm-orchestrator/instructions.md"
+validation: "{project-root}/.anyon/anyon-method/workflows/pm-orchestrator/checklist.md"
 
 # 티켓 템플릿
-ticket_template: "{installed_path}/templates/ticket-template.md"
-execution_plan_template: "{installed_path}/templates/execution-plan-template.md"
+ticket_template: "{project-root}/.anyon/anyon-method/workflows/pm-orchestrator/templates/ticket-template.md"
+execution_plan_template: "{project-root}/.anyon/anyon-method/workflows/pm-orchestrator/templates/execution-plan-template.md"
 
 # 에이전트 템플릿 (프로젝트별 커스터마이징용)
 agent_templates_path: "{project-root}/.anyon/anyon-method/agent-templates"
 
 # Smart input file patterns - 6개 설계 문서 (모두 필수)
+# 입력 경로: {project-root}/anyon-docs/planning/
 input_file_patterns:
+  # 실제 파일명: prd.md
   prd:
-    whole: "{project-root}/anyon-docs/conversation/*prd*.md"
-    sharded: "{project-root}/anyon-docs/conversation/*prd*/index.md"
+    whole: "{project-root}/anyon-docs/planning/prd.md"
     load_strategy: FULL_LOAD
     required: true
     description: "제품 요구사항, 비즈니스 로직"
 
-  ux_design:
-    whole: "{project-root}/anyon-docs/conversation/*ux-design*.md"
-    sharded: "{project-root}/anyon-docs/conversation/*ux-design*/index.md"
+  # 실제 파일명: ui-ux.html (HTML 와이어프레임)
+  ux_wireframe:
+    whole: "{project-root}/anyon-docs/planning/ui-ux.html"
     load_strategy: FULL_LOAD
     required: true
-    description: "사용자 플로우, 페이지 구조"
+    description: "와이어프레임, 사용자 플로우, 페이지 구조 (HTML)"
+    note: "라인 번호로 특정 섹션 참조 가능"
 
+  # 실제 파일명: design-guide.md
   ui_design:
-    whole: "{project-root}/anyon-docs/conversation/*design-guide*.md"
-    sharded: "{project-root}/anyon-docs/conversation/*design-guide*/index.md"
+    whole: "{project-root}/anyon-docs/planning/design-guide.md"
     load_strategy: FULL_LOAD
     required: true
-    description: "디자인 스펙, 컴포넌트"
+    description: "디자인 시스템, 색상, 타이포그래피, 컴포넌트 스타일"
 
+  # 실제 파일명: erd.md
   erd:
-    whole: "{project-root}/anyon-docs/conversation/*erd*.md"
-    sharded: "{project-root}/anyon-docs/conversation/*erd*/index.md"
+    whole: "{project-root}/anyon-docs/planning/erd.md"
     load_strategy: FULL_LOAD
     required: true
-    description: "데이터베이스 구조"
+    description: "데이터베이스 구조, SQL 스키마, RLS 정책, 트리거"
 
+  # 실제 파일명: architecture.md
   architecture:
-    whole: "{project-root}/anyon-docs/conversation/*architecture*.md"
-    sharded: "{project-root}/anyon-docs/conversation/*architecture*/index.md"
+    whole: "{project-root}/anyon-docs/planning/architecture.md"
     load_strategy: FULL_LOAD
     required: true
     description: "시스템 아키텍처, 백엔드 아키텍처, 프론트엔드 아키텍처"
 
+  # 실제 파일명: trd.md
   trd:
-    whole: "{project-root}/anyon-docs/conversation/*trd*.md"
-    sharded: "{project-root}/anyon-docs/conversation/*trd*/index.md"
+    whole: "{project-root}/anyon-docs/planning/trd.md"
     load_strategy: FULL_LOAD
     required: true
     description: "기술 스택, 기술 요구사항, 성능 지표"
 
-# Output configuration (수정: 2025-11-29 - 일관성 강화)
-# ✓ 명시적 정의 (config.yaml 참조 제거)
-# ✓ output_folder: 단일 정의
-# ✓ claude_context_file 추가
-# ✓ execution-progress-template 추가
+  # 실제 파일명: open-source.md
+  open_source:
+    whole: "{project-root}/anyon-docs/planning/open-source.md"
+    load_strategy: FULL_LOAD
+    required: false
+    description: "Clone된 오픈소스 레포지토리 정보 - 참조할 코드베이스"
 
-output_folder: "{project-root}/anyon-docs/conversation"
+# Output configuration
+# 출력 경로: {project-root}/anyon-docs/dev-plan/
 
 output_configuration:
-  execution_plan: "{output_folder}/execution-plan.md"
-  dependency_graph: "{output_folder}/dependency-graph.md"
-  api_spec: "{output_folder}/api-spec.md"
-  epics_folder: "{output_folder}/epics"
+  execution_plan: "{project-root}/anyon-docs/dev-plan/execution-plan.md"
+  dependency_graph: "{project-root}/anyon-docs/dev-plan/dependency-graph.md"
+  api_spec: "{project-root}/anyon-docs/dev-plan/api-spec.md"
+  epics_folder: "{project-root}/anyon-docs/dev-plan/epics"
   agents_folder: "{project-root}/.claude/agents"
   claude_context_file: "{project-root}/CLAUDE.md"
 
-# 내부 참조용 (레거시 호환성)
-epics_folder: "{output_folder}/epics"
-default_output_file: "{output_folder}/execution-plan.md"
-dependency_graph_file: "{output_folder}/dependency-graph.md"
+# 직접 참조용
+epics_folder: "{project-root}/anyon-docs/dev-plan/epics"
+default_output_file: "{project-root}/anyon-docs/dev-plan/execution-plan.md"
+dependency_graph_file: "{project-root}/anyon-docs/dev-plan/dependency-graph.md"
 
 # Invocation control
 standalone: true

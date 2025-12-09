@@ -489,6 +489,87 @@ Step 5: 각 섹션의 모든 필드 파싱
   5. CLAUDE.md에서 프로젝트 컨텍스트 로드
 </action>
 
+<action>🎨 **UI 티켓인 경우: 설계 문서 참조 (라인 번호 기반)**
+
+티켓에 `ui_specification.wireframe_source`가 있으면 해당 설계 문서의 정확한 라인 참조:
+
+```yaml
+# 티켓의 ui_specification 예시 (pm-orchestrator가 생성)
+ui_specification:
+  wireframe_source:
+    file: "anyon-docs/planning/ui-ux.html"
+    references:
+      - lines: "245-320"
+        section: "로그인 화면 레이아웃"
+      - lines: "890-920"
+        section: "화면 전환 인터랙션 JS"
+
+  summary: |
+    2단계 로그인 화면:
+    - Step 1: 전화번호 입력 → 인증코드 발송
+    - Step 2: 인증코드 입력 → 로그인 완료
+
+  key_states:
+    - "step: 'phone' | 'code'"
+    - "isLoading: boolean"
+
+# 스타일 참조 (design-guide.md)
+style_reference:
+  source_file: "anyon-docs/planning/design-guide.md"
+  lines: "30-70"
+  note: "카드 스타일, Primary color"
+```
+
+**참조 방법:**
+1. `wireframe_source.file`에서 해당 라인 범위 읽기
+2. HTML/CSS/JS 구조 분석
+3. `summary`, `key_states`로 핵심 요구사항 파악
+4. design-guide.md에서 색상/폰트/스타일 확인
+5. 구현에 직접 반영
+</action>
+
+<action>🗄️ **DB 티켓인 경우: ERD 참조 (TRD 기술 스택 기반)**
+
+티켓에 `database_schema.erd_reference`가 있으면 ERD 문서의 SQL 직접 참조:
+
+```yaml
+# 티켓의 database_schema 예시 (pm-orchestrator가 생성)
+database_schema:
+  erd_reference:
+    source_file: "anyon-docs/planning/erd.md"
+    references:
+      - lines: "45-120"
+        section: "users 테이블 정의"
+      - lines: "350-420"
+        section: "RLS 정책"
+      - lines: "500-550"
+        section: "트리거 및 함수"
+
+  # TRD 기술 스택에 따라 아래 중 하나가 포함됨:
+  prisma_schema: |
+    model User { ... }
+
+  # 또는
+  raw_sql_reference: |
+    -- erd.md 라인 45-180 참조
+
+  migration:
+    name: "20240115_add_auth_models"
+    erd_sql_lines: "45-180"
+```
+
+**TRD 기술 스택에 따른 처리:**
+- **Prisma 사용 시**: `prisma_schema` 필드 활용
+- **Raw SQL/Supabase 사용 시**: `erd_reference`에서 SQL 직접 추출
+- **Drizzle 사용 시**: ERD SQL을 Drizzle 스키마로 변환
+
+**참조 방법:**
+1. TRD에서 DB 기술 스택 확인
+2. `erd_reference.references`의 라인 범위에서 SQL 추출
+3. 기술 스택에 맞게 변환/활용
+4. RLS 정책, 트리거도 함께 적용
+</action>
+
 <check if="difficulty is hard OR websearch_hints exists">
   <action>WebSearch로 레퍼런스 조사:
     - "{{technology}} {{feature}} implementation 2024 2025"

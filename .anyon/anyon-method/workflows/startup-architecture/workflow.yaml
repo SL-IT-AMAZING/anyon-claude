@@ -1,6 +1,6 @@
 # Startup Architecture Workflow Configuration
 name: startup-architecture
-description: "Create comprehensive system architecture document using storytelling and diagrams for non-technical understanding. Uses WebSearch to find 4-8 similar service architectures. References PRD, UX Design, UI Design Guide, and TRD. Auto-chains to startup-erd when complete."
+description: "시스템 아키텍처. 구조, 데이터 흐름, 확장성, 보안. 기술스택/API는 제외."
 author: "Anyon"
 
 # Critical variables from config
@@ -10,34 +10,20 @@ communication_language: "{config_source}:communication_language"
 document_output_language: "{config_source}:document_output_language"
 date: system-generated
 
-# Output folder - conversation subfolder in anyon-docs
-output_folder: "{project-root}/anyon-docs/conversation"
+# Output folder
+output_folder: "{project-root}/anyon-docs/planning"
 
 # Module path and component files
 installed_path: "{project-root}/.anyon/anyon-method/workflows/startup-architecture"
 template: "{installed_path}/template.md"
 instructions: "{installed_path}/instructions.md"
-validation: "{installed_path}/checklist.md"
 
-# Inputs: Previous documents (YAML-based reference)
+# Inputs
 input_prd: "{output_folder}/prd.md"
-input_ux: "{output_folder}/ux-design.md"
-input_ui: "{output_folder}/ui-design-guide.md"
+input_ux: "{output_folder}/ui-ux.html"
 input_trd: "{output_folder}/trd.md"
 
 # Output file
 default_output_file: "{output_folder}/architecture.md"
-
-# Next workflow in chain
-next_workflow: "{project-root}/.anyon/anyon-method/workflows/startup-erd/workflow.yaml"
-
-# Tool Requirements
-required_tools:
-  - "WebSearch":
-      description: "Search for similar service architectures and patterns"
-      critical: true
-  - "WebFetch":
-      description: "Fetch architecture diagrams and best practices"
-      critical: true
 
 standalone: true

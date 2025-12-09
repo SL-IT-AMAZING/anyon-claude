@@ -1,6 +1,6 @@
 # Startup TRD Workflow Configuration
 name: startup-trd
-description: "Create Technical Requirements Document with tech stack recommendations. Uses WebSearch/WebFetch to find 4-8 options for each technical decision. References PRD, UX Design, and UI Design Guide. Auto-chains to startup-architecture when complete."
+description: "기술 스택 선정. 프론트엔드, 백엔드, DB, UI 라이브러리, 호스팅 모두 포함."
 author: "Anyon"
 
 # Critical variables from config
@@ -10,33 +10,26 @@ communication_language: "{config_source}:communication_language"
 document_output_language: "{config_source}:document_output_language"
 date: system-generated
 
-# Output folder - conversation subfolder in anyon-docs
-output_folder: "{project-root}/anyon-docs/conversation"
+# Output folder
+output_folder: "{project-root}/anyon-docs/planning"
 
 # Module path and component files
 installed_path: "{project-root}/.anyon/anyon-method/workflows/startup-trd"
 template: "{installed_path}/template.md"
 instructions: "{installed_path}/instructions.md"
-validation: "{installed_path}/checklist.md"
 
-# Inputs: Previous documents (YAML-based reference)
+# Inputs
 input_prd: "{output_folder}/prd.md"
-input_ux: "{output_folder}/ux-design.md"
-input_ui: "{output_folder}/ui-design-guide.md"
+input_ux: "{output_folder}/ui-ux.html"
+input_design: "{output_folder}/design-guide.md"
 
 # Output file
 default_output_file: "{output_folder}/trd.md"
 
-# Next workflow in chain
-next_workflow: "{project-root}/.anyon/anyon-method/workflows/startup-architecture/workflow.yaml"
-
 # Tool Requirements
 required_tools:
   - "WebSearch":
-      description: "Search for technical solutions, frameworks, databases, and services"
-      critical: true
-  - "WebFetch":
-      description: "Fetch technical details, benchmarks, and documentation"
+      description: "Search for latest tech options"
       critical: true
 
 standalone: true

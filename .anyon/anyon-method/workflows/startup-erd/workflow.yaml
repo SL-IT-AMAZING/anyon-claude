@@ -1,6 +1,6 @@
 # Startup ERD Workflow Configuration
 name: startup-erd
-description: "Create comprehensive Entity Relationship Diagram (ERD) document with detailed database schema design. Uses WebSearch to find ERD strategies from similar services. References all previous documents (PRD, UX, UI, TRD, Architecture). This is the final workflow in the startup-launchpad chain."
+description: "Create comprehensive Entity Relationship Diagram (ERD) document with detailed database schema design. Uses AI knowledge and previous documents (PRD, UX, UI, TRD, Architecture) to design optimal schema. This is the final workflow in the startup-launchpad chain."
 author: "Anyon"
 
 # Critical variables from config
@@ -10,8 +10,8 @@ communication_language: "{config_source}:communication_language"
 document_output_language: "{config_source}:document_output_language"
 date: system-generated
 
-# Output folder - conversation subfolder in anyon-docs
-output_folder: "{project-root}/anyon-docs/conversation"
+# Output folder - planning subfolder in anyon-docs
+output_folder: "{project-root}/anyon-docs/planning"
 
 # Module path and component files
 installed_path: "{project-root}/.anyon/anyon-method/workflows/startup-erd"
@@ -21,8 +21,8 @@ validation: "{installed_path}/checklist.md"
 
 # Inputs: All previous documents (YAML-based reference)
 input_prd: "{output_folder}/prd.md"
-input_ux: "{output_folder}/ux-design.md"
-input_ui: "{output_folder}/ui-design-guide.md"
+input_ux: "{output_folder}/ui-ux.html"
+input_ui: "{output_folder}/design-guide.md"
 input_trd: "{output_folder}/trd.md"
 input_architecture: "{output_folder}/architecture.md"
 
@@ -32,13 +32,18 @@ default_output_file: "{output_folder}/erd.md"
 # No next workflow - this is the final step
 next_workflow: null
 
-# Tool Requirements
-required_tools:
-  - "WebSearch":
-      description: "Search for ERD strategies and database schema patterns from similar services"
-      critical: true
-  - "WebFetch":
-      description: "Fetch ERD examples and database design best practices"
-      critical: true
+# Tool Requirements - None required (uses AI knowledge + previous documents)
+
+# Skill Requirements - MUST be activated during workflow execution
+required_skills:
+  - skill: "postgresql-design"
+    trigger: "designing database schema"
+    mandatory: false
+    condition: "TRD에서 PostgreSQL 또는 관계형 DB를 선택한 경우"
+    description: "PostgreSQL 스키마 설계 시 사용 (해당 DB일 때만)"
+  - skill: "document-consistency"
+    trigger: "after document is saved to anyon-docs/planning/"
+    mandatory: true
+    description: "문서 저장 후 기존 문서들과 일관성 검사 수행"
 
 standalone: true

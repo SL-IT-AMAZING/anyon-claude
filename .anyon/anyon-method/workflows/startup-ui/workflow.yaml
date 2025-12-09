@@ -1,6 +1,6 @@
-# Startup UI Design Guide Workflow Configuration
-name: startup-ui
-description: "Create UI Design Guide with open-source component library recommendations. Uses WebSearch/WebFetch to find 4-8 options for each decision. References PRD and UX Design. Auto-chains to startup-trd when complete."
+# Startup Design Guide Workflow Configuration
+name: startup-design-guide
+description: "디자인 가이드 정의 - 색상, 폰트, 스타일만. 기술 스택(React, MUI 등)은 TRD에서 처리."
 author: "Anyon"
 
 # Critical variables from config
@@ -10,8 +10,8 @@ communication_language: "{config_source}:communication_language"
 document_output_language: "{config_source}:document_output_language"
 date: system-generated
 
-# Output folder - conversation subfolder in anyon-docs
-output_folder: "{project-root}/anyon-docs/conversation"
+# Output folder
+output_folder: "{project-root}/anyon-docs/planning"
 
 # Module path and component files
 installed_path: "{project-root}/.anyon/anyon-method/workflows/startup-ui"
@@ -19,23 +19,11 @@ template: "{installed_path}/template.md"
 instructions: "{installed_path}/instructions.md"
 validation: "{installed_path}/checklist.md"
 
-# Inputs: PRD and UX Design documents (YAML-based reference)
+# Inputs
 input_prd: "{output_folder}/prd.md"
-input_ux: "{output_folder}/ux-design.md"
+input_ux: "{output_folder}/ui-ux.html"
 
-# Output file
-default_output_file: "{output_folder}/ui-design-guide.md"
-
-# Next workflow in chain
-next_workflow: "{project-root}/.anyon/anyon-method/workflows/startup-trd/workflow.yaml"
-
-# Tool Requirements
-required_tools:
-  - "WebSearch":
-      description: "Search for UI component libraries and design resources"
-      critical: true
-  - "WebFetch":
-      description: "Fetch details from GitHub, npm, and documentation sites"
-      critical: true
+# Output file - renamed from ui-lib.md to design-guide.md
+default_output_file: "{output_folder}/design-guide.md"
 
 standalone: true

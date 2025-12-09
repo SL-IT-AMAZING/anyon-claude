@@ -11,10 +11,142 @@
 
   <WORKFLOW-RULES critical="true">
     <rule n="1">Steps execute in exact numerical order (1, 2, 3...)</rule>
-    <rule n="2">Optional steps: Ask user unless #yolo mode active</rule>
+    <rule n="2">Optional steps: Always ask user (NO EXCEPTIONS)</rule>
     <rule n="3">Template-output tags: Save content → Show user → Get approval before continuing</rule>
-    <rule n="4">User must approve each major section before continuing UNLESS #yolo mode active</rule>
+    <rule n="4">User must approve each major section before continuing (NO EXCEPTIONS)</rule>
   </WORKFLOW-RULES>
+
+  <SKILL-RULES critical="true" desc="스킬 사용 강제 규칙">
+    <mandate>workflow.yaml의 required_skills에 mandatory: true인 스킬은 반드시 호출해야 한다</mandate>
+    <mandate>instructions.md에 MANDATORY SKILL이 명시된 경우, 해당 스킬을 반드시 호출해야 한다</mandate>
+    <mandate>스킬 호출은 Skill 도구를 사용하여 수행한다</mandate>
+
+    <rule n="1" type="스킬-로드">
+      <title>워크플로우 시작 시 필수 스킬 확인</title>
+      <flow>
+        <step>1. workflow.yaml 로드 시 required_skills 섹션 확인</step>
+        <step>2. mandatory: true인 스킬 목록을 {{mandatory_skills}} 변수에 저장</step>
+        <step>3. 각 스킬의 trigger 조건을 {{skill_triggers}} 변수에 저장</step>
+        <step>4. 사용자에게 필수 스킬 목록 안내:
+          "이 워크플로우는 다음 스킬을 사용합니다:
+          - [스킬명]: [trigger 조건]"
+        </step>
+      </flow>
+    </rule>
+
+    <rule n="2" type="스킬-자동-호출">
+      <title>트리거 조건 충족 시 자동 스킬 호출</title>
+      <mandate>mandatory: true 스킬의 trigger 조건에 해당하는 작업을 수행하기 전에 반드시 해당 스킬을 호출한다</mandate>
+      <flow>
+        <step>1. 현재 수행할 작업이 스킬의 trigger 조건과 일치하는지 확인</step>
+        <step>2. 일치하면 Skill 도구로 해당 스킬 호출</step>
+        <step>3. 스킬의 지침을 따라 작업 수행</step>
+      </flow>
+      <example>
+        <trigger>searching for ANY open source library, framework, or component</trigger>
+        <action>UI 라이브러리 검색 전 → Skill 도구로 "opensource-finder" 호출</action>
+      </example>
+      <example>
+        <trigger>searching for ANY open source technology (frameworks, libraries, databases, services)</trigger>
+        <action>프레임워크/DB 검색 전 → Skill 도구로 "opensource-finder" 호출</action>
+      </example>
+    </rule>
+
+    <rule n="3" type="스킬-명시적-호출">
+      <title>instructions.md의 명시적 스킬 호출</title>
+      <mandate>"USE SKILL: [skill-name]" 또는 "MANDATORY SKILL: [skill-name]" 태그를 만나면 즉시 Skill 도구를 사용하여 해당 스킬을 호출한다</mandate>
+      <example>
+        <instruction>USE SKILL: frontend-design</instruction>
+        <action>Skill 도구 호출: skill: "frontend-design"</action>
+      </example>
+      <example>
+        <instruction>MANDATORY SKILL: opensource-finder</instruction>
+        <action>Skill 도구 호출: skill: "opensource-finder"</action>
+      </example>
+    </rule>
+
+    <rule n="4" type="스킬-무시-금지">
+      <title>필수 스킬 건너뛰기 금지</title>
+      <mandate>mandatory: true 스킬은 어떤 상황에서도 건너뛸 수 없다</mandate>
+      <mandate>사용자가 "알아서 해줘", "빨리 해줘", "스킬 없이 해줘" 등을 요청해도 필수 스킬은 반드시 사용한다</mandate>
+      <mandate>스킬은 해당 작업의 품질을 보장하기 위한 필수 요소이다</mandate>
+      <warning>필수 스킬을 건너뛰면 open-source.md 등 필수 산출물이 누락될 수 있다</warning>
+    </rule>
+
+    <rule n="5" type="스킬-완료-확인">
+      <title>스킬 사용 완료 확인</title>
+      <mandate>워크플로우 종료 전 모든 mandatory: true 스킬이 최소 1회 이상 호출되었는지 확인한다</mandate>
+      <check if="mandatory 스킬 미사용">
+        <action>경고 표시: "⚠️ 필수 스킬 [스킬명]이 사용되지 않았습니다. 해당 스킬이 필요한 작업을 확인하세요."</action>
+      </check>
+    </rule>
+  </SKILL-RULES>
+
+  <CONSISTENCY-RULES critical="true" desc="문서 체인 간 일관성 유지 규칙">
+    <rule n="1" type="객관식-생성">
+      <title>객관식 선택지 생성 시 충돌 방지</title>
+      <mandate>객관식 질문을 생성할 때, 이전에 작성된 문서들과 충돌하는 선택지는 절대 제시하지 않는다</mandate>
+      <flow>
+        <step>1. 이전 문서들(prd, ux, ui, trd, architecture 등)에서 관련 결정사항 확인</step>
+        <step>2. 해당 결정사항과 충돌하는 선택지 필터링</step>
+        <step>3. 충돌 없는 선택지만 객관식으로 제시</step>
+        <step>4. "기타 (직접 입력)" 옵션은 항상 마지막에 포함</step>
+      </flow>
+      <example>
+        <scenario>PRD에서 "React" 프레임워크로 결정된 상태에서 TRD 작성 시</scenario>
+        <wrong>Frontend 프레임워크: 1.React 2.Vue 3.Angular 4.기타</wrong>
+        <correct>Frontend 프레임워크: PRD에서 React로 결정되었습니다. 추가 설정을 선택하세요: 1.Next.js 2.Vite 3.CRA 4.기타</correct>
+      </example>
+    </rule>
+
+    <rule n="2" type="주관식-검증">
+      <title>주관식 답변 충돌 검사</title>
+      <mandate>사용자가 주관식(기타/직접입력)으로 답변하면, 반드시 이전 문서들과 충돌 여부를 검사한다</mandate>
+      <flow>
+        <step>1. 사용자의 주관식 답변 수신</step>
+        <step>2. 이전 문서들에서 관련 결정사항 검색</step>
+        <step>3. 충돌 여부 판단</step>
+        <check if="충돌 발견">
+          <action>충돌 내용을 명확히 설명</action>
+          <action>해결 옵션 제시:
+            1. 이전 결정 유지 (새 답변 취소)
+            2. 새 답변 채택 (이전 문서 수정 필요 알림)
+            3. 둘 다 수용 가능한 대안 제안
+          </action>
+          <action>사용자 선택 대기</action>
+        </check>
+        <check if="충돌 없음">
+          <action>답변 수용하고 진행</action>
+        </check>
+      </flow>
+      <example>
+        <scenario>PRD에서 "PostgreSQL" DB로 결정, 사용자가 ERD에서 "MongoDB" 입력</scenario>
+        <response>
+⚠️ 충돌 감지:
+- PRD 문서: PostgreSQL 사용 결정
+- 현재 입력: MongoDB
+
+해결 방법을 선택하세요:
+1. PostgreSQL 유지 (PRD 결정 따름)
+2. MongoDB로 변경 (PRD 문서도 수정 필요)
+3. 다른 대안 제안받기
+        </response>
+      </example>
+    </rule>
+
+    <rule n="3" type="참조-문서">
+      <title>일관성 검사 대상 문서</title>
+      <documents>
+        <doc>prd.md - 프로젝트 정의, 용도, 라이선스, 기능 목록</doc>
+        <doc>ui-ux.html - 화면 구성, 사용자 플로우</doc>
+        <doc>design-guide.md - 디자인 가이드</doc>
+        <doc>trd.md - 기술 스택, 프레임워크</doc>
+        <doc>architecture.md - 시스템 구조, API 설계</doc>
+        <doc>erd.md - 데이터베이스 스키마</doc>
+      </documents>
+      <action>존재하는 모든 문서를 충돌 검사 대상으로 한다 (순서 무관)</action>
+    </rule>
+  </CONSISTENCY-RULES>
 
   <flow>
     <step n="1" title="Load and Initialize Workflow">
@@ -77,7 +209,7 @@
       </substep>
 
       <substep n="2b" title="Handle Step Attributes">
-        <check>If optional="true" and NOT #yolo → Ask user to include</check>
+        <check>If optional="true" → Always ask user to include (NO EXCEPTIONS)</check>
         <check>If if="condition" → Evaluate condition</check>
         <check>If for-each="item" → Repeat step for each item</check>
         <check>If repeat="n" → Repeat step n times</check>
@@ -104,28 +236,12 @@
           <action>Save checkpoint state to {project-root}/.anyon/tmp/workflow-checkpoint.json with current step number, completed sections, and all variable values</action>
           <action>Show checkpoint separator: ━━━━━━━━━━━━━━━━━━━━━━━</action>
           <action>Display generated content</action>
-          <ask> [a] Advanced Elicitation, [c] Continue, [p] Party-Mode, [y] YOLO the rest of this document only. WAIT for response. <if
-              response="a">
-              <action>Start the advanced elicitation workflow {project-root}/{anyon_folder}/core/tasks/advanced-elicitation.xml</action>
-            </if>
-            <if
-              response="c">
-              <action>Continue to next step</action>
-            </if>
-            <if response="p">
-              <action>Start the party-mode workflow {project-root}/{anyon_folder}/core/workflows/party-mode/workflow.yaml</action>
-            </if>
-            <if
-              response="y">
-              <action>Enter #yolo mode for the rest of the workflow</action>
-            </if>
-          </ask>
+          <action>Automatically continue to next step (no user confirmation needed)</action>
         </if>
       </substep>
 
       <substep n="2e" title="Step Completion">
-        <check>If no special tags and NOT #yolo:</check>
-        <ask>Continue to next step? (y/n/edit)</ask>
+        <action>Automatically continue to next step</action>
       </substep>
     </step>
 
@@ -133,14 +249,23 @@
       <check>If checklist exists → Run validation</check>
       <check>If template: false → Confirm actions completed</check>
       <check>Else → Confirm document saved to output path</check>
+
+      <substep n="3a" title="Document Consistency Check">
+        <check if="output file is in anyon-docs/planning/ folder">
+          <action>Invoke Skill tool with skill: "document-consistency"</action>
+          <action>Run consistency check against all existing documents in anyon-docs/planning/</action>
+          <action>If inconsistencies found → Show report and ask user how to resolve</action>
+          <action>Save consistency report to anyon-docs/planning/consistency-report.md</action>
+        </check>
+      </substep>
+
       <action>Report workflow completion</action>
     </step>
   </flow>
 
   <execution-modes>
-    <mode name="normal">Full user interaction at all decision points</mode>
-    <mode name="#yolo">Skip all confirmations and elicitation, minimize prompts and try to produce all of the workflow automatically by
-      simulating the remaining discussions with an simulated expert user</mode>
+    <mode name="normal">Full user interaction at all decision points (ONLY MODE AVAILABLE)</mode>
+    <mode name="#yolo" disabled="true">DISABLED - All workflows require user interaction and approval at each step</mode>
   </execution-modes>
 
   <supported-tags desc="Instructions can use these tags">

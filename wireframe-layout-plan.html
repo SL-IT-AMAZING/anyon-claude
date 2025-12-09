@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANYON Layout Wireframe - Interactive</title>
+    <style>
+        /* ===== Wireframe Style - Grayscale Only ===== */
+        :root {
+            --bg-dark: #1a1a1a;
+            --bg-medium: #2a2a2a;
+            --bg-light: #3a3a3a;
+            --bg-lighter: #4a4a4a;
+            --border: #555;
+            --text-primary: #fff;
+            --text-secondary: #aaa;
+            --text-muted: #777;
+            --highlight: #666;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 13px;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ===== Main Layout ===== */
+        .app {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            width: 240px;
+            background: var(--bg-medium);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .window-btn {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+        }
+
+        .window-btn.close { background: #ff5f57; }
+        .window-btn.minimize { background: #ffbd2e; }
+        .window-btn.maximize { background: #28c840; }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .logo-icon {
+            width: 24px;
+            height: 24px;
+            background: var(--bg-lighter);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            padding: 12px;
+        }
+
+        .new-btn {
+            width: 100%;
+            padding: 10px;
+            background: var(--bg-light);
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.15s;
+        }
+
+        .new-btn:hover {
+            background: var(--bg-lighter);
+            border-style: solid;
+            color: var(--text-primary);
+        }
+
+        /* Navigation */
+        .nav-section {
+            padding: 8px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 8px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.1s;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-light);
+            color: var(--text-primary);
+        }
+
+        .nav-item.active {
+            background: var(--bg-lighter);
+            color: var(--text-primary);
+        }
+
+        .nav-icon {
+            width: 18px;
+            height: 18px;
+            background: var(--bg-lighter);
+            border-radius: 4px;
+        }
+
+        .nav-badge {
+            margin-left: auto;
+            background: var(--bg-lighter);
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+
+        /* Projects List */
+        .projects-section {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .project-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+
+        .project-item:hover {
+            background: var(--bg-light);
+        }
+
+        .project-item.active {
+            background: var(--bg-lighter);
+            border: 1px solid var(--border);
+        }
+
+        .project-avatar {
+            width: 32px;
+            height: 32px;
+            background: var(--bg-light);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .project-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .project-name {
+            font-size: 13px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .project-meta {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .project-status {
+            width: 8px;
+            height: 8px;
+            background: #28c840;
+            border-radius: 50%;
+        }
+
+        /* User Section */
+        .user-section {
+            padding: 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .user-profile:hover {
+            background: var(--bg-light);
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: var(--bg-lighter);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-size: 13px;
+        }
+
+        .user-plan {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ===== TOP BAR ===== */
+        .topbar {
+            height: 44px;
+            background: var(--bg-medium);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            gap: 12px;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .breadcrumb-current {
+            color: var(--text-primary);
+        }
+
+        /* Tab Bar */
+        .tab-bar {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex: 1;
+            overflow-x: auto;
+            padding: 0 8px;
+        }
+
+        .tab-bar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.1s;
+        }
+
+        .tab:hover {
+            background: var(--bg-light);
+            color: var(--text-primary);
+        }
+
+        .tab.active {
+            background: var(--bg-lighter);
+            color: var(--text-primary);
+        }
+
+        .tab-icon {
+            width: 14px;
+            height: 14px;
+            background: var(--bg-lighter);
+            border-radius: 3px;
+        }
+
+        .tab-close {
+            width: 14px;
+            height: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            font-size: 10px;
+        }
+
+        .tab:hover .tab-close {
+            opacity: 0.5;
+        }
+
+        .tab-close:hover {
+            opacity: 1 !important;
+        }
+
+        .tab-add {
+            width: 28px;
+            height: 28px;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .tab-add:hover {
+            background: var(--bg-light);
+            color: var(--text-primary);
+        }
+
+        /* Top Bar Actions */
+        .topbar-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        .icon-btn {
+            width: 32px;
+            height: 32px;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-btn:hover {
+            background: var(--bg-light);
+            color: var(--text-primary);
+        }
+
+        .icon-placeholder {
+            width: 16px;
+            height: 16px;
+            background: var(--bg-lighter);
+            border-radius: 4px;
+        }
+
+        /* ===== WORKSPACE ===== */
+        .workspace {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Split Pane */
+        .pane {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .pane-left {
+            flex: 1.2;
+            border-right: 1px solid var(--border);
+        }
+
+        .pane-right {
+            flex: 1;
+        }
+
+        .resizer {
+            width: 4px;
+            background: transparent;
+            cursor: col-resize;
+        }
+
+        .resizer:hover {
+            background: var(--highlight);
+        }
+
+        /* ===== CHAT PANEL ===== */
+        .chat-panel {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            background: var(--bg-dark);
+        }
+
+        .chat-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chat-title h3 {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .chat-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .chat-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        /* Messages */
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .message {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .message-avatar {
+            width: 28px;
+            height: 28px;
+            background: var(--bg-light);
+            border-radius: 6px;
+            flex-shrink: 0;
+        }
+
+        .message-avatar.ai {
+            background: var(--bg-lighter);
+        }
+
+        .message-content {
+            flex: 1;
+        }
+
+        .message-header {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .message-author {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .message-body {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* Tool Widget */
+        .tool-widget {
+            background: var(--bg-medium);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .tool-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: var(--bg-light);
+            border-bottom: 1px solid var(--border);
+            font-size: 11px;
+        }
+
+        .tool-icon {
+            width: 14px;
+            height: 14px;
+            background: var(--bg-lighter);
+            border-radius: 3px;
+        }
+
+        .tool-status {
+            margin-left: auto;
+            color: #28c840;
+        }
+
+        .tool-body {
+            padding: 8px 12px;
+            font-family: monospace;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* Chat Input */
+        .chat-input-area {
+            padding: 12px 16px;
+            border-top: 1px solid var(--border);
+            background: var(--bg-medium);
+        }
+
+        .input-container {
+            background: var(--bg-light);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .input-main {
+            display: flex;
+            gap: 12px;
+        }
+
+        .input-field {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+
+        .input-field::placeholder {
+            color: var(--text-muted);
+        }
+
+        .send-btn {
+            width: 32px;
+            height: 32px;
+            background: var(--bg-lighter);
+            border: none;
+            border-radius: 6px;
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+
+        .send-btn:hover {
+            background: var(--highlight);
+        }
+
+        .input-toolbar {
+            display: flex;
+            gap: 8px;
+            padding-top: 8px;
+            margin-top: 8px;
+            border-top: 1px solid var(--border);
+        }
+
+        .toolbar-btn {
+            padding: 4px 8px;
+            background: transparent;
+            border: none;
+            border-radius: 4px;
+            color: var(--text-muted);
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        .toolbar-btn:hover {
+            background: var(--bg-lighter);
+            color: var(--text-secondary);
+        }
+
+        .model-select {
+            margin-left: auto;
+            padding: 4px 8px;
+            background: var(--bg-lighter);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-secondary);
+            font-size: 11px;
+        }
+
+        /* ===== CONTEXT PANEL ===== */
+        .context-panel {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            background: var(--bg-dark);
+        }
+
+        .context-tabs {
+            display: flex;
+            background: var(--bg-medium);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .context-tab {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+
+        .context-tab:hover {
+            color: var(--text-primary);
+            background: var(--bg-light);
+        }
+
+        .context-tab.active {
+            color: var(--text-primary);
+            border-bottom-color: var(--text-primary);
+        }
+
+        .context-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        /* Progress Card */
+        .progress-card {
+            background: var(--bg-medium);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .progress-title {
+            font-size: 13px;
+        }
+
+        .progress-percent {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: var(--bg-light);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--text-secondary);
+            border-radius: 3px;
+        }
+
+        .progress-stats {
+            display: flex;
+            gap: 16px;
+            margin-top: 12px;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* Doc Cards */
+        .doc-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .doc-card {
+            background: var(--bg-medium);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+
+        .doc-card:hover {
+            border-color: var(--highlight);
+        }
+
+        .doc-card.completed {
+            border-left: 3px solid #28c840;
+        }
+
+        .doc-card.in-progress {
+            border-left: 3px solid #ffbd2e;
+        }
+
+        .doc-card.pending {
+            border-left: 3px solid var(--text-muted);
+        }
+
+        .doc-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .doc-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--bg-light);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .doc-title {
+            flex: 1;
+            font-size: 13px;
+        }
+
+        .doc-status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+        }
+
+        .doc-status.completed {
+            background: rgba(40, 200, 64, 0.2);
+            color: #28c840;
+        }
+
+        .doc-status.in-progress {
+            background: rgba(255, 189, 46, 0.2);
+            color: #ffbd2e;
+        }
+
+        .doc-status.pending {
+            background: var(--bg-light);
+            color: var(--text-muted);
+        }
+
+        .doc-desc {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .doc-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .doc-btn {
+            flex: 1;
+            padding: 8px;
+            border-radius: 6px;
+            border: none;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+
+        .doc-btn-primary {
+            background: var(--bg-lighter);
+            color: var(--text-primary);
+        }
+
+        .doc-btn-primary:hover {
+            background: var(--highlight);
+        }
+
+        .doc-btn-secondary {
+            background: var(--bg-light);
+            color: var(--text-secondary);
+        }
+
+        .doc-btn-secondary:hover {
+            background: var(--bg-lighter);
+        }
+
+        /* ===== ANNOTATION ===== */
+        .annotation {
+            position: fixed;
+            background: #333;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            pointer-events: none;
+            z-index: 1000;
+            max-width: 250px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .annotation.visible {
+            opacity: 1;
+        }
+
+        .annotation-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .annotation-action {
+            color: #aaa;
+        }
+
+        /* ===== LEGEND ===== */
+        .legend {
+            position: fixed;
+            bottom: 20px;
+            left: 260px;
+            background: var(--bg-medium);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            font-size: 11px;
+            z-index: 100;
+            max-width: 320px;
+        }
+
+        .legend-title {
+            font-weight: 600;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+
+        .legend-section {
+            margin-bottom: 12px;
+        }
+
+        .legend-section-title {
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 0;
+            color: var(--text-secondary);
+        }
+
+        .legend-key {
+            padding: 2px 6px;
+            background: var(--bg-light);
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 10px;
+        }
+
+        /* ===== CLICK HIGHLIGHT ===== */
+        [data-action] {
+            position: relative;
+        }
+
+        [data-action]:hover::after {
+            content: attr(data-action);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            white-space: nowrap;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        /* ===== Full Screen Views ===== */
+        .full-view {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-dark);
+            z-index: 50;
+        }
+
+        .full-view.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .full-view-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .full-view-content {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        .back-btn {
+            padding: 6px 12px;
+            background: var(--bg-light);
+            border: none;
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .back-btn:hover {
+            background: var(--bg-lighter);
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- ===== SIDEBAR ===== -->
+        <aside class="sidebar">
+            <!-- Header with Window Controls -->
+            <div class="sidebar-header">
+                <div class="window-controls">
+                    <button class="window-btn close" data-action="window.close()"></button>
+                    <button class="window-btn minimize" data-action="window.minimize()"></button>
+                    <button class="window-btn maximize" data-action="window.maximize()"></button>
+                </div>
+                <div class="logo">
+                    <div class="logo-icon">A</div>
+                    <span>ANYON</span>
+                </div>
+            </div>
+
+            <!-- Quick Action: New Project Tab -->
+            <div class="quick-actions">
+                <button class="new-btn" data-action="createProjectsTab()" onclick="showToast('New Projects tab created')">
+                    + New Project
+                </button>
+            </div>
+
+            <!-- Main Navigation -->
+            <nav class="nav-section">
+                <div class="nav-label">Workspace</div>
+
+                <div class="nav-item active" data-action="createProjectsTab()" onclick="setActiveNav(this); showToast('Projects tab')">
+                    <div class="nav-icon"></div>
+                    <span>Projects</span>
+                </div>
+
+                <div class="nav-item" data-action="createAgentsTab()" onclick="setActiveNav(this); showToast('Agents tab opened')">
+                    <div class="nav-icon"></div>
+                    <span>Agents</span>
+                    <span class="nav-badge">3</span>
+                </div>
+
+                <div class="nav-item" data-action="createUsageTab()" onclick="setActiveNav(this); showToast('Usage Dashboard opened')">
+                    <div class="nav-icon"></div>
+                    <span>Usage</span>
+                </div>
+
+                <div class="nav-item" data-action="createMCPTab()" onclick="setActiveNav(this); showToast('MCP Servers opened')">
+                    <div class="nav-icon"></div>
+                    <span>MCP Servers</span>
+                </div>
+
+                <div class="nav-item" data-action="createSettingsTab()" onclick="setActiveNav(this); showToast('Settings opened')">
+                    <div class="nav-icon"></div>
+                    <span>Settings</span>
+                </div>
+            </nav>
+
+            <!-- Recent Projects -->
+            <div class="nav-section">
+                <div class="nav-label">Recent Projects</div>
+            </div>
+            <div class="projects-section">
+                <div class="project-item active" data-action="selectProject(project)" onclick="setActiveProject(this)">
+                    <div class="project-avatar">A</div>
+                    <div class="project-info">
+                        <div class="project-name">anyon-claude</div>
+                        <div class="project-meta">2 min ago</div>
+                    </div>
+                    <div class="project-status"></div>
+                </div>
+
+                <div class="project-item" data-action="selectProject(project)" onclick="setActiveProject(this)">
+                    <div class="project-avatar">S</div>
+                    <div class="project-info">
+                        <div class="project-name">startup-app</div>
+                        <div class="project-meta">1 hour ago</div>
+                    </div>
+                </div>
+
+                <div class="project-item" data-action="selectProject(project)" onclick="setActiveProject(this)">
+                    <div class="project-avatar">B</div>
+                    <div class="project-info">
+                        <div class="project-name">backend-api</div>
+                        <div class="project-meta">Yesterday</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Profile -->
+            <div class="user-section">
+                <div class="user-profile" data-action="openUserMenu()" onclick="showToast('User menu: Settings, Logout')">
+                    <div class="user-avatar">C</div>
+                    <div class="user-info">
+                        <div class="user-name">Cosmos</div>
+                        <div class="user-plan">Pro Plan</div>
+                    </div>
+                    <span>⋯</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ===== MAIN CONTENT ===== -->
+        <main class="main">
+            <!-- Top Bar -->
+            <header class="topbar">
+                <!-- Breadcrumb -->
+                <div class="breadcrumb">
+                    <span>anyon-claude</span>
+                    <span>/</span>
+                    <span class="breadcrumb-current">MVP Development</span>
+                </div>
+
+                <!-- Tab Bar (from TabManager) -->
+                <div class="tab-bar">
+                    <button class="tab active" data-action="switchToTab(id)" onclick="setActiveTab(this)">
+                        <div class="tab-icon"></div>
+                        <span>startup-prd</span>
+                        <span class="tab-close" onclick="event.stopPropagation(); closeTab(this.parentElement)">×</span>
+                    </button>
+
+                    <button class="tab" data-action="switchToTab(id)" onclick="setActiveTab(this)">
+                        <div class="tab-icon"></div>
+                        <span>pm-executor</span>
+                        <span class="tab-close" onclick="event.stopPropagation(); closeTab(this.parentElement)">×</span>
+                    </button>
+
+                    <button class="tab" data-action="switchToTab(id)" onclick="setActiveTab(this)">
+                        <div class="tab-icon"></div>
+                        <span>Settings</span>
+                        <span class="tab-close" onclick="event.stopPropagation(); closeTab(this.parentElement)">×</span>
+                    </button>
+
+                    <button class="tab-add" data-action="createProjectsTab()" onclick="addTab()">+</button>
+                </div>
+
+                <!-- Top Bar Actions (from CustomTitlebar) -->
+                <div class="topbar-actions">
+                    <button class="icon-btn" data-action="openCommandPalette()" onclick="showToast('Command Palette (Cmd+K)')">
+                        <div class="icon-placeholder"></div>
+                    </button>
+                    <button class="icon-btn" data-action="toggleNotifications()" onclick="showToast('Notifications')">
+                        <div class="icon-placeholder"></div>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Workspace (Split Pane) -->
+            <div class="workspace">
+                <!-- Left Pane: Chat (ClaudeCodeSession) -->
+                <div class="pane pane-left">
+                    <div class="chat-panel">
+                        <!-- Chat Header -->
+                        <div class="chat-header">
+                            <div class="chat-title">
+                                <h3>PRD 작성</h3>
+                                <span class="chat-meta">· 진행중</span>
+                            </div>
+                            <div class="chat-actions">
+                                <button class="icon-btn" data-action="openTimeline()" onclick="showToast('Timeline Navigator')">
+                                    <div class="icon-placeholder"></div>
+                                </button>
+                                <button class="icon-btn" data-action="copySession()" onclick="showToast('Copy: Markdown / JSONL')">
+                                    <div class="icon-placeholder"></div>
+                                </button>
+                                <button class="icon-btn" data-action="sessionMenu()" onclick="showToast('Session Menu')">
+                                    <div class="icon-placeholder"></div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Messages Area -->
+                        <div class="messages">
+                            <div class="message">
+                                <div class="message-avatar">C</div>
+                                <div class="message-content">
+                                    <div class="message-header">
+                                        <span class="message-author">You</span>
+                                        <span class="message-time">2:34 PM</span>
+                                    </div>
+                                    <div class="message-body">
+                                        /anyon:anyon-method:workflows:startup-prd
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="message">
+                                <div class="message-avatar ai">AI</div>
+                                <div class="message-content">
+                                    <div class="message-header">
+                                        <span class="message-author">Claude</span>
+                                        <span class="message-time">2:34 PM</span>
+                                    </div>
+                                    <div class="message-body">
+                                        PRD 작성 워크플로우를 시작합니다. 먼저 몇 가지 질문을 드리겠습니다.
+                                    </div>
+                                    <div class="tool-widget" data-action="expandToolWidget()">
+                                        <div class="tool-header">
+                                            <div class="tool-icon"></div>
+                                            <span>Write</span>
+                                            <span class="tool-status">✓</span>
+                                        </div>
+                                        <div class="tool-body">
+                                            anyon-docs/planning/PRD.md
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chat Input (FloatingPromptInput) -->
+                        <div class="chat-input-area">
+                            <div class="input-container">
+                                <div class="input-main">
+                                    <input type="text" class="input-field" placeholder="Ask Claude anything..." data-action="sendMessage()">
+                                    <button class="send-btn" data-action="sendMessage()" onclick="showToast('Message sent')">→</button>
+                                </div>
+                                <div class="input-toolbar">
+                                    <button class="toolbar-btn" data-action="attachFile()" onclick="showToast('FilePicker opened')">📎 Attach</button>
+                                    <button class="toolbar-btn" data-action="openSlashCommands()" onclick="showToast('SlashCommandPicker opened')">/ Commands</button>
+                                    <button class="toolbar-btn" data-action="insertImage()" onclick="showToast('Image picker')">🖼️ Image</button>
+                                    <select class="model-select" data-action="changeModel()">
+                                        <option>Sonnet 4</option>
+                                        <option>Opus 4</option>
+                                        <option>Haiku</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resizer -->
+                <div class="resizer" data-action="resizePane()"></div>
+
+                <!-- Right Pane: Context Panel -->
+                <div class="pane pane-right">
+                    <div class="context-panel">
+                        <!-- Context Tabs -->
+                        <div class="context-tabs">
+                            <button class="context-tab active" onclick="setActiveContextTab(this)" data-action="showPlanningDocs()">기획문서</button>
+                            <button class="context-tab" onclick="setActiveContextTab(this)" data-action="showDevDocs()">개발문서</button>
+                            <button class="context-tab" onclick="setActiveContextTab(this)" data-action="showPreview()">프리뷰</button>
+                            <button class="context-tab" onclick="setActiveContextTab(this)" data-action="showFiles()">파일</button>
+                        </div>
+
+                        <!-- Context Content -->
+                        <div class="context-content">
+                            <!-- Progress Overview -->
+                            <div class="progress-card">
+                                <div class="progress-header">
+                                    <span class="progress-title">Documentation Progress</span>
+                                    <span class="progress-percent">33%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 33%;"></div>
+                                </div>
+                                <div class="progress-stats">
+                                    <span><strong>2</strong> Completed</span>
+                                    <span><strong>1</strong> In Progress</span>
+                                    <span><strong>3</strong> Pending</span>
+                                </div>
+                            </div>
+
+                            <!-- Document Cards (PlanningDocsPanel) -->
+                            <div class="doc-list">
+                                <div class="doc-card completed" data-action="openDoc(prd)" onclick="showToast('PRD.md opened')">
+                                    <div class="doc-header">
+                                        <div class="doc-icon">📋</div>
+                                        <div class="doc-title">PRD</div>
+                                        <span class="doc-status completed">완료</span>
+                                    </div>
+                                    <div class="doc-desc">제품 요구사항 문서</div>
+                                    <div class="doc-actions">
+                                        <button class="doc-btn doc-btn-secondary" onclick="event.stopPropagation(); showToast('View PRD')">보기</button>
+                                        <button class="doc-btn doc-btn-secondary" onclick="event.stopPropagation(); showToast('Edit PRD')">편집</button>
+                                    </div>
+                                </div>
+
+                                <div class="doc-card completed" data-action="openDoc(ux)" onclick="showToast('UX.md opened')">
+                                    <div class="doc-header">
+                                        <div class="doc-icon">🎨</div>
+                                        <div class="doc-title">UX 디자인</div>
+                                        <span class="doc-status completed">완료</span>
+                                    </div>
+                                    <div class="doc-desc">사용자 경험 설계</div>
+                                    <div class="doc-actions">
+                                        <button class="doc-btn doc-btn-secondary" onclick="event.stopPropagation()">보기</button>
+                                        <button class="doc-btn doc-btn-secondary" onclick="event.stopPropagation()">편집</button>
+                                    </div>
+                                </div>
+
+                                <div class="doc-card in-progress" data-action="openDoc(ui)" onclick="showToast('UI.md opened')">
+                                    <div class="doc-header">
+                                        <div class="doc-icon">🖼️</div>
+                                        <div class="doc-title">UI 디자인</div>
+                                        <span class="doc-status in-progress">진행중</span>
+                                    </div>
+                                    <div class="doc-desc">디자인 가이드</div>
+                                    <div class="doc-actions">
+                                        <button class="doc-btn doc-btn-primary" data-action="continueWorkflow(ui)" onclick="event.stopPropagation(); showToast('Continuing UI workflow')">계속하기</button>
+                                        <button class="doc-btn doc-btn-secondary" onclick="event.stopPropagation()">보기</button>
+                                    </div>
+                                </div>
+
+                                <div class="doc-card pending" data-action="openDoc(trd)">
+                                    <div class="doc-header">
+                                        <div class="doc-icon">⚙️</div>
+                                        <div class="doc-title">TRD</div>
+                                        <span class="doc-status pending">대기</span>
+                                    </div>
+                                    <div class="doc-desc">기술 요구사항</div>
+                                    <div class="doc-actions">
+                                        <button class="doc-btn doc-btn-primary" data-action="startWorkflow(trd)" onclick="event.stopPropagation(); showToast('Starting TRD workflow')">시작하기</button>
+                                    </div>
+                                </div>
+
+                                <div class="doc-card pending">
+                                    <div class="doc-header">
+                                        <div class="doc-icon">🏗️</div>
+                                        <div class="doc-title">Architecture</div>
+                                        <span class="doc-status pending">대기</span>
+                                    </div>
+                                    <div class="doc-desc">시스템 아키텍처</div>
+                                    <div class="doc-actions">
+                                        <button class="doc-btn doc-btn-primary" onclick="event.stopPropagation(); showToast('Starting Architecture workflow')">시작하기</button>
+                                    </div>
+                                </div>
+
+                                <div class="doc-card pending">
+                                    <div class="doc-header">
+                                        <div class="doc-icon">🗃️</div>
+                                        <div class="doc-title">ERD</div>
+                                        <span class="doc-status pending">대기</span>
+                                    </div>
+                                    <div class="doc-desc">데이터베이스 설계</div>
+                                    <div class="doc-actions">
+                                        <button class="doc-btn doc-btn-primary" onclick="event.stopPropagation(); showToast('Starting ERD workflow')">시작하기</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend">
+        <div class="legend-title">Layout Change Plan</div>
+
+        <div class="legend-section">
+            <div class="legend-section-title">FROM (기존)</div>
+            <div class="legend-item">CustomTitlebar → Sidebar header + TopBar actions</div>
+            <div class="legend-item">TabManager → TopBar tab-bar</div>
+            <div class="legend-item">TabContent (전체) → Workspace split pane</div>
+        </div>
+
+        <div class="legend-section">
+            <div class="legend-section-title">NEW (추가)</div>
+            <div class="legend-item">Sidebar navigation</div>
+            <div class="legend-item">Sidebar projects list</div>
+            <div class="legend-item">Context Panel (right)</div>
+        </div>
+
+        <div class="legend-section">
+            <div class="legend-section-title">UNCHANGED (유지)</div>
+            <div class="legend-item">ClaudeCodeSession 전체</div>
+            <div class="legend-item">모든 Tab actions</div>
+            <div class="legend-item">모든 Event handlers</div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" style="position: fixed; bottom: 20px; right: 20px; background: #333; color: #fff; padding: 12px 20px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity 0.2s; z-index: 1000;"></div>
+
+    <script>
+        // Toast notification
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.opacity = '1';
+            setTimeout(() => toast.style.opacity = '0', 2000);
+        }
+
+        // Navigation
+        function setActiveNav(el) {
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        // Project selection
+        function setActiveProject(el) {
+            document.querySelectorAll('.project-item').forEach(item => item.classList.remove('active'));
+            el.classList.add('active');
+            showToast('Project selected: ' + el.querySelector('.project-name').textContent);
+        }
+
+        // Tab management
+        function setActiveTab(el) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        function closeTab(el) {
+            el.remove();
+            showToast('Tab closed');
+            // Activate first remaining tab
+            const firstTab = document.querySelector('.tab');
+            if (firstTab) firstTab.classList.add('active');
+        }
+
+        function addTab() {
+            const tabBar = document.querySelector('.tab-bar');
+            const addBtn = document.querySelector('.tab-add');
+            const newTab = document.createElement('button');
+            newTab.className = 'tab';
+            newTab.innerHTML = `
+                <div class="tab-icon"></div>
+                <span>New Tab</span>
+                <span class="tab-close" onclick="event.stopPropagation(); closeTab(this.parentElement)">×</span>
+            `;
+            newTab.onclick = function() { setActiveTab(this); };
+            newTab.setAttribute('data-action', 'switchToTab(id)');
+            tabBar.insertBefore(newTab, addBtn);
+            setActiveTab(newTab);
+            showToast('New tab created');
+        }
+
+        // Context tabs
+        function setActiveContextTab(el) {
+            document.querySelectorAll('.context-tab').forEach(tab => tab.classList.remove('active'));
+            el.classList.add('active');
+            showToast('Context: ' + el.textContent);
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 't') {
+                e.preventDefault();
+                addTab();
+            }
+            if ((e.metaKey || e.ctrlKey) && e.key === 'w') {
+                e.preventDefault();
+                const activeTab = document.querySelector('.tab.active');
+                if (activeTab) closeTab(activeTab);
+            }
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                showToast('Command Palette opened');
+            }
+        });
+    </script>
+</body>
+</html>

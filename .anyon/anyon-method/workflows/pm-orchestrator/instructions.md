@@ -49,7 +49,7 @@
 
 <critical>6개 문서 모두 필수 - 하나라도 없으면 중단</critical>
 
-<action>필수 문서 검증:
+<action>필수 문서 검증 (6개 모두 필수):
   1. PRD - 제품 요구사항, 비즈니스 로직
   2. UX Design - 사용자 플로우, 페이지 구조
   3. UI Design Guide - 디자인 스펙, 컴포넌트
@@ -58,10 +58,27 @@
   6. TRD - 기술 스택, 기술 요구사항, 성능 지표
 </action>
 
-<check if="any document missing">
-  <action>누락된 문서 목록 출력</action>
-  <action>⚠️ 주의: 일부 문서가 누락되었지만, 워크플로우를 계속 진행합니다</action>
-  <action>누락된 문서는 자동으로 스킵되고, 수동으로 추가 후 재실행 가능</action>
+<check if="any required document missing">
+  <action>누락된 문서 목록 출력:
+```
+❌ 필수 문서 누락 - 워크플로우 중단
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+누락된 문서:
+{{missing_documents}}
+
+📁 필요한 문서 경로: {project-root}/anyon-docs/planning/
+  - *prd*.md
+  - *ux-design*.md
+  - *design-guide*.md
+  - *erd*.md
+  - *architecture*.md
+  - *trd*.md
+
+⚠️ 모든 설계 문서가 준비된 후 다시 실행해주세요.
+```
+  </action>
+  <action>워크플로우 중단 (Halt)</action>
 </check>
 
 <action>로딩된 문서 요약 출력:
@@ -79,180 +96,166 @@
 </action>
 </step>
 
-<step n="0b" goal="프로젝트 커스텀 에이전트 동적 생성 (문서 기반)">
+<step n="0a" goal="Clone된 오픈소스 레포 분석 및 활용 계획 수립">
 
-<critical>⚠️ 에이전트 템플릿 자동 인식 + 동적 생성! 문서를 분석해서 필요한 에이전트를 스스로 파악</critical>
+<action>open-source.md 문서 확인</action>
 
-<action>🔴 **에이전트 템플릿 경로 확인 (자동 인식)**:
+<check if="open-source.md exists">
+  <action>🔍 **Clone된 오픈소스 레포지토리 분석**:
+
+open-source.md에서 Clone된 레포 정보 추출:
+- 레포 이름
+- Clone 경로
+- 용도/목적 설명
+
+각 Clone된 레포에 대해:
+1️⃣ **레포 구조 파악**
+   - 주요 디렉토리 구조 스캔
+   - 핵심 파일 식별 (src/, lib/, components/ 등)
+   - 사용된 기술 스택 확인 (package.json, requirements.txt 등)
+
+2️⃣ **PRD/Architecture와 매칭**
+   - 이 레포의 어떤 기능이 우리 프로젝트에 필요한지 분석
+   - PRD의 기능 요구사항과 레포 코드 매핑
+   - Architecture의 설계와 레포 구조 비교
+
+3️⃣ **참조할 코드 식별**
+   - 직접 참고할 파일/폴더 목록
+   - 복사해올 로직 vs 참고만 할 로직 구분
+   - 수정이 필요한 부분 파악
+
+4️⃣ **의존성 확인**
+   - 레포에서 사용하는 라이브러리 중 우리도 필요한 것
+   - 버전 호환성 체크
+  </action>
+
+  <action>📋 **오픈소스 활용 계획서 생성**:
+
+{output_folder}/opensource-utilization-plan.md 파일 생성:
+
+```markdown
+# 오픈소스 활용 계획서
+
+## 개요
+Clone된 오픈소스 레포지토리들을 분석하고, 프로젝트에서 어떻게 활용할지 정리한 문서입니다.
+
+---
+
+## 1. {{repo_name}}
+
+### 기본 정보
+- **Clone 경로**: {{clone_path}}
+- **원본 URL**: {{github_url}}
+- **용도**: {{purpose_from_opensource_md}}
+
+### 레포 구조
+```
+{{directory_structure}}
+```
+
+### 기술 스택
+- 언어: {{language}}
+- 프레임워크: {{framework}}
+- 주요 라이브러리: {{libraries}}
+
+### 활용 계획
+
+#### 직접 참조할 코드
+| 파일/폴더 | 우리 프로젝트 적용 위치 | 활용 방법 |
+|----------|----------------------|----------|
+| {{source_path}} | {{target_path}} | {{how_to_use}} |
+
+#### 참고할 패턴/로직
+- {{pattern_1}}: {{description}}
+- {{pattern_2}}: {{description}}
+
+#### 필요한 수정사항
+- {{modification_1}}
+- {{modification_2}}
+
+### 관련 티켓
+- TICKET-XXX: {{ticket_title}} - 이 레포의 {{feature}} 참조
+- TICKET-YYY: {{ticket_title}} - 이 레포의 {{feature}} 참조
+
+---
+
+## 2. {{next_repo_name}}
+...
+```
+  </action>
+
+  <action>결과 출력:
+```
+📦 오픈소스 레포 분석 완료
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+분석된 레포: {{repo_count}}개
+
+{{for each repo}}
+✓ {{repo_name}}
+  - 경로: {{clone_path}}
+  - 참조할 코드: {{reference_count}}개 파일
+  - 관련 기능: {{related_features}}
+{{end for}}
+
+📄 활용 계획서: anyon-docs/dev-plan/opensource-utilization-plan.md
+
+⚡ 티켓 생성 시 이 정보가 반영됩니다.
+```
+  </action>
+</check>
+
+<check if="open-source.md not exists">
+  <action>ℹ️ open-source.md 문서가 없습니다. 외부 오픈소스 참조 없이 진행합니다.</action>
+</check>
+
+</step>
+
+<step n="0b" goal="프로젝트 에이전트 배치 (템플릿 기반)">
+
+<critical>⚠️ 에이전트를 동적 생성하지 않음! 템플릿에 있는 에이전트 중 필요한 것만 선택하여 배치</critical>
+
+<action>🔴 **에이전트 템플릿 스캔**:
 
 경로: {project-root}/.anyon/anyon-method/agent-templates/
 
-자동 감지 프로세스:
-1️⃣ 해당 경로의 YAML 파일 목록 스캔
-2️⃣ 각 파일명으로 에이전트 이름 추출
-   - backend-developer.yaml → backend-developer
-   - frontend-developer.yaml → frontend-developer
-   - 등등...
-3️⃣ 각 YAML 파일의 내용 분석
-   - 에이전트 설명, 역할, 전문 분야 파악
-4️⃣ 자동으로 로드하여 템플릿 적용
+프로세스:
+1️⃣ 해당 경로의 모든 에이전트 템플릿 파일 스캔
+2️⃣ 각 템플릿의 역할과 전문 분야 파악
+3️⃣ 6개 설계 문서 분석하여 필요한 에이전트 목록 결정
+4️⃣ 필요한 템플릿만 {project-root}/.claude/agents/로 복사
 
 **결과:**
 ```
-✅ 템플릿 자동 감지 완료
+✅ 에이전트 템플릿 스캔 완료
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-발견된 템플릿:
-  • backend-developer.yaml
-  • database-architect.yaml
-  • devops-engineer.yaml
-  • frontend-developer.yaml
-  • integration-engineer.yaml
-  • qa-engineer.yaml
-  • scaffolding-engineer.yaml
-  • security-auditor.yaml
-
-총 8개 기본 템플릿 로드됨
+발견된 템플릿: {{template_count}}개
 ```
 </action>
 
-<action>🔴 **문서 심층 분석 - 필요한 에이전트 동적 파악**:
+<action>🔴 **문서 분석 - 필요한 에이전트 선택**:
 
-이미 로드된 6개 설계 문서(PRD, UX, UI, ERD, Architecture, TRD)를 깊이 있게 분석해서
-프로젝트에 실제로 필요한 에이전트를 파악합니다.
+6개 설계 문서를 분석하여 프로젝트에 필요한 에이전트를 선택합니다.
 
-**Step 1: TRD 분석 (기술 스택 기반)**
-```yaml
-기술 스택 스캔:
-  언어/프레임워크:
-    - "TypeScript" → 타입스크립트 전문 에이전트 필요?
-    - "Next.js" → SSR/API 경험 필요
-    - "React Native" → 모바일 특화 필요
-  
-  데이터베이스:
-    - "PostgreSQL" → DB 복잡도 높음
-    - "MongoDB" → NoSQL 특화 필요?
-  
-  외부 서비스:
-    - "Twilio" → SMS/전화 전문
-    - "Stripe" → 결제 전문
-    - "AWS S3" → 파일/미디어 전문
-    - "Firebase" → 실시간/클라우드 전문
-    - "Auth0" → 인증 전문
-  
-  인프라/배포:
-    - "Docker" → 컨테이너 엔지니어
-    - "Kubernetes" → 오케스트레이션 엔지니어
-    - "GitHub Actions" → CI/CD 자동화
-    - "Vercel" → 엣지 컴퓨팅 특화
-  
-  특수 기술:
-    - "WebSocket" → 실시간 엔지니어
-    - "GraphQL" → GraphQL 전문가
-    - "Redis" → 캐싱 & 세션 전문
-    - "ElasticSearch" → 검색 엔지니어
-    - "Kafka" → 메시지 큐 엔지니어
-```
+**분석 기준:**
 
-**Step 2: Architecture 분석 (설계 패턴 기반)**
-```yaml
-아키텍처 패턴 스캔:
-  마이크로서비스 여부:
-    - "마이크로서비스" → 서비스 메시 엔지니어
-    - "모놀리식" → 단일 아키텍처 엔지니어
-  
-  캐싱 전략:
-    - "Redis 캐싱" → 캐싱 전문가
-    - "CDN" → CDN 최적화 전문가
-  
-  검색 기능:
-    - "ElasticSearch" → 검색 엔지니어
-    - "Algolia" → 검색 최적화 전문가
-  
-  실시간 기능:
-    - "WebSocket" → 실시간 엔지니어
-    - "Server-Sent Events" → 스트리밍 엔지니어
-  
-  보안 아키텍처:
-    - "OAuth 2.0" → OAuth 전문가
-    - "JWT + Refresh Token" → 인증 아키텍처 전문가
-    - "API Gateway" → API 보안 전문가
-  
-  성능 최적화:
-    - "Code Splitting" → 번들 최적화 전문가
-    - "이미지 최적화" → 이미지 전문가
-    - "Database Indexing" → DB 성능 전문가
-```
+| 문서 | 분석 내용 | 선택 기준 예시 |
+|------|----------|---------------|
+| TRD | 기술 스택 | Twilio → messaging-engineer 선택 |
+| Architecture | 설계 패턴 | WebSocket → realtime-engineer 선택 |
+| PRD | 기능 요구사항 | 결제 기능 → payment-engineer 선택 |
+| UX/UI | 인터페이스 복잡도 | 복잡한 폼 → form-engineer 선택 |
+| ERD | 데이터 복잡도 | M:N 다수 → advanced-database-engineer 선택 |
 
-**Step 3: PRD 분석 (기능 요구사항 기반)**
-```yaml
-기능별 에이전트 파악:
-  인증/권한:
-    - "소셜 로그인" → 소셜 인증 전문가
-    - "2FA/MFA" → 멀티팩터 인증 전문가
-    - "역할 기반 접근" → RBAC 전문가
-  
-  파일/미디어:
-    - "파일 업로드" → 파일 업로드 전문가
-    - "이미지 처리" → 이미지 처리 전문가
-    - "비디오 스트리밍" → 비디오 전문가
-  
-  결제/결제:
-    - "결제 시스템" → 결제 전문가
-    - "구독 관리" → 구독 전문가
-    - "환불 처리" → 결제 로직 전문가
-  
-  통지/메시징:
-    - "푸시 알림" → 푸시 알림 전문가
-    - "이메일 발송" → 이메일 전문가
-    - "SMS/카카오톡" → 메시징 전문가
-  
-  검색/필터:
-    - "고급 검색" → 검색 엔지니어
-    - "필터링" → 필터 로직 전문가
-  
-  분석/통계:
-    - "분석 대시보드" → 데이터 분석 전문가
-    - "레포팅" → 레포팅 엔지니어
-```
-
-**Step 4: UX/UI 분석 (인터페이스 복잡도)**
-```yaml
-UI 복잡도별:
-  "고급 폼 처리":
-    - 다단계 폼 → 폼 전문가
-    - 동적 필드 → 폼 검증 전문가
-  
-  "실시간 협업":
-    - 동시 편집 → 실시간 에디터 전문가
-    - 채팅 → 채팅 엔지니어
-  
-  "복잡한 상태 관리":
-    - 깊은 상태 구조 → 상태 관리 전문가
-    - Undo/Redo → 상태 머신 전문가
-  
-  "성능 최적화 필요":
-    - 가상화 → 성능 최적화 전문가
-    - 무한 스크롤 → 메모리 효율 전문가
-```
-
-**Step 5: ERD 분석 (데이터 복잡도)**
-```yaml
-데이터 복잡도별:
-  "복잡한 관계":
-    - M:N 관계 다수 → 데이터 모델 설계 전문가
-    - 다중 조인 쿼리 → DB 성능 최적화 전문가
-  
-  "대규모 데이터":
-    - 100만 행 이상 → 데이터베이스 샤딩 전문가
-    - 시계열 데이터 → 시계열 DB 전문가
-```
-
-결과적으로, 위의 분석을 종합하여 **프로젝트 특화 에이전트** 목록을 동적으로 생성합니다.
+**선택 프로세스:**
+1️⃣ 각 문서에서 키워드 추출 (OAuth, WebSocket, Stripe 등)
+2️⃣ 키워드와 매칭되는 에이전트 템플릿 식별
+3️⃣ 필요한 에이전트 목록 확정
 </action>
 
-<action>🟢 **기본 8개 에이전트 + 동적 생성된 특화 에이전트**:
+<action>🟢 **에이전트 배치 (템플릿 복사)**:
 
-**기본 에이전트 (항상 생성 - 템플릿 기반):**
+**기본 에이전트 (항상 배치):**
 1. scaffolding-engineer - 프로젝트 초기 구조 생성
 2. backend-developer - API, 비즈니스 로직
 3. frontend-developer - UI, 사용자 인터페이스
@@ -262,178 +265,34 @@ UI 복잡도별:
 7. qa-engineer - 테스트, 품질 검증
 8. security-auditor - 보안, 취약점 분석
 
-**동적 생성 에이전트 (문서 분석 기반 - 파일이 없으면 생성):**
-
-### 인증/권한 관련
-- auth-engineer.md
-  - 언제: "OAuth", "JWT", "인증", "2FA", "권한" 감지 시
-  - 역할: 인증 시스템, 권한 관리, 세션 처리
-  - 기술: OAuth 2.0, JWT, Passport.js, Auth0, Firebase Auth
-  
-- social-auth-engineer.md
-  - 언제: "구글 로그인", "네이버", "카카오", "깃허브" 감지 시
-  - 역할: 소셜 로그인 통합
-  - 기술: OAuth 프로바이더 연동
-
-### 실시간 기능
-- realtime-engineer.md
-  - 언제: "WebSocket", "Socket.io", "실시간", "채팅" 감지 시
-  - 역할: 실시간 통신, 라이브 업데이트
-  - 기술: WebSocket, Socket.io, Server-Sent Events, Pusher
-
-### 파일/미디어 처리
-- media-engineer.md
-  - 언제: "파일 업로드", "S3", "CDN", "이미지", "비디오" 감지 시
-  - 역할: 파일 업로드, 미디어 처리, 이미지 최적화
-  - 기술: AWS S3, Cloudinary, Sharp, FFmpeg
-
-- image-optimization-engineer.md
-  - 언제: "이미지 최적화", "WebP", "Responsive Image" 감지 시
-  - 역할: 이미지 성능 최적화
-  - 기술: Next.js Image, WebP 변환, 이미지 압축
-
-### 결제 시스템
-- payment-engineer.md
-  - 언제: "결제", "Stripe", "PG", "결제 게이트웨이" 감지 시
-  - 역할: 결제 통합, 결제 처리
-  - 기술: Stripe, Toss Payments, 카카오페이, 구독 관리
-
-### 메시징/알림
-- messaging-engineer.md
-  - 언제: "이메일", "SMS", "알림", "Twilio" 감지 시
-  - 역할: 메시징 시스템, 알림 발송
-  - 기술: Twilio, SendGrid, Firebase Cloud Messaging, FCM
-
-- notification-engineer.md
-  - 언제: "푸시 알림", "FCM", "APNs" 감지 시
-  - 역할: 푸시 알림 시스템
-  - 기술: Firebase Cloud Messaging, APNs, Web Push API
-
-### 검색 및 필터
-- search-engineer.md
-  - 언제: "검색", "ElasticSearch", "Algolia" 감지 시
-  - 역할: 검색 기능, 전문 검색 엔진
-  - 기술: ElasticSearch, Algolia, Meilisearch
-
-### 데이터 캐싱 & 성능
-- caching-engineer.md
-  - 언제: "Redis", "캐싱", "session" 감지 시
-  - 역할: 캐싱 전략, 세션 관리
-  - 기술: Redis, Memcached, 캐시 무효화 전략
-
-- performance-engineer.md
-  - 언제: "성능", "최적화", "번들 크기" 감지 시
-  - 역할: 성능 최적화, 로딩 속도 개선
-  - 기술: 코드 스플리팅, Lazy Loading, 번들 최적화
-
-### 데이터베이스 특화
-- advanced-database-engineer.md
-  - 언제: "복잡한 쿼리", "성능", "인덱싱", "N+1" 감지 시
-  - 역할: DB 성능 최적화, 고급 쿼리 작성
-  - 기술: 쿼리 최적화, 인덱싱, 실행 계획 분석
-
-- timeseries-engineer.md
-  - 언제: "시계열", "InfluxDB", "시간별 데이터" 감지 시
-  - 역할: 시계열 데이터 처리
-  - 기술: InfluxDB, TimescaleDB, Prometheus
-
-### 폼 처리
-- form-engineer.md
-  - 언제: "복잡한 폼", "다단계", "검증", "React Hook Form" 감지 시
-  - 역할: 폼 처리, 검증, 에러 핸들링
-  - 기술: React Hook Form, Formik, Zod, Yup
-
-### 상태 관리
-- state-management-engineer.md
-  - 언제: "복잡한 상태", "Redux", "Zustand", "Context" 감지 시
-  - 역할: 상태 관리 아키텍처
-  - 기술: Redux, Zustand, Recoil, Jotai
-
-### 위치/지도
-- location-engineer.md
-  - 언제: "GPS", "지도", "Google Maps", "좌표" 감지 시
-  - 역할: 위치 기반 기능, 지도 통합
-  - 기술: Google Maps API, MapBox, 좌표 계산
-
-### 분석/대시보드
-- analytics-engineer.md
-  - 언제: "분석", "대시보드", "리포팅", "Mixpanel" 감지 시
-  - 역할: 분석 시스템, 데이터 시각화
-  - 기술: 분석 도구 연동, 데이터 시각화
-
-### 모바일 특화
-- mobile-specialist-engineer.md
-  - 언제: React Native, iOS/Android 네이티브 기능 감지 시
-  - 역할: 모바일 플랫폼 최적화
-  - 기술: React Native, Expo, Native Modules
-
-### 고급 CI/CD
-- platform-engineer.md
-  - 언제: "Kubernetes", "Docker Compose", "Infrastructure as Code" 감지 시
-  - 역할: 플랫폼 엔지니어링, 인프라 자동화
-  - 기술: Kubernetes, Terraform, ArgoCD
-
-### 모니터링/로깅
-- observability-engineer.md
-  - 언제: "모니터링", "로깅", "Datadog", "New Relic" 감지 시
-  - 역할: 모니터링, 로깅, 성능 분석
-  - 기술: Datadog, ELK Stack, 분산 추적
-
-### GraphQL 특화
-- graphql-engineer.md
-  - 언제: "GraphQL", "Apollo", "Relay" 감지 시
-  - 역할: GraphQL API 설계 및 구현
-  - 기술: Apollo Server, GraphQL, Schema Design
+**특화 에이전트 (문서 분석 결과 필요시 배치):**
+- 템플릿에 있는 특화 에이전트 중 프로젝트에 필요한 것만 선택
+- 예: auth-engineer, payment-engineer, realtime-engineer 등
+- 키워드 매칭으로 자동 선택
 </action>
 
-<action>🔵 **에이전트 자동 생성 프로세스**:
+<action>🔵 **에이전트 배치 프로세스**:
 
-문서 분석이 완료되면:
+1️⃣ 템플릿 폴더 스캔
+   - {project-root}/.anyon/anyon-method/agent-templates/ 폴더의 모든 에이전트 파일 확인
 
-1️⃣ 기본 8개 에이전트 템플릿 로드
-   - {project-root}/.anyon/anyon-method/agent-templates/*.yaml에서 로드
+2️⃣ 필요한 에이전트 선택
+   - 기본 8개는 항상 선택
+   - 문서 분석 결과에 따라 특화 에이전트 추가 선택
 
-2️⃣ 필요한 특화 에이전트 결정
-   - 문서 분석 결과와 위의 조건 비교
-   - 필요한 에이전트 목록 생성
+3️⃣ 선택된 템플릿을 .claude/agents/로 복사
+   - {project-root}/.claude/agents/{{agent-name}}.md
+   - 이미 존재하면 덮어쓰지 않음
 
-3️⃣ 각 에이전트별로:
-   - {project-root}/.claude/agents/{{agent-name}}.md 파일 존재 여부 확인
-   - 없으면 자동 생성
-   - 있으면 기존 파일 유지 (덮어쓰지 않음)
-
-4️⃣ 에이전트 파일 생성 형식:
-   ```markdown
-   ---
-   name: {{에이전트명}}
-   description: "{{설명}}"
-   tools: Read, Write, Edit, Bash, Glob, Grep
-   model: sonnet
-   ---
-
-   # {{에이전트명}} 에이전트
-
-   ## 역할
-   {{역할 설명}}
-
-   ## 전문 분야
-   {{기술 스택}}
-
-   ## 주요 책임
-   {{프로젝트 문서에서 추출한 구체적 책임}}
-
-   {{프로젝트 기술 스택, 컨벤션, 도메인 지식 포함}}
-   ```
-
-5️⃣ 생성 완료 시 요약 출력
+4️⃣ 배치 완료 시 요약 출력
 </action>
 
 <action>결과 출력 예시:
 ```
-🤖 프로젝트 커스텀 에이전트 동적 생성 완료
+🤖 프로젝트 에이전트 배치 완료
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-✅ 기본 에이전트 (8개 - 템플릿 기반 로드):
+✅ 기본 에이전트 (8개):
   ✓ scaffolding-engineer.md
   ✓ backend-developer.md
   ✓ frontend-developer.md
@@ -443,33 +302,12 @@ UI 복잡도별:
   ✓ qa-engineer.md
   ✓ security-auditor.md
 
-🎯 문서 분석 기반 동적 생성 에이전트 (15개):
-  ✓ auth-engineer.md - JWT, OAuth 인증 전문
-  ✓ realtime-engineer.md - WebSocket, 실시간 통신
-  ✓ media-engineer.md - 파일/미디어 처리
-  ✓ payment-engineer.md - Stripe, 결제 시스템
-  ✓ messaging-engineer.md - 이메일, SMS 통지
-  ✓ notification-engineer.md - 푸시 알림 (FCM)
-  ✓ search-engineer.md - ElasticSearch, 검색 기능
-  ✓ caching-engineer.md - Redis 캐싱, 세션
-  ✓ performance-engineer.md - 성능 최적화
-  ✓ advanced-database-engineer.md - DB 성능 튜닝
-  ✓ form-engineer.md - 복잡한 폼 처리
-  ✓ state-management-engineer.md - 상태 관리 아키텍처
-  ✓ location-engineer.md - 지도, GPS 기능
-  ✓ analytics-engineer.md - 분석 및 대시보드
-  ✓ mobile-specialist-engineer.md - React Native 최적화
+🎯 특화 에이전트 (문서 분석 기반 선택):
+  ✓ {{selected_specialized_agents}}
 
 📊 요약:
-  • 총 에이전트: 23개 (기본 8개 + 특화 15개)
-  • 기술 영역: 인증, 실시간, 미디어, 결제, 메시징, 검색, 캐싱, 성능 등
-  • 생성 위치: .claude/agents/
-
-📁 각 에이전트는:
-  • 프로젝트 기술 스택 포함
-  • 아키텍처 컨벤션 포함
-  • 도메인 지식 포함
-  • 즉시 사용 가능한 상태
+  • 총 에이전트: {{total_count}}개
+  • 배치 위치: .claude/agents/
 ```
 </action>
 
@@ -684,6 +522,21 @@ Epic 분류 기준:
 - ticket_id, title, epic, type, priority, description
 - assigned_agents, input_documents, acceptance_criteria, output_artifacts
 
+**오픈소스 참조 정보 (open-source.md가 있는 경우):**
+- opensource-utilization-plan.md에서 해당 티켓과 관련된 오픈소스 참조 정보 추출
+- 티켓에 opensource_reference 필드 추가:
+```yaml
+opensource_reference:
+  repo_name: "vibe-kanban"
+  clone_path: "{project-root}/vibe-kanban"
+  reference_files:
+    - source: "src/components/KanbanBoard.tsx"
+      purpose: "칸반 보드 드래그앤드롭 로직 참조"
+    - source: "src/hooks/useKanban.ts"
+      purpose: "상태 관리 패턴 참조"
+  adaptation_notes: "React 버전 맞춤 수정 필요, 스타일은 우리 디자인 시스템 적용"
+```
+
 **자율 실행을 위한 상세 필드 (TDD + 구체적 명세):**
 
 ```yaml
@@ -738,38 +591,62 @@ api_specification:
     - "만료 시간: 현재 + 5분"
 
 # ============================================================
-# 3. 데이터베이스 스키마 (Database 티켓)
+# 3. 데이터베이스 스키마 (Database 티켓) - TRD 기술 스택 기반
 # ============================================================
+# ⚠️ 중요: ERD 문서의 SQL을 TRD의 기술 스택에 맞게 변환
+#    - TRD에 Prisma 명시 → Prisma 스키마 형식으로 변환
+#    - TRD에 raw SQL/Supabase 명시 → ERD의 SQL 직접 참조
+#    - TRD에 Drizzle 명시 → Drizzle 스키마 형식으로 변환
+
 database_schema:
-  models:
-    - name: "User"
-      fields:
-        - "id: String @id @default(cuid())"
-        - "phone: String @unique"
-        - "nickname: String?"
-        - "createdAt: DateTime @default(now())"
-        - "updatedAt: DateTime @updatedAt"
-      relationships:
-        - "authCodes: AuthCode[]"
-        - "authTokens: AuthToken[]"
-      indexes:
-        - "@@index([phone])"
-    
-    - name: "AuthCode"
-      fields:
-        - "id: String @id @default(cuid())"
-        - "phone: String  # User.phone 과 일치"
-        - "code: String  # 6자리 숫자"
-        - "attempts: Int @default(0)"
-        - "expiresAt: DateTime"
-        - "createdAt: DateTime @default(now())"
-      indexes:
-        - "@@index([phone])"
-        - "@@index([expiresAt])  # 만료된 코드 정리용"
-  
+  # ERD 문서 참조 (라인 번호로 정확한 위치 지정)
+  erd_reference:
+    source_file: "anyon-docs/planning/erd.md"
+    references:
+      - lines: "45-120"
+        section: "users 테이블 정의"
+      - lines: "121-180"
+        section: "auth_codes 테이블 정의"
+      - lines: "350-420"
+        section: "RLS 정책 (Row Level Security)"
+      - lines: "500-550"
+        section: "트리거 및 함수"
+
+  # TRD 기술 스택에 따른 스키마 형식
+  # 예시 1: Prisma 사용 시 (TRD에서 Prisma 명시된 경우)
+  prisma_schema: |
+    model User {
+      id        String   @id @default(cuid())
+      phone     String   @unique
+      nickname  String?
+      createdAt DateTime @default(now())
+      updatedAt DateTime @updatedAt
+      authCodes AuthCode[]
+      @@index([phone])
+    }
+
+    model AuthCode {
+      id        String   @id @default(cuid())
+      phone     String
+      code      String
+      attempts  Int      @default(0)
+      expiresAt DateTime
+      createdAt DateTime @default(now())
+      @@index([phone])
+      @@index([expiresAt])
+    }
+
+  # 예시 2: Raw SQL/Supabase 사용 시 (ERD SQL 직접 참조)
+  raw_sql_reference: |
+    -- ERD 문서의 SQL을 그대로 활용
+    -- erd.md 라인 45-180 참조
+    -- RLS 정책: erd.md 라인 350-420 참조
+    -- 트리거: erd.md 라인 500-550 참조
+
   migration:
     name: "20240115_add_auth_models"
     description: "인증 시스템 필수 모델 추가"
+    erd_sql_lines: "45-180"  # ERD에서 해당 SQL 위치
 
 # ============================================================
 # 4. 파일 구조 (정확한 경로)
@@ -818,48 +695,38 @@ business_logic:
     - "9. 응답: { success, data: { token, user } }"
 
 # ============================================================
-# 6. UI 명세 (Frontend 티켓 - Component Tree)
+# 6. UI 명세 (Frontend 티켓 - HTML 와이어프레임 라인 참조)
 # ============================================================
 ui_specification:
-  component_tree: |
-    LoginScreen
-    ├── SafeAreaView
-    ├── ScrollView
-    │   ├── Header
-    │   │   ├── Title: "로그인"
-    │   │   └── Subtitle: "전화번호로 시작하세요"
-    │   ├── {step === 'phone' && (
-    │   │   ├── PhoneInput
-    │   │   │   ├── placeholder: "01012345678"
-    │   │   │   ├── maxLength: 11
-    │   │   │   ├── keyboardType: "phone-pad"
-    │   │   │   └── borderColor={isValid ? 'blue' : 'red'}
-    │   │   ├── SendButton (disabled={!isValid || isLoading})
-    │   │   └── ErrorText
-    │   │ )}
-    │   └── {step === 'code' && (
-    │       ├── CodeInput (length: 6, autoFocus: true)
-    │       ├── Timer (MM:SS 형식)
-    │       ├── ResendButton (cooldown 제한)
-    │       └── ErrorText
-    │     )}
-    └── BottomBar
-  
-  states:
+  # 와이어프레임 HTML 파일 참조 (라인 번호로 정확한 위치 지정)
+  wireframe_source:
+    file: "anyon-docs/planning/ui-ux.html"
+    references:
+      - lines: "245-320"
+        section: "로그인 화면 레이아웃"
+      - lines: "321-380"
+        section: "전화번호 입력 폼"
+      - lines: "381-420"
+        section: "인증코드 입력 폼"
+      - lines: "890-920"
+        section: "화면 전환 인터랙션 JS"
+
+  # 핵심 요약 (에이전트가 빠르게 파악할 수 있도록)
+  summary: |
+    2단계 로그인 화면:
+    - Step 1: 전화번호 입력 → 인증코드 발송
+    - Step 2: 인증코드 입력 → 로그인 완료
+
+  # 주요 상태 및 인터랙션
+  key_states:
     - "step: 'phone' | 'code'"
-    - "phone: string"
-    - "code: string"
     - "isLoading: boolean"
     - "timeRemaining: number (초)"
-    - "error: string | null"
-    - "attempts: number"
-  
-  interactions:
-    - "phone 입력 시 isPhoneValid 판단"
-    - "SendButton 클릭 → API 호출 → step 전환"
-    - "code 6자 자동 입력 → 자동 제출"
-    - "타이머 카운트다운 (5분)"
-    - "ResendButton cooldown 3초"
+
+  key_interactions:
+    - "전화번호 11자 입력 시 버튼 활성화"
+    - "인증코드 6자 입력 시 자동 제출"
+    - "5분 타이머 만료 시 재발송 유도"
 
 # ============================================================
 # 7. 환경 변수 & 설정
@@ -1133,7 +1000,7 @@ UX Design 문서에서 해당 화면의 **동작 로직** 추출:
    - 권한 체크
 </action>
 
-<action>UI 티켓 템플릿 예시 (로직 중심):
+<action>UI 티켓 템플릿 예시 (와이어프레임 라인 참조 + 로직 중심):
 
 ```yaml
 ticket_id: T04-009
@@ -1143,7 +1010,30 @@ assigned_agents:
   - agent: "Frontend Developer"
     responsibility: "화면 구현, API 연동"
 
-# 사용자 플로우 로직 (from UX Design 문서)
+# ============================================================
+# 와이어프레임 참조 (HTML 라인 번호로 정확한 위치 지정)
+# ============================================================
+wireframe_reference:
+  source_file: "anyon-docs/planning/ui-ux.html"
+  references:
+    - lines: "150-220"
+      section: "홈 화면 전체 레이아웃"
+    - lines: "221-280"
+      section: "상품 카드 컴포넌트"
+    - lines: "281-320"
+      section: "헤더 (검색, 알림, 위치)"
+    - lines: "750-800"
+      section: "무한스크롤 인터랙션 JS"
+
+# 디자인 가이드 참조
+style_reference:
+  source_file: "anyon-docs/planning/design-guide.md"
+  lines: "30-70"
+  note: "카드 스타일, Primary color #6366F1"
+
+# ============================================================
+# 사용자 플로우 로직 (와이어프레임 기반 추출)
+# ============================================================
 user_flow:
   # 사용자가 할 수 있는 액션과 결과
   user_actions:
@@ -1276,7 +1166,7 @@ subagent_invocation:
 
 **파일 구조 예시:**
 ```
-anyon-docs/conversation/epics/
+anyon-docs/dev-plan/epics/
 ├── EPIC-001-인증시스템.md
 │   ├── ## TICKET-001: 인증 API 구현
 │   │   ├── 설명
@@ -1349,7 +1239,7 @@ anyon-docs/conversation/epics/
 
 ... (총 {{total_tickets}}개 티켓, {{total_epics}}개 Epic 파일)
 
-📁 저장 위치: anyon-docs/conversation/epics/
+📁 저장 위치: anyon-docs/dev-plan/epics/
 ```
 </action>
 

@@ -1,0 +1,40 @@
+# Explain Docs - 비개발자를 위한 쉬운 기술 문서 생성
+name: "explain-docs"
+description: "기술 문서(TRD, Architecture, ERD)를 비개발자가 이해할 수 있는 쉬운 버전으로 변환. 스토리텔링, 비유, Mermaid 다이어그램을 활용하여 창업자도 쉽게 이해할 수 있는 문서 생성"
+author: "Anyon"
+
+# Critical variables from config
+config_source: "{project-root}/.anyon/anyon-method/config.yaml"
+output_folder: "{config_source}:output_folder"
+user_name: "{config_source}:user_name"
+communication_language: "{config_source}:communication_language"
+date: system-generated
+
+# Module path and component files
+installed_path: "{project-root}/.anyon/anyon-method/workflows/explain-docs"
+template: false  # 각 문서별로 직접 생성
+instructions: "{installed_path}/instructions.md"
+validation: "{installed_path}/checklist.md"
+
+# Input documents (from planning folder)
+input_file_patterns:
+  trd:
+    whole: "{output_folder}/planning/*trd*.md"
+  architecture:
+    whole: "{output_folder}/planning/*architecture*.md"
+  erd:
+    whole: "{output_folder}/planning/*erd*.md"
+
+# Output configuration
+explain_folder: "{output_folder}/explain"
+trd_easy_output: "{explain_folder}/trd-easy.md"
+architecture_easy_output: "{explain_folder}/architecture-easy.md"
+erd_easy_output: "{explain_folder}/erd-easy.md"
+
+# Skills to use
+skills:
+  - docs-write      # Metabase 스타일 가이드
+  - opensource-finder  # 비유/스토리텔링 템플릿
+
+# Invocation control
+standalone: true  # 버튼으로 직접 실행 가능

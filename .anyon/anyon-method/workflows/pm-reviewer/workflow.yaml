@@ -11,21 +11,24 @@ communication_language: "Korean"
 date: system-generated
 
 # Module path and component files
-installed_path: "{project-root}/.anyon/anyon-method/workflows/pm-reviewer"
 template: false  # Action workflow
-instructions: "{installed_path}/instructions.md"
-validation: "{installed_path}/checklist.md"
+instructions: "{project-root}/.anyon/anyon-method/workflows/pm-reviewer/instructions.md"
+validation: "{project-root}/.anyon/anyon-method/workflows/pm-reviewer/checklist.md"
 
-# 기본 출력 폴더 (pm-executor와 일치해야 함)
-output_folder: "{project-root}/anyon-docs/conversation"
+# PM Executor 출력물 경로 (모든 경로는 {project-root} 기반 전체 경로로 명시)
+progress_file: "{project-root}/anyon-docs/dev-plan/execution-progress.md"
+api_spec_file: "{project-root}/anyon-docs/dev-plan/api-spec.md"
+epics_folder: "{project-root}/anyon-docs/dev-plan/epics"
 
-# PM Executor 출력물 경로
-progress_file: "{output_folder}/execution-progress.md"
-api_spec_file: "{output_folder}/api-spec.md"
+# 프로젝트 완료 시 생성되는 최종 문서
+completion_report: "{project-root}/anyon-docs/dev-plan/DEVELOPMENT_COMPLETE.md"
 
-# 설계 문서 경로 (리뷰 기준)
-architecture_docs: "{output_folder}/*architecture*"
-trd_docs: "{output_folder}/*trd*.md"
+# 설계 문서 경로 (리뷰 기준) - planning 폴더에 있음
+architecture_doc: "{project-root}/anyon-docs/planning/architecture.md"
+trd_doc: "{project-root}/anyon-docs/planning/trd.md"
+erd_doc: "{project-root}/anyon-docs/planning/erd.md"
+wireframe_doc: "{project-root}/anyon-docs/planning/ui-ux.html"
+design_guide_doc: "{project-root}/anyon-docs/planning/design-guide.md"
 
 # 프로젝트 소스 코드 루트
 project_src: "{project-root}"

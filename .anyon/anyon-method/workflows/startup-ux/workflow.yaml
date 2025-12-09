@@ -1,6 +1,6 @@
 # Startup UX Design Workflow Configuration
 name: startup-ux
-description: "Create detailed UX Design document with obsessively specific user flows. References PRD for service type, platform, and features. This is the MOST CRITICAL workflow - spend time here for quality results. Auto-chains to startup-ui when complete."
+description: "인터랙티브 HTML 목업(ui-ux.html) 생성. PRD의 서비스 유형, 플랫폼, 기능을 참조. 모든 버튼/클릭 요소가 연결된 클릭 가능한 프로토타입."
 author: "Anyon"
 
 # Critical variables from config
@@ -10,8 +10,8 @@ communication_language: "{config_source}:communication_language"
 document_output_language: "{config_source}:document_output_language"
 date: system-generated
 
-# Output folder - conversation subfolder in anyon-docs
-output_folder: "{project-root}/anyon-docs/conversation"
+# Output folder - planning subfolder in anyon-docs
+output_folder: "{project-root}/anyon-docs/planning"
 
 # Module path and component files
 installed_path: "{project-root}/.anyon/anyon-method/workflows/startup-ux"
@@ -23,9 +23,17 @@ validation: "{installed_path}/checklist.md"
 input_prd: "{output_folder}/prd.md"
 
 # Output file
-default_output_file: "{output_folder}/ux-design.md"
+default_output_file: "{output_folder}/ui-ux.html"
 
-# Next workflow in chain
-next_workflow: "{project-root}/.anyon/anyon-method/workflows/startup-ui/workflow.yaml"
+# Skill Requirements - MUST be activated during workflow execution
+required_skills:
+  - skill: "frontend-design"
+    trigger: "creating HTML wireframes"
+    mandatory: true
+    description: "와이어프레임 생성 시 반드시 사용 (그레이스케일, 이모지 금지 모드)"
+  - skill: "document-consistency"
+    trigger: "after document is saved to anyon-docs/planning/"
+    mandatory: true
+    description: "문서 저장 후 기존 문서들과 일관성 검사 수행"
 
 standalone: true

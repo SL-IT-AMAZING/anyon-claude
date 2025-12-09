@@ -1,149 +1,93 @@
 ---
-document_type: Product Requirements Document (PRD)
+document_type: PRD
 project_name: {{project_name}}
 created_date: {{date}}
-author: {{user_name}}
-
-# Quick Reference - 빠른 검색을 위한 메타데이터
-service_type: {{service_type}}  # 웹/앱/설치형/하이브리드
-platform: {{platform}}  # PC/모바일/태블릿/크로스플랫폼
-target_users: {{target_users_summary}}  # 주요 타겟 사용자
-business_model: {{business_model}}  # 수익 모델
-
+service_type: {{service_type}}
+platform: {{platform}}
+project_license_type: {{project_license_type}}
+opensource:
+  decision: {{opensource_decision}}
+  base_project: {{base_opensource_name}}
+  base_repo: {{base_opensource_repo}}
+  base_tech_stack: {{base_opensource_tech}}
+  base_license: {{base_opensource_license}}
+  base_template: {{base_template}}
+  feature_map:
+{{feature_opensource_map_yaml}}
 core_features:
 {{core_features_list}}
-
-success_metrics:
-{{success_metrics_list}}
 ---
 
-# {{project_name}} - Product Requirements Document (PRD)
+# {{project_name}} - PRD
 
-**작성일**: {{date}}
-**작성자**: {{user_name}}
+## 프로젝트 개요
+
+| 항목 | 내용 |
+|-----|------|
+| 프로젝트명 | {{project_name}} |
+| 서비스 유형 | {{service_type}} |
+| 플랫폼 | {{platform}} |
+| 용도 | {{project_license_type}} |
+| 라이선스 정책 | {{license_policy}} |
 
 ---
 
-## 📋 문서 개요
+## 문제 & 타겟
 
-이 문서는 {{project_name}}의 제품 요구사항을 정의합니다. 비개발자도 이해할 수 있도록 작성되었으며, UX 설계, 기술 스택 선정, 아키텍처 설계의 기반이 됩니다.
-
----
-
-## 🎯 프로젝트 비전
-
-### 해결하고자 하는 문제
+**해결하려는 문제:**
 {{problem_statement}}
 
-### 타겟 사용자
+**타겟 사용자:**
 {{target_users}}
 
-### 차별화 포인트
-{{unique_value}}
-
-### 왜 지금인가?
-{{why_now}}
-
 ---
 
-## 🔧 서비스 유형 및 플랫폼
-
-### 서비스 유형
-**{{service_type}}**
-
-{{service_type_description}}
-
-### 플랫폼
-**{{platform}}**
-
-{{platform_description}}
-
-**선택 이유:**
-{{platform_rationale}}
-
----
-
-## ⭐ 핵심 기능 (Core Features)
+## 핵심 기능 (MVP)
 
 {{core_features}}
 
 ---
 
-## 👥 사용자 페르소나
+## 오픈소스 활용
 
-{{user_personas}}
+**결정**: {{opensource_decision}}
 
----
+{{#if base_opensource_name}}
+### 기반 프로젝트: {{base_opensource_name}}
 
-## 💰 비즈니스 모델
+| 항목 | 내용 |
+|-----|------|
+| GitHub | {{base_opensource_repo}} |
+| 기술 스택 | {{base_opensource_tech}} |
+| 라이선스 | {{base_opensource_license}} |
 
-### 수익 모델
-**{{business_model}}**
+**활용 방식**: {{opensource_usage_plan}}
+{{/if}}
 
-{{business_model_description}}
+{{#if base_template}}
+### 기반 템플릿: {{base_template}}
+{{/if}}
 
-### 수익화 전략
-{{monetization_strategy}}
+{{#if feature_opensource_map}}
+### 기능별 오픈소스 조합
 
----
+| 기능 | 선택한 라이브러리 | 역할 |
+|------|-----------------|------|
+{{feature_opensource_map}}
+{{/if}}
 
-## 📊 성공 지표 (Success Metrics)
+### 검토한 오픈소스 목록
 
-{{success_metrics}}
-
----
-
-## 🚀 MVP 범위
-
-### MVP에 포함되는 기능
-{{mvp_features}}
-
-### MVP에 포함되지 않는 기능 (향후 개발)
-{{future_features}}
-
----
-
-## 🎨 UX/UI 방향성
-
-{{ux_ui_direction}}
+{{opensource_registry}}
 
 ---
 
-## 🔒 보안 및 개인정보 요구사항
+## 참고 서비스
 
-{{security_requirements}}
-
----
-
-## 📱 접근성 요구사항
-
-{{accessibility_requirements}}
+{{competitor_benchmarks}}
 
 ---
 
-## 🌍 다국어/지역화 요구사항
-
-{{localization_requirements}}
-
----
-
-## 📝 추가 요구사항
+## 추가 요구사항
 
 {{additional_requirements}}
-
----
-
-## 🔄 다음 단계
-
-이 PRD를 기반으로 다음 문서들이 생성됩니다:
-
-1. **UX Design** (`ux-design.md`) - 사용자 플로우 및 화면 설계
-2. **UI Design Guide** (`ui-design-guide.md`) - 디자인 시스템 및 컴포넌트
-3. **TRD** (`trd.md`) - 기술 스택 및 구현 방법
-4. **Architecture** (`architecture.md`) - 시스템 아키텍처
-5. **ERD** (`erd.md`) - 데이터베이스 설계
-
----
-
-**문서 버전**: 1.0
-**최종 수정일**: {{date}}
