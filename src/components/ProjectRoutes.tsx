@@ -5,6 +5,7 @@ import { useTabContext } from '@/contexts/TabContext';
 
 // Lazy load components
 const ProjectListView = React.lazy(() => import('@/components/ProjectListView'));
+const TemplateSelector = React.lazy(() => import('@/components/TemplateSelector'));
 const WorkspaceSelector = React.lazy(() => import('@/components/WorkspaceSelector'));
 const MvpWorkspace = React.lazy(() => import('@/components/MvpWorkspace'));
 const MaintenanceWorkspace = React.lazy(() => import('@/components/MaintenanceWorkspace'));
@@ -19,6 +20,7 @@ const LoadingFallback = () => (
 // Route types for internal navigation
 type ProjectsRouteType =
   | { type: 'list' }
+  | { type: 'template-selector'; projectId: string }
   | { type: 'workspace-selector'; projectId: string }
   | { type: 'mvp'; projectId: string }
   | { type: 'maintenance'; projectId: string };
@@ -29,6 +31,8 @@ interface ProjectsNavigationContextType {
   navigate: (route: ProjectsRouteType) => void;
   goToProjectList: () => void;
   goToProject: (projectId: string) => void;
+  goToTemplateSelector: (projectId: string) => void;
+  goToWorkspaceSelector: (projectId: string) => void;
   goToMvp: (projectId: string) => void;
   goToMaintenance: (projectId: string) => void;
 }
@@ -41,6 +45,8 @@ const defaultNavigationContext: ProjectsNavigationContextType = {
   navigate: () => console.warn('Navigation not available outside ProjectRoutes'),
   goToProjectList: () => console.warn('Navigation not available outside ProjectRoutes'),
   goToProject: () => console.warn('Navigation not available outside ProjectRoutes'),
+  goToTemplateSelector: () => console.warn('Navigation not available outside ProjectRoutes'),
+  goToWorkspaceSelector: () => console.warn('Navigation not available outside ProjectRoutes'),
   goToMvp: () => console.warn('Navigation not available outside ProjectRoutes'),
   goToMaintenance: () => console.warn('Navigation not available outside ProjectRoutes'),
 };
@@ -81,7 +87,8 @@ interface ProjectRoutesProps {
  *
  * Routes:
  * - list                           → Project list (grid cards)
- * - workspace-selector/:projectId  → Workspace type selection
+ * - template-selector/:projectId   → Template selection (first time only)
+ * - workspace-selector/:projectId  → Workspace type selection (Basic template)
  * - mvp/:projectId                 → MVP workspace
  * - maintenance/:projectId         → Maintenance workspace
  */
@@ -104,6 +111,8 @@ export const ProjectRoutes: React.FC<ProjectRoutesProps> = ({ tabId }) => {
     const params = tab.projectsRouteParams || {};
 
     switch (route) {
+      case 'template-selector':
+        return { type: 'template-selector', projectId: params.projectId || '' };
       case 'workspace-selector':
         return { type: 'workspace-selector', projectId: params.projectId || '' };
       case 'mvp':
@@ -134,6 +143,10 @@ export const ProjectRoutes: React.FC<ProjectRoutesProps> = ({ tabId }) => {
       case 'list':
         routeName = 'list';
         break;
+      case 'template-selector':
+        routeName = 'template-selector';
+        params = { projectId: route.projectId };
+        break;
       case 'workspace-selector':
         routeName = 'workspace-selector';
         params = { projectId: route.projectId };
@@ -158,9 +171,38 @@ export const ProjectRoutes: React.FC<ProjectRoutesProps> = ({ tabId }) => {
     navigate({ type: 'list' });
   }, [navigate]);
 
-  const goToProject = useCallback((projectId: string) => {
+  const goToTemplateSelector = useCallback((projectId: string) => {
+    navigate({ type: 'template-selector', projectId });
+  }, [navigate]);
+
+  const goToWorkspaceSelector = useCallback((projectId: string) => {
     navigate({ type: 'workspace-selector', projectId });
   }, [navigate]);
+
+  // Main project navigation - checks template and routes accordingly
+  const goToProject = useCallback(async (projectId: string) => {
+    // Find project to get its path
+    const project = projects.find(p => p.id === projectId);
+    if (!project) {
+      console.warn('Project not found:', projectId);
+      return;
+    }
+
+    // Check if template is already set
+    const template = await api.getProjectTemplate(project.path);
+    
+    if (!template) {
+      // No template set → go to template selector
+      navigate({ type: 'template-selector', projectId });
+    } else if (template === 'basic') {
+      // Basic template → go to workspace selector
+      navigate({ type: 'workspace-selector', projectId });
+    } else {
+      // Other templates → for now, also go to workspace selector
+      // (will be updated when other templates are implemented)
+      navigate({ type: 'workspace-selector', projectId });
+    }
+  }, [navigate, projects]);
 
   const goToMvp = useCallback((projectId: string) => {
     navigate({ type: 'mvp', projectId });
@@ -208,6 +250,8 @@ export const ProjectRoutes: React.FC<ProjectRoutesProps> = ({ tabId }) => {
     navigate,
     goToProjectList,
     goToProject,
+    goToTemplateSelector,
+    goToWorkspaceSelector,
     goToMvp,
     goToMaintenance,
   };
@@ -217,6 +261,8 @@ export const ProjectRoutes: React.FC<ProjectRoutesProps> = ({ tabId }) => {
     switch (currentRoute.type) {
       case 'list':
         return <ProjectListView />;
+      case 'template-selector':
+        return <TemplateSelector projectId={currentRoute.projectId} />;
       case 'workspace-selector':
         return <WorkspaceSelector projectId={currentRoute.projectId} />;
       case 'mvp':

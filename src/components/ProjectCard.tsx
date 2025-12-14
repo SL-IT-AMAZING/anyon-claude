@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import type { Project } from '@/lib/api';
+import { getTemplateById, type TemplateId } from '@/types/template';
 
 interface ProjectCardProps {
   project: Project;
@@ -20,6 +21,8 @@ interface ProjectCardProps {
   isSelectMode?: boolean;
   isSelected?: boolean;
   onToggleSelect?: () => void;
+  /** Template ID for this project (optional) */
+  templateId?: TemplateId | null;
 }
 
 /**
@@ -86,12 +89,16 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   isSelectMode = false,
   isSelected = false,
   onToggleSelect,
+  templateId,
 }) => {
   const projectName = getProjectName(project.path);
   const displayPath = getDisplayPath(project.path);
   const lastUpdated = project.most_recent_session
     ? getRelativeTime(project.most_recent_session)
     : getRelativeTime(project.created_at);
+  
+  // Get template info for badge
+  const template = templateId ? getTemplateById(templateId) : null;
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -174,9 +181,17 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           >
             {displayPath}
           </p>
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Clock className="w-3 h-3" />
-            <span>{lastUpdated}</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Clock className="w-3 h-3" />
+              <span>{lastUpdated}</span>
+            </div>
+            {/* Template badge */}
+            {template && (
+              <span className="px-2 py-0.5 text-xs rounded-full bg-primary/10 text-primary">
+                {template.name}
+              </span>
+            )}
           </div>
         </div>
       </Card>

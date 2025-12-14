@@ -2126,6 +2126,64 @@ export const api = {
     }
   },
 
+  // ===== Project Templates =====
+
+  /**
+   * Get all project template mappings
+   * @returns Promise resolving to a map of project paths to template IDs
+   */
+  async getProjectTemplates(): Promise<Record<string, string>> {
+    try {
+      const setting = await this.getSetting('project_templates');
+      if (!setting || setting === '""' || setting === 'null') {
+        return {};
+      }
+      return JSON.parse(setting) as Record<string, string>;
+    } catch (error) {
+      console.error('Failed to get project templates:', error);
+      return {};
+    }
+  },
+
+  /**
+   * Get template for a specific project
+   * @param projectPath - The project path to get template for
+   * @returns Promise resolving to template ID or null if not set
+   */
+  async getProjectTemplate(projectPath: string): Promise<string | null> {
+    try {
+      const templates = await this.getProjectTemplates();
+      const normalizedPath = normalizeProjectPath(projectPath);
+      
+      // Find matching project (normalized comparison)
+      for (const [path, templateId] of Object.entries(templates)) {
+        if (normalizeProjectPath(path) === normalizedPath) {
+          return templateId;
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error('Failed to get project template:', error);
+      return null;
+    }
+  },
+
+  /**
+   * Set template for a project
+   * @param projectPath - The project path to set template for
+   * @param templateId - The template ID to set
+   */
+  async setProjectTemplate(projectPath: string, templateId: string): Promise<void> {
+    try {
+      const templates = await this.getProjectTemplates();
+      templates[projectPath] = templateId;
+      await this.saveSetting('project_templates', JSON.stringify(templates));
+    } catch (error) {
+      console.error('Failed to set project template:', error);
+      throw error;
+    }
+  },
+
   // ===== Anyon Agents Installation =====
 
   /**

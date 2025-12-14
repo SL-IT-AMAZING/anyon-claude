@@ -16,6 +16,7 @@ import { MinimalSidebar } from '@/components/MinimalSidebar';
 import { Settings } from '@/components/Settings';
 import { useProjects, useProjectsNavigation } from '@/components/ProjectRoutes';
 import { api, type Project } from '@/lib/api';
+import type { TemplateId } from '@/types/template';
 
 // Cross-platform project name extractor (handles / and \\)
 const getProjectName = (path: string): string => {
@@ -43,6 +44,7 @@ export const ProjectListView: React.FC = () => {
   const [sortBy, setSortBy] = useState<'recent' | 'name' | 'created'>('recent');
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedProjects, setSelectedProjects] = useState<Set<string>>(new Set());
+  const [projectTemplates, setProjectTemplates] = useState<Record<string, TemplateId>>({});
 
   const toggleSelectMode = () => {
     if (isSelectMode) {
@@ -94,6 +96,19 @@ export const ProjectListView: React.FC = () => {
   useEffect(() => {
     refreshProjects();
   }, [refreshProjects]);
+
+  // Load project templates
+  useEffect(() => {
+    const loadTemplates = async () => {
+      try {
+        const templates = await api.getProjectTemplates();
+        setProjectTemplates(templates as Record<string, TemplateId>);
+      } catch (err) {
+        console.error('Failed to load project templates:', err);
+      }
+    };
+    loadTemplates();
+  }, [projects]);
 
   // Filter and sort projects
   const filteredProjects = useMemo(() => {
@@ -448,7 +463,13 @@ export const ProjectListView: React.FC = () => {
           {/* Project grid */}
           {filteredProjects.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {filteredProjects.map((project) => (
+              {filteredProjects.map((project) => {
+                // Find template for this project (normalize path for comparison)
+                const templateId = Object.entries(projectTemplates).find(
+                  ([path]) => path.replace(/\\/g, '/').toLowerCase() === project.path.replace(/\\/g, '/').toLowerCase()
+                )?.[1] as TemplateId | undefined;
+                
+                return (
                 <ProjectCard
                   key={project.id}
                   project={project}
@@ -457,8 +478,10 @@ export const ProjectListView: React.FC = () => {
                   isSelectMode={isSelectMode}
                   isSelected={selectedProjects.has(project.id)}
                   onToggleSelect={() => toggleProjectSelection(project.id)}
+                  templateId={templateId}
                 />
-              ))}
+              );
+              })}
             </div>
           ) : projects.length > 0 && searchQuery ? (
             /* No search results */
