@@ -81,12 +81,24 @@ export const SelectedComponentsDisplay: React.FC<SelectedComponentsDisplayProps>
                 >
                   {component.name}
                 </span>
-                <span
-                  className="truncate text-xs text-purple-600/80 dark:text-purple-400/80"
-                  title={`${component.relativePath}:${component.lineNumber}`}
-                >
-                  {component.relativePath}:{component.lineNumber}
-                </span>
+                {/* 소스 코드 위치가 있으면 표시, 없으면 CSS selector 표시 */}
+                {component.relativePath ? (
+                  <span
+                    className="truncate text-xs text-purple-600/80 dark:text-purple-400/80"
+                    title={`${component.relativePath}:${component.lineNumber}`}
+                  >
+                    {component.relativePath}:{component.lineNumber}
+                  </span>
+                ) : (
+                  <span
+                    className="truncate text-xs text-purple-600/80 dark:text-purple-400/80 font-mono"
+                    title={component.id}
+                  >
+                    {component.id.length > 40
+                      ? component.id.slice(0, 40) + '...'
+                      : component.id}
+                  </span>
+                )}
               </div>
             </div>
 

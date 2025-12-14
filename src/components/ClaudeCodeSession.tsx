@@ -1,4 +1,11 @@
 import { useState, useEffect, useRef, useMemo, useImperativeHandle, forwardRef } from "react";
+
+// Extend window for debug logging
+declare global {
+  interface Window {
+    _streamEventLogged?: number;
+  }
+}
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Copy,
@@ -16,7 +23,8 @@ import {
   LayoutList,
   Rocket,
   CheckCircle,
-  Loader2
+  Loader2,
+  AlertCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +41,7 @@ type UnlistenFn = () => void;
 // Use Tauri's listen directly - it will be available in Tauri environment
 const listen = tauriListen;
 import { StreamMessage } from "./StreamMessage";
+import { StreamingText } from "./StreamingText";
 import { FloatingPromptInput, type FloatingPromptInputRef } from "./FloatingPromptInput";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { TimelineNavigator } from "./TimelineNavigator";
@@ -148,6 +157,10 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
   const [messages, setMessages] = useState<ClaudeStreamMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Streaming text state for real-time typing effect
+  const [streamingText, setStreamingText] = useState<string>('');
+  const accumulatedTextRef = useRef<string>('');
   const [rawJsonlOutput, setRawJsonlOutput] = useState<string[]>([]);
   const [copyPopoverOpen, setCopyPopoverOpen] = useState(false);
   const [isFirstPrompt, setIsFirstPrompt] = useState(!session);
@@ -156,6 +169,7 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
   const [claudeSessionId, setClaudeSessionId] = useState<string | null>(null);
   const [showTimeline, setShowTimeline] = useState(false);
   const [timelineVersion, setTimelineVersion] = useState(0);
+  const [timelinePanelWidth, setTimelinePanelWidth] = useState(384); // 384px = w-96
   const [showSettings, setShowSettings] = useState(false);
   const [showForkDialog, setShowForkDialog] = useState(false);
   const [showSlashCommandsSettings, setShowSlashCommandsSettings] = useState(false);
@@ -235,9 +249,22 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
     return null;
   }, [session, extractedSessionInfo, projectPath]);
 
-  // Filter out messages that shouldn't be displayed
+  // Helper: check if message is tool-only (no text content)
+  const isToolOnlyMessage = (msg: ClaudeStreamMessage): boolean => {
+    if (msg.type !== 'assistant' || !msg.message?.content) return false;
+    const content = msg.message.content;
+    if (!Array.isArray(content)) return false;
+    
+    const hasText = content.some((c: any) => c.type === 'text' && c.text?.trim());
+    const hasTools = content.some((c: any) => c.type === 'tool_use');
+    
+    return hasTools && !hasText;
+  };
+
+  // Filter and merge consecutive tool-only messages
   const displayableMessages = useMemo(() => {
-    return messages.filter((message, index) => {
+    // First filter out non-displayable messages
+    const filtered = messages.filter((message, index) => {
       // Skip meta messages that don't have meaningful content
       if (message.isMeta && !message.leafUuid && !message.summary) {
         return false;
@@ -296,6 +323,48 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
       }
       return true;
     });
+
+    // Merge consecutive tool-only assistant messages
+    const merged: ClaudeStreamMessage[] = [];
+    
+    for (let i = 0; i < filtered.length; i++) {
+      const current = filtered[i];
+      
+      // If current is tool-only and previous in merged is also tool-only, merge them
+      if (isToolOnlyMessage(current) && merged.length > 0) {
+        const prev = merged[merged.length - 1];
+        if (isToolOnlyMessage(prev)) {
+          // Merge: combine content arrays
+          const mergedContent = [
+            ...(prev.message?.content || []),
+            ...(current.message?.content || [])
+          ];
+          
+          // Merge usage if available
+          const mergedUsage = prev.message?.usage && current.message?.usage ? {
+            input_tokens: (prev.message.usage.input_tokens || 0) + (current.message.usage.input_tokens || 0),
+            output_tokens: (prev.message.usage.output_tokens || 0) + (current.message.usage.output_tokens || 0)
+          } : prev.message?.usage || current.message?.usage;
+          
+          // Update the previous message with merged content
+          merged[merged.length - 1] = {
+            ...prev,
+            message: {
+              ...prev.message,
+              content: mergedContent,
+              usage: mergedUsage
+            },
+            _mergedCount: ((prev as any)._mergedCount || 1) + 1
+          } as ClaudeStreamMessage;
+          
+          continue;
+        }
+      }
+      
+      merged.push(current);
+    }
+    
+    return merged;
   }, [messages]);
 
   const rowVirtualizer = useVirtualizer({
@@ -362,6 +431,25 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
       }, 50);
     }
   }, [displayableMessages.length, rowVirtualizer]);
+
+  // Throttled auto-scroll for streaming text updates (separate from message scroll)
+  const lastScrollTimeRef = useRef<number>(0);
+  useEffect(() => {
+    if (streamingText && isLoading) {
+      const now = Date.now();
+      // Throttle scroll updates to max once every 100ms during streaming
+      if (now - lastScrollTimeRef.current > 100) {
+        lastScrollTimeRef.current = now;
+        const scrollElement = parentRef.current;
+        if (scrollElement) {
+          scrollElement.scrollTo({
+            top: scrollElement.scrollHeight,
+            behavior: 'auto'
+          });
+        }
+      }
+    }
+  }, [streamingText, isLoading]);
 
   // Calculate total tokens from messages
   useEffect(() => {
@@ -766,6 +854,74 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
               sessionMetrics.current.errorsEncountered += 1;
             }
 
+            // Handle streaming text for real-time typing effect
+            if ((message as any).type === 'content_block_delta') {
+              const delta = (message as any).delta;
+              if (delta?.type === 'text_delta' && delta?.text) {
+                accumulatedTextRef.current += delta.text;
+                setStreamingText(accumulatedTextRef.current);
+              }
+              return; // Don't add delta messages to the message list
+            } else if ((message as any).type === 'stream_event') {
+              // Handle stream_event which wraps the actual streaming data
+              const streamEvent = message as any;
+
+              // Debug: Log stream_event structure (first few only)
+              if (!window._streamEventLogged) {
+                window._streamEventLogged = 0;
+              }
+              if (window._streamEventLogged < 5) {
+                console.log('[stream_event] Full structure:', JSON.stringify(streamEvent, null, 2));
+                window._streamEventLogged++;
+              }
+
+              // Check for content_block_delta inside stream_event
+              if (streamEvent.event?.type === 'content_block_delta') {
+                const delta = streamEvent.event.delta;
+                if (delta?.type === 'text_delta' && delta?.text) {
+                  accumulatedTextRef.current += delta.text;
+                  setStreamingText(accumulatedTextRef.current);
+                }
+                return; // Don't add to message list
+              }
+
+              // Check for raw text in various possible locations
+              const textContent = streamEvent.text || streamEvent.content ||
+                                  streamEvent.event?.text || streamEvent.event?.content ||
+                                  streamEvent.delta?.text;
+              if (typeof textContent === 'string' && textContent) {
+                accumulatedTextRef.current += textContent;
+                setStreamingText(accumulatedTextRef.current);
+                return;
+              }
+
+              // For message_start, clear accumulated text
+              if (streamEvent.event?.type === 'message_start') {
+                accumulatedTextRef.current = '';
+                setStreamingText('');
+              }
+
+              // For message_stop, also clear
+              if (streamEvent.event?.type === 'message_stop') {
+                accumulatedTextRef.current = '';
+                setStreamingText('');
+              }
+
+              return; // Don't add stream_event to message list
+            } else if ((message as any).type === 'partial') {
+              const partialContent = (message as any).content;
+              if (typeof partialContent === 'string') {
+                accumulatedTextRef.current += partialContent;
+                setStreamingText(accumulatedTextRef.current);
+              }
+            } else if (message.type === 'assistant' && message.message?.content) {
+              // Full assistant message arrived - clear streaming text
+              if (accumulatedTextRef.current) {
+                accumulatedTextRef.current = '';
+                setStreamingText('');
+              }
+            }
+
             setMessages((prev) => [...prev, message]);
           } catch (err) {
             console.error('Failed to parse message:', err, payload);
@@ -777,6 +933,10 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
           setIsLoading(false);
           hasActiveSessionRef.current = false;
           isListeningRef.current = false; // Reset listening state
+          
+          // Clear streaming text on completion
+          accumulatedTextRef.current = '';
+          setStreamingText('');
           
           // Track enhanced session stopped metrics when session completes
           if (effectiveSession && claudeSessionId) {
@@ -1307,8 +1467,9 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
         contain: 'strict',
       }}
     >
+      {/* GPT-style message container - no card boxes, natural flow */}
       <div
-        className="relative w-full max-w-6xl mx-auto px-4 pt-8 pb-4"
+        className="relative w-full max-w-4xl mx-auto"
         style={{
           height: `${Math.max(rowVirtualizer.getTotalSize(), 100)}px`,
           minHeight: '100px',
@@ -1322,11 +1483,11 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
                 key={virtualItem.key}
                 data-index={virtualItem.index}
                 ref={(el) => el && rowVirtualizer.measureElement(el)}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.3 }}
-                className="absolute inset-x-4 pb-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="absolute inset-x-0"
                 style={{
                   top: virtualItem.start,
                 }}
@@ -1342,27 +1503,50 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
         </AnimatePresence>
       </div>
 
-      {/* Loading indicator under the latest message */}
+      {/* Loading indicator with streaming text */}
       {isLoading && (
         <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ duration: 0.15 }}
-          className="flex items-center justify-center py-4 mb-20"
+          className="max-w-4xl mx-auto py-3"
         >
-          <Loader2 className="h-6 w-6 animate-spin" />
+          {streamingText ? (
+            /* Show streaming text when available */
+            <div className="px-2">
+              <StreamingText 
+                text={streamingText} 
+                isStreaming={true}
+                className="text-sm text-foreground"
+              />
+            </div>
+          ) : (
+            /* Show thinking indicator when no text yet */
+            <div className="flex items-center gap-3 px-2">
+              <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse flex-shrink-0" />
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <span>Thinking</span>
+                <span className="animate-bounce" style={{ animationDelay: '0ms' }}>.</span>
+                <span className="animate-bounce" style={{ animationDelay: '150ms' }}>.</span>
+                <span className="animate-bounce" style={{ animationDelay: '300ms' }}>.</span>
+              </div>
+            </div>
+          )}
         </motion.div>
       )}
 
       {/* Error indicator */}
       {error && (
         <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ duration: 0.15 }}
-          className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive mb-20 w-full max-w-6xl mx-auto"
+          className="max-w-4xl mx-auto py-4 px-4"
         >
-          {error}
+          <div className="flex items-start gap-3 text-destructive">
+            <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+            <div className="text-sm">{error}</div>
+          </div>
         </motion.div>
       )}
     </div>
@@ -1400,10 +1584,7 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
         <div className="w-full h-full flex flex-col">
 
         {/* Main Content Area */}
-        <div className={cn(
-          "flex-1 overflow-hidden transition-all duration-300",
-          showTimeline && "sm:mr-96"
-        )}>
+        <div className="flex-1 overflow-hidden">
           {showPreview ? (
             // Split pane layout when preview is active
             <SplitPane
@@ -1606,9 +1787,8 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
 
           <div className={cn(
             embedded
-              ? "w-full transition-all duration-300"
-              : "fixed bottom-0 left-0 right-0 transition-all duration-300 z-50",
-            showTimeline && !embedded && "sm:right-96"
+              ? "w-full"
+              : "fixed bottom-0 left-0 right-0 z-50"
           )}>
             <FloatingPromptInput
               ref={floatingPromptRef}
@@ -1703,45 +1883,81 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
 
         </ErrorBoundary>
 
-        {/* Timeline */}
+        {/* Timeline Overlay */}
         <AnimatePresence>
           {showTimeline && effectiveSession && (
-            <motion.div
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="fixed right-0 top-0 h-full w-full sm:w-96 bg-background border-l border-border shadow-xl z-30 overflow-hidden"
-            >
-              <div className="h-full flex flex-col">
-                {/* Timeline Header */}
-                <div className="flex items-center justify-between p-4 border-b border-border">
-                  <h3 className="text-lg font-semibold">Session Timeline</h3>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setShowTimeline(false)}
-                    className="h-8 w-8"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="fixed inset-0 bg-black/20 z-40"
+                onClick={() => setShowTimeline(false)}
+              />
+              {/* Panel */}
+              <motion.div
+                initial={{ x: "100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "100%" }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                className="fixed right-0 top-9 h-[calc(100%-2.25rem)] bg-background border-l border-border shadow-xl z-50 overflow-hidden"
+                style={{ width: `${timelinePanelWidth}px`, minWidth: '280px', maxWidth: '800px' }}
+              >
+                {/* Resize Handle */}
+                <div
+                  className="absolute left-0 top-0 bottom-0 w-1 cursor-ew-resize hover:bg-primary/50 active:bg-primary/70 transition-colors z-10"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    const startX = e.clientX;
+                    const startWidth = timelinePanelWidth;
+                    
+                    const handleMouseMove = (moveEvent: MouseEvent) => {
+                      const delta = startX - moveEvent.clientX;
+                      const newWidth = Math.min(800, Math.max(280, startWidth + delta));
+                      setTimelinePanelWidth(newWidth);
+                    };
+                    
+                    const handleMouseUp = () => {
+                      document.removeEventListener('mousemove', handleMouseMove);
+                      document.removeEventListener('mouseup', handleMouseUp);
+                    };
+                    
+                    document.addEventListener('mousemove', handleMouseMove);
+                    document.addEventListener('mouseup', handleMouseUp);
+                  }}
+                />
+                <div className="h-full flex flex-col">
+                  {/* Timeline Header */}
+                  <div className="flex items-center justify-between p-4 border-b border-border tauri-no-drag">
+                    <h3 className="text-lg font-semibold">작업 히스토리</h3>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setShowTimeline(false)}
+                      className="h-8 w-8"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  
+                  {/* Timeline Content */}
+                  <div className="flex-1 overflow-y-auto p-4">
+                    <TimelineNavigator
+                      sessionId={effectiveSession.id}
+                      projectId={effectiveSession.project_id}
+                      projectPath={projectPath}
+                      currentMessageIndex={messages.length - 1}
+                      onCheckpointSelect={handleCheckpointSelect}
+                      onFork={handleFork}
+                      onCheckpointCreated={handleCheckpointCreated}
+                      refreshVersion={timelineVersion}
+                    />
+                  </div>
                 </div>
-                
-                {/* Timeline Content */}
-                <div className="flex-1 overflow-y-auto p-4">
-                  <TimelineNavigator
-                    sessionId={effectiveSession.id}
-                    projectId={effectiveSession.project_id}
-                    projectPath={projectPath}
-                    currentMessageIndex={messages.length - 1}
-                    onCheckpointSelect={handleCheckpointSelect}
-                    onFork={handleFork}
-                    onCheckpointCreated={handleCheckpointCreated}
-                    refreshVersion={timelineVersion}
-                  />
-                </div>
-              </div>
-            </motion.div>
+              </motion.div>
+            </>
           )}
         </AnimatePresence>
       </div>

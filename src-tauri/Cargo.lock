@@ -136,6 +136,7 @@ dependencies = [
  "glob",
  "image",
  "jsonwebtoken",
+ "lazy_static",
  "libc",
  "log",
  "objc",

@@ -438,6 +438,11 @@ fn main() {
             commands::dev_workflow::get_dev_workflow_status,
             // Preview (Port Scanning)
             scan_ports,
+            // Dev Server with HTML injection proxy
+            commands::dev_server::start_dev_server,
+            commands::dev_server::stop_dev_server,
+            commands::dev_server::get_dev_server_info,
+            commands::dev_server::detect_package_manager,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

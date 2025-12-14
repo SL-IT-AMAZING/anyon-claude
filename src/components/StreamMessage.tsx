@@ -1,22 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { 
-  Terminal, 
-  User, 
-  Bot, 
   AlertCircle, 
-  CheckCircle2,
-  FileEdit,
-  FileText,
-  FolderOpen,
-  Search,
-  ListChecks,
-  ListPlus,
-  Globe,
-  Globe2,
-  Package2,
-  Sparkles
+  CheckCircle2
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -29,28 +15,23 @@ import {
   TodoReadWidget,
   LSWidget,
   ReadWidget,
-  ReadResultWidget,
   GlobWidget,
   BashWidget,
   WriteWidget,
   GrepWidget,
   EditWidget,
-  EditResultWidget,
   MCPWidget,
   CommandWidget,
   CommandOutputWidget,
   SummaryWidget,
   MultiEditWidget,
-  MultiEditResultWidget,
   SystemReminderWidget,
-  SystemInitializedWidget,
   TaskWidget,
-  LSResultWidget,
   ThinkingWidget,
   WebSearchWidget,
   WebFetchWidget,
-  CollapsibleToolWidget
 } from "./ToolWidgets";
+import { InlineToolBadge, ToolBadgeGroup } from "./InlineToolBadge";
 import { getPromptDisplayInfo, isAnyonWorkflowCommand, type PromptIconType } from "@/lib/promptDisplay";
 import { 
   FileText as FileTextIcon, 
@@ -88,21 +69,20 @@ interface StreamMessageProps {
 }
 
 /**
- * Component to render a single Claude Code stream message
+ * GPT-style Stream Message Component
+ * - No card/box wrapping
+ * - Natural flowing conversation
+ * - Inline tool badges with slide-over details
  */
 const StreamMessageComponent: React.FC<StreamMessageProps> = ({ message, className, streamMessages, onLinkDetected }) => {
-  // State to track tool results mapped by tool call ID
   const [toolResults, setToolResults] = useState<Map<string, any>>(new Map());
   
-  // Get current theme
   const { theme } = useTheme();
   const syntaxTheme = getClaudeSyntaxTheme(theme);
   
   // Extract all tool results from stream messages
   useEffect(() => {
     const results = new Map<string, any>();
-    
-    // Iterate through all messages to find tool results
     streamMessages.forEach(msg => {
       if (msg.type === "user" && msg.message?.content && Array.isArray(msg.message.content)) {
         msg.message.content.forEach((content: any) => {
@@ -112,725 +92,308 @@ const StreamMessageComponent: React.FC<StreamMessageProps> = ({ message, classNa
         });
       }
     });
-    
     setToolResults(results);
   }, [streamMessages]);
   
-  // Helper to get tool result for a specific tool call ID
   const getToolResult = (toolId: string | undefined): any => {
     if (!toolId) return null;
     return toolResults.get(toolId) || null;
   };
   
   try {
-    // Skip rendering for meta messages that don't have meaningful content
+    // Skip meta messages
     if (message.isMeta && !message.leafUuid && !message.summary) {
       return null;
     }
 
-    // Handle summary messages
+    // Summary messages
     if (message.leafUuid && message.summary && (message as any).type === "summary") {
       return <SummaryWidget summary={message.summary} leafUuid={message.leafUuid} />;
     }
 
-    // System initialization message
+    // System initialization - hide completely
     if (message.type === "system" && message.subtype === "init") {
-      return (
-        <CollapsibleToolWidget
-          icon={<Bot className="h-4 w-4 text-blue-500" />}
-          title="System Initialized"
-          summary={message.model || ''}
-        >
-          <SystemInitializedWidget
-            sessionId={message.session_id}
-            model={message.model}
-            cwd={message.cwd}
-            tools={message.tools}
-          />
-        </CollapsibleToolWidget>
-      );
+      return null;
     }
 
-    // Assistant message
+    // Assistant message - GPT style (no card)
     if (message.type === "assistant" && message.message) {
       const msg = message.message;
+      const contentParts: React.ReactNode[] = [];
+      const toolBadges: React.ReactNode[] = [];
+      let hasContent = false;
       
-      let renderedSomething = false;
-      
-      const renderedCard = (
-        <Card className={cn("border-primary/20 bg-primary/5", className)}>
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
-              <Bot className="h-5 w-5 text-primary mt-0.5" />
-              <div className="flex-1 space-y-2 min-w-0">
-                {msg.content && Array.isArray(msg.content) && msg.content.map((content: any, idx: number) => {
-                  // Text content - render as markdown
-                  if (content.type === "text") {
-                    // Ensure we have a string to render
-                    const textContent = typeof content.text === 'string' 
-                      ? content.text 
-                      : (content.text?.text || JSON.stringify(content.text || content));
-                    
-                    renderedSomething = true;
-                    return (
-                      <div key={idx} className="prose prose-sm dark:prose-invert max-w-none">
-                        <ReactMarkdown
-                          remarkPlugins={[remarkGfm]}
-                          components={{
-                            code({ node, inline, className, children, ...props }: any) {
-                              const match = /language-(\w+)/.exec(className || '');
-                              return !inline && match ? (
-                                <SyntaxHighlighter
-                                  style={syntaxTheme}
-                                  language={match[1]}
-                                  PreTag="div"
-                                  {...props}
-                                >
-                                  {String(children).replace(/\n$/, '')}
-                                </SyntaxHighlighter>
-                              ) : (
-                                <code className={className} {...props}>
-                                  {children}
-                                </code>
-                              );
-                            }
-                          }}
-                        >
-                          {textContent}
-                        </ReactMarkdown>
-                      </div>
-                    );
-                  }
-                  
-                  // Thinking content - render with ThinkingWidget
-                  if (content.type === "thinking") {
-                    renderedSomething = true;
-                    return (
-                      <div key={idx}>
-                        <ThinkingWidget 
-                          thinking={content.thinking || ''} 
-                          signature={content.signature}
-                        />
-                      </div>
-                    );
-                  }
-                  
-                  // Tool use - render custom widgets based on tool name
-                  if (content.type === "tool_use") {
-                    const toolName = content.name?.toLowerCase();
-                    const input = content.input;
-                    const toolId = content.id;
-                    
-                    // Get the tool result if available
-                    const toolResult = getToolResult(toolId);
-                    
-                    // Function to render the appropriate tool widget
-                    const renderToolWidget = () => {
-                      // Task tool - for sub-agent tasks
-                      if (toolName === "task" && input) {
-                        renderedSomething = true;
-                        return (
-                          <CollapsibleToolWidget
-                            icon={<><Bot className="h-4 w-4 text-purple-500" /><Sparkles className="h-2 w-2 text-purple-400 -ml-2 -mt-2" /></>}
-                            title="Sub-Agent Task"
-                            summary={input.description}
+      if (msg.content && Array.isArray(msg.content)) {
+        msg.content.forEach((content: any, idx: number) => {
+          // Text content - render as markdown
+          if (content.type === "text") {
+            const textContent = typeof content.text === 'string' 
+              ? content.text 
+              : (content.text?.text || JSON.stringify(content.text || content));
+            
+            if (textContent.trim()) {
+              hasContent = true;
+              contentParts.push(
+                <div key={`text-${idx}`} className="prose prose-sm dark:prose-invert max-w-none">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      code({ node, inline, className, children, ...props }: any) {
+                        const match = /language-(\w+)/.exec(className || '');
+                        return !inline && match ? (
+                          <SyntaxHighlighter
+                            style={syntaxTheme}
+                            language={match[1]}
+                            PreTag="div"
+                            {...props}
                           >
-                            <TaskWidget description={input.description} prompt={input.prompt} result={toolResult} />
-                          </CollapsibleToolWidget>
+                            {String(children).replace(/\n$/, '')}
+                          </SyntaxHighlighter>
+                        ) : (
+                          <code className={cn("px-1.5 py-0.5 rounded bg-muted font-mono text-sm", className)} {...props}>
+                            {children}
+                          </code>
+                        );
+                      },
+                      // Better link styling
+                      a({ href, children, ...props }) {
+                        return (
+                          <a 
+                            href={href} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                            {...props}
+                          >
+                            {children}
+                          </a>
                         );
                       }
-                      
-                      // Edit tool
-                      if (toolName === "edit" && input?.file_path) {
-                        renderedSomething = true;
-                        const fileName = input.file_path.split('/').pop() || input.file_path;
-                        return (
-                          <CollapsibleToolWidget
-                            icon={<FileEdit className="h-4 w-4 text-amber-500" />}
-                            title="Edit"
-                            summary={fileName}
-                          >
-                            <EditWidget {...input} result={toolResult} />
-                          </CollapsibleToolWidget>
-                        );
-                      }
-                      
-                      // MultiEdit tool
-                      if (toolName === "multiedit" && input?.file_path && input?.edits) {
-                        renderedSomething = true;
-                        const fileName = input.file_path.split('/').pop() || input.file_path;
-                        return (
-                          <CollapsibleToolWidget
-                            icon={<FileEdit className="h-4 w-4 text-amber-500" />}
-                            title="MultiEdit"
-                            summary={`${fileName} (${input.edits?.length || 0} edits)`}
-                          >
-                            <MultiEditWidget {...input} result={toolResult} />
-                          </CollapsibleToolWidget>
-                        );
-                      }
-                      
-                      // MCP tools (starting with mcp__)
-                      if (content.name?.startsWith("mcp__")) {
-                        renderedSomething = true;
-                        const parts = content.name.split('__');
-                        const namespace = parts[1] || '';
-                        const method = parts[2] || '';
-                        return (
-                          <CollapsibleToolWidget
-                            icon={<><Package2 className="h-4 w-4 text-violet-500" /><Sparkles className="h-2 w-2 text-violet-400 -ml-2 -mt-2" /></>}
-                            title="MCP"
-                            summary={`${namespace} → ${method}`}
-                          >
-                            <MCPWidget toolName={content.name} input={input} result={toolResult} />
-                          </CollapsibleToolWidget>
-                        );
-                      }
-                      
-                      // TodoWrite tool
-                      if (toolName === "todowrite" && input?.todos) {
-                        renderedSomething = true;
-                        const todoCount = input.todos?.length || 0;
-                        const inProgress = input.todos?.filter((t: any) => t.status === 'in_progress').length || 0;
-                        return (
-                          <CollapsibleToolWidget
-                            icon={<ListPlus className="h-4 w-4 text-blue-500" />}
-                            title="Todo List"
-                            summary={`${todoCount} items${inProgress > 0 ? `, ${inProgress} in progress` : ''}`}
-                          >
-                            <TodoWidget todos={input.todos} result={toolResult} />
-                          </CollapsibleToolWidget>
-                        );
-                      }
-                      
-                      // TodoRead tool
-                      if (toolName === "todoread") {
-                        renderedSomething = true;
-                        return (
-                          <CollapsibleToolWidget
-                            icon={<ListChecks className="h-4 w-4 text-blue-500" />}
-                            title="Read Todos"
-                          >
-                            <TodoReadWidget todos={input?.todos} result={toolResult} />
-                          </CollapsibleToolWidget>
-                        );
-                      }
-                      
-                      // LS tool
-                      if (toolName === "ls" && input?.path) {
-                        renderedSomething = true;
-                        const dirName = input.path.split('/').pop() || input.path;
-                        return (
-                          <CollapsibleToolWidget
-                            icon={<FolderOpen className="h-4 w-4 text-yellow-500" />}
-                            title="List Directory"
-                            summary={dirName}
-                          >
-                            <LSWidget path={input.path} result={toolResult} />
-                          </CollapsibleToolWidget>
-                        );
-                      }
-                      
-                      // Read tool
-                      if (toolName === "read" && input?.file_path) {
-                        renderedSomething = true;
-                        const fileName = input.file_path.split('/').pop() || input.file_path;
-                        return (
-                          <CollapsibleToolWidget
-                            icon={<FileText className="h-4 w-4 text-green-500" />}
-                            title="Read"
-                            summary={fileName}
-                          >
-                            <ReadWidget filePath={input.file_path} result={toolResult} />
-                          </CollapsibleToolWidget>
-                        );
-                      }
-                      
-                      // Glob tool
-                      if (toolName === "glob" && input?.pattern) {
-                        renderedSomething = true;
-                        return (
-                          <CollapsibleToolWidget
-                            icon={<Search className="h-4 w-4 text-cyan-500" />}
-                            title="Glob"
-                            summary={input.pattern}
-                          >
-                            <GlobWidget pattern={input.pattern} result={toolResult} />
-                          </CollapsibleToolWidget>
-                        );
-                      }
-                      
-                      // Bash tool
-                      if (toolName === "bash" && input?.command) {
-                        renderedSomething = true;
-                        const cmdPreview = input.command.length > 40 
-                          ? input.command.substring(0, 40) + '...' 
-                          : input.command;
-                        return (
-                          <CollapsibleToolWidget
-                            icon={<Terminal className="h-4 w-4 text-green-500" />}
-                            title="Bash"
-                            summary={input.description || cmdPreview}
-                          >
-                            <BashWidget command={input.command} description={input.description} result={toolResult} />
-                          </CollapsibleToolWidget>
-                        );
-                      }
-                      
-                      // Write tool
-                      if (toolName === "write" && input?.file_path && input?.content) {
-                        renderedSomething = true;
-                        const fileName = input.file_path.split('/').pop() || input.file_path;
-                        return (
-                          <CollapsibleToolWidget
-                            icon={<FileEdit className="h-4 w-4 text-emerald-500" />}
-                            title="Write"
-                            summary={fileName}
-                          >
-                            <WriteWidget filePath={input.file_path} content={input.content} result={toolResult} />
-                          </CollapsibleToolWidget>
-                        );
-                      }
-                      
-                      // Grep tool
-                      if (toolName === "grep" && input?.pattern) {
-                        renderedSomething = true;
-                        return (
-                          <CollapsibleToolWidget
-                            icon={<Search className="h-4 w-4 text-emerald-500" />}
-                            title="Grep"
-                            summary={input.pattern}
-                          >
-                            <GrepWidget pattern={input.pattern} include={input.include} path={input.path} exclude={input.exclude} result={toolResult} />
-                          </CollapsibleToolWidget>
-                        );
-                      }
-                      
-                      // WebSearch tool
-                      if (toolName === "websearch" && input?.query) {
-                        renderedSomething = true;
-                        return (
-                          <CollapsibleToolWidget
-                            icon={<Globe2 className="h-4 w-4 text-blue-500" />}
-                            title="Web Search"
-                            summary={input.query}
-                          >
-                            <WebSearchWidget query={input.query} result={toolResult} />
-                          </CollapsibleToolWidget>
-                        );
-                      }
-                      
-                      // WebFetch tool
-                      if (toolName === "webfetch" && input?.url) {
-                        renderedSomething = true;
-                        const urlPreview = input.url.length > 50 
-                          ? input.url.substring(0, 50) + '...' 
-                          : input.url;
-                        return (
-                          <CollapsibleToolWidget
-                            icon={<Globe className="h-4 w-4 text-blue-500" />}
-                            title="Web Fetch"
-                            summary={urlPreview}
-                          >
-                            <WebFetchWidget url={input.url} prompt={input.prompt} result={toolResult} />
-                          </CollapsibleToolWidget>
-                        );
-                      }
-                      
-                      // Default - return null
-                      return null;
-                    };
-                    
-                    // Render the tool widget
-                    const widget = renderToolWidget();
-                    if (widget) {
-                      renderedSomething = true;
-                      return <div key={idx}>{widget}</div>;
-                    }
-                    
-                    // Fallback to basic tool display
-                    renderedSomething = true;
-                    return (
-                      <div key={idx} className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Terminal className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm font-medium">
-                            Using tool: <code className="font-mono">{content.name}</code>
-                          </span>
-                        </div>
-                        {content.input && (
-                          <div className="ml-6 p-2 bg-background rounded-md border">
-                            <pre className="text-xs font-mono overflow-x-auto">
-                              {JSON.stringify(content.input, null, 2)}
-                            </pre>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  }
-                  
-                  return null;
-                })}
-                
-                {msg.usage && (
-                  <div className="text-xs text-muted-foreground mt-2">
-                    Tokens: {msg.usage.input_tokens} in, {msg.usage.output_tokens} out
-                  </div>
-                )}
+                    }}
+                  >
+                    {textContent}
+                  </ReactMarkdown>
+                </div>
+              );
+            }
+          }
+          
+          // Thinking content
+          if (content.type === "thinking") {
+            hasContent = true;
+            contentParts.push(
+              <div key={`thinking-${idx}`}>
+                <ThinkingWidget 
+                  thinking={content.thinking || ''} 
+                  signature={content.signature}
+                />
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      );
+            );
+          }
+          
+          // Tool use - render as inline badge
+          if (content.type === "tool_use") {
+            hasContent = true;
+            const toolName = content.name?.toLowerCase();
+            const input = content.input;
+            const toolId = content.id;
+            const toolResult = getToolResult(toolId);
+            
+            const badge = renderToolBadge(toolName, content.name, input, toolResult, toolId, idx);
+            if (badge) {
+              toolBadges.push(badge);
+            }
+          }
+        });
+      }
       
-      if (!renderedSomething) return null;
-      return renderedCard;
+      if (!hasContent) return null;
+      
+      // If only tools (no text), render minimal tool list
+      const hasTextContent = contentParts.length > 0;
+      
+      if (!hasTextContent && toolBadges.length > 0) {
+        // Tool-only message - minimal style like screenshot
+        return (
+          <div className={cn("py-2", className)}>
+            <ToolBadgeGroup>
+              {toolBadges}
+            </ToolBadgeGroup>
+          </div>
+        );
+      }
+      
+      // Has text content - show with prose styling, no avatar
+      return (
+        <div className={cn("py-4", className)}>
+          <div className="space-y-3">
+            {/* Text content */}
+            {contentParts}
+            
+            {/* Tool badges */}
+            {toolBadges.length > 0 && (
+              <ToolBadgeGroup>
+                {toolBadges}
+              </ToolBadgeGroup>
+            )}
+            
+            {/* Usage info - subtle */}
+            {msg.usage && (
+              <div className="text-xs text-muted-foreground/60">
+                {msg.usage.input_tokens + msg.usage.output_tokens} tokens
+              </div>
+            )}
+          </div>
+        </div>
+      );
     }
 
-    // User message - handle both nested and direct content structures
+    // User message - GPT style (right-aligned feel but left-aligned text)
     if (message.type === "user") {
-      // Don't render meta messages, which are for system use
       if (message.isMeta) return null;
 
-      // Handle different message structures
       const msg = message.message || message;
+      let hasContent = false;
+      const contentParts: React.ReactNode[] = [];
       
-      let renderedSomething = false;
-      
-      const renderedCard = (
-        <Card className={cn("border-muted-foreground/20 bg-muted/20", className)}>
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
-              <User className="h-5 w-5 text-muted-foreground mt-0.5" />
-              <div className="flex-1 space-y-2 min-w-0">
-                {/* Handle content that is a simple string (e.g. from user commands) */}
-                {(typeof msg.content === 'string' || (msg.content && !Array.isArray(msg.content))) && (
-                  (() => {
-                    const contentStr = typeof msg.content === 'string' ? msg.content : String(msg.content);
-                    if (contentStr.trim() === '') return null;
-                    renderedSomething = true;
-                    
-                    // Check if it's a command message
-                    const commandMatch = contentStr.match(/<command-name>(.+?)<\/command-name>[\s\S]*?<command-message>(.+?)<\/command-message>[\s\S]*?<command-args>(.*?)<\/command-args>/);
-                    if (commandMatch) {
-                      const [, commandName, commandMessage, commandArgs] = commandMatch;
-                      return (
-                        <CommandWidget 
-                          commandName={commandName.trim()} 
-                          commandMessage={commandMessage.trim()}
-                          commandArgs={commandArgs?.trim()}
-                        />
-                      );
-                    }
-                    
-                    // Check if it's command output
-                    const stdoutMatch = contentStr.match(/<local-command-stdout>([\s\S]*?)<\/local-command-stdout>/);
-                    if (stdoutMatch) {
-                      const [, output] = stdoutMatch;
-                      return <CommandOutputWidget output={output} onLinkDetected={onLinkDetected} />;
-                    }
-                    
-                    // Check if it's an anyon workflow command - show friendly display text with icon
-                    if (isAnyonWorkflowCommand(contentStr.trim())) {
-                      const { text, icon } = getPromptDisplayInfo(contentStr.trim());
-                      return (
-                        <div className="flex items-center gap-2 text-sm font-medium text-primary">
-                          <WorkflowIcon icon={icon} className="h-4 w-4" />
-                          <span>{text}</span>
-                        </div>
-                      );
-                    }
-                    
-                    // Otherwise render as plain text
-                    return (
-                      <div className="text-sm">
-                        {contentStr}
-                      </div>
-                    );
-                  })()
-                )}
-
-                {/* Handle content that is an array of parts */}
-                {Array.isArray(msg.content) && msg.content.map((content: any, idx: number) => {
-                  // Tool result
-                  if (content.type === "tool_result") {
-                    // Skip duplicate tool_result if a dedicated widget is present
-                    let hasCorrespondingWidget = false;
-                    if (content.tool_use_id && streamMessages) {
-                      for (let i = streamMessages.length - 1; i >= 0; i--) {
-                        const prevMsg = streamMessages[i];
-                        if (prevMsg.type === 'assistant' && prevMsg.message?.content && Array.isArray(prevMsg.message.content)) {
-                          const toolUse = prevMsg.message.content.find((c: any) => c.type === 'tool_use' && c.id === content.tool_use_id);
-                          if (toolUse) {
-                            const toolName = toolUse.name?.toLowerCase();
-                            const toolsWithWidgets = ['task','edit','multiedit','todowrite','todoread','ls','read','glob','bash','write','grep','websearch','webfetch'];
-                            if (toolsWithWidgets.includes(toolName) || toolUse.name?.startsWith('mcp__')) {
-                              hasCorrespondingWidget = true;
-                            }
-                            break;
-                          }
-                        }
-                      }
-                    }
-
-                    if (hasCorrespondingWidget) {
-                      return null;
-                    }
-                    // Extract the actual content string
-                    let contentText = '';
-                    if (typeof content.content === 'string') {
-                      contentText = content.content;
-                    } else if (content.content && typeof content.content === 'object') {
-                      // Handle object with text property
-                      if (content.content.text) {
-                        contentText = content.content.text;
-                      } else if (Array.isArray(content.content)) {
-                        // Handle array of content blocks
-                        contentText = content.content
-                          .map((c: any) => (typeof c === 'string' ? c : c.text || JSON.stringify(c)))
-                          .join('\n');
-                      } else {
-                        // Fallback to JSON stringify
-                        contentText = JSON.stringify(content.content, null, 2);
-                      }
-                    }
-                    
-                    // Always show system reminders regardless of widget status
-                    const reminderMatch = contentText.match(/<system-reminder>(.*?)<\/system-reminder>/s);
-                    if (reminderMatch) {
-                      const reminderMessage = reminderMatch[1].trim();
-                      const beforeReminder = contentText.substring(0, reminderMatch.index || 0).trim();
-                      const afterReminder = contentText.substring((reminderMatch.index || 0) + reminderMatch[0].length).trim();
-                      
-                      renderedSomething = true;
-                      return (
-                        <div key={idx} className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-green-500" />
-                            <span className="text-sm font-medium">Tool Result</span>
-                          </div>
-                          
-                          {beforeReminder && (
-                            <div className="ml-6 p-2 bg-background rounded-md border">
-                              <pre className="text-xs font-mono overflow-x-auto whitespace-pre-wrap">
-                                {beforeReminder}
-                              </pre>
-                            </div>
-                          )}
-                          
-                          <div className="ml-6">
-                            <SystemReminderWidget message={reminderMessage} />
-                          </div>
-                          
-                          {afterReminder && (
-                            <div className="ml-6 p-2 bg-background rounded-md border">
-                              <pre className="text-xs font-mono overflow-x-auto whitespace-pre-wrap">
-                                {afterReminder}
-                              </pre>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    }
-                    
-                    // Check if this is an Edit tool result
-                    const isEditResult = contentText.includes("has been updated. Here's the result of running `cat -n`");
-                    
-                    if (isEditResult) {
-                      renderedSomething = true;
-                      return (
-                        <div key={idx} className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-green-500" />
-                            <span className="text-sm font-medium">Edit Result</span>
-                          </div>
-                          <EditResultWidget content={contentText} />
-                        </div>
-                      );
-                    }
-                    
-                    // Check if this is a MultiEdit tool result
-                    const isMultiEditResult = contentText.includes("has been updated with multiple edits") || 
-                                             contentText.includes("MultiEdit completed successfully") ||
-                                             contentText.includes("Applied multiple edits to");
-                    
-                    if (isMultiEditResult) {
-                      renderedSomething = true;
-                      return (
-                        <div key={idx} className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-green-500" />
-                            <span className="text-sm font-medium">MultiEdit Result</span>
-                          </div>
-                          <MultiEditResultWidget content={contentText} />
-                        </div>
-                      );
-                    }
-                    
-                    // Check if this is an LS tool result (directory tree structure)
-                    const isLSResult = (() => {
-                      if (!content.tool_use_id || typeof contentText !== 'string') return false;
-                      
-                      // Check if this result came from an LS tool by looking for the tool call
-                      let isFromLSTool = false;
-                      
-                      // Search in previous assistant messages for the matching tool_use
-                      if (streamMessages) {
-                        for (let i = streamMessages.length - 1; i >= 0; i--) {
-                          const prevMsg = streamMessages[i];
-                          // Only check assistant messages
-                          if (prevMsg.type === 'assistant' && prevMsg.message?.content && Array.isArray(prevMsg.message.content)) {
-                            const toolUse = prevMsg.message.content.find((c: any) => 
-                              c.type === 'tool_use' && 
-                              c.id === content.tool_use_id &&
-                              c.name?.toLowerCase() === 'ls'
-                            );
-                            if (toolUse) {
-                              isFromLSTool = true;
-                              break;
-                            }
-                          }
-                        }
-                      }
-                      
-                      // Only proceed if this is from an LS tool
-                      if (!isFromLSTool) return false;
-                      
-                      // Additional validation: check for tree structure pattern
-                      const lines = contentText.split('\n');
-                      const hasTreeStructure = lines.some(line => /^\s*-\s+/.test(line));
-                      const hasNoteAtEnd = lines.some(line => line.trim().startsWith('NOTE: do any of the files'));
-                      
-                      return hasTreeStructure || hasNoteAtEnd;
-                    })();
-                    
-                    if (isLSResult) {
-                      renderedSomething = true;
-                      return (
-                        <div key={idx} className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-green-500" />
-                            <span className="text-sm font-medium">Directory Contents</span>
-                          </div>
-                          <LSResultWidget content={contentText} />
-                        </div>
-                      );
-                    }
-                    
-                    // Check if this is a Read tool result (contains line numbers with arrow separator)
-                    const isReadResult = content.tool_use_id && typeof contentText === 'string' && 
-                      /^\s*\d+→/.test(contentText);
-                    
-                    if (isReadResult) {
-                      // Try to find the corresponding Read tool call to get the file path
-                      let filePath: string | undefined;
-                      
-                      // Search in previous assistant messages for the matching tool_use
-                      if (streamMessages) {
-                        for (let i = streamMessages.length - 1; i >= 0; i--) {
-                          const prevMsg = streamMessages[i];
-                          // Only check assistant messages
-                          if (prevMsg.type === 'assistant' && prevMsg.message?.content && Array.isArray(prevMsg.message.content)) {
-                            const toolUse = prevMsg.message.content.find((c: any) => 
-                              c.type === 'tool_use' && 
-                              c.id === content.tool_use_id &&
-                              c.name?.toLowerCase() === 'read'
-                            );
-                            if (toolUse?.input?.file_path) {
-                              filePath = toolUse.input.file_path;
-                              break;
-                            }
-                          }
-                        }
-                      }
-                      
-                      renderedSomething = true;
-                      return (
-                        <div key={idx} className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-green-500" />
-                            <span className="text-sm font-medium">Read Result</span>
-                          </div>
-                          <ReadResultWidget content={contentText} filePath={filePath} />
-                        </div>
-                      );
-                    }
-                    
-                    // Handle empty tool results
-                    if (!contentText || contentText.trim() === '') {
-                      renderedSomething = true;
-                      return (
-                        <div key={idx} className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-green-500" />
-                            <span className="text-sm font-medium">Tool Result</span>
-                          </div>
-                          <div className="ml-6 p-3 bg-muted/50 rounded-md border text-sm text-muted-foreground italic">
-                            Tool did not return any output
-                          </div>
-                        </div>
-                      );
-                    }
-                    
-                    renderedSomething = true;
-                    return (
-                      <div key={idx} className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          {content.is_error ? (
-                            <AlertCircle className="h-4 w-4 text-destructive" />
-                          ) : (
-                            <CheckCircle2 className="h-4 w-4 text-green-500" />
-                          )}
-                          <span className="text-sm font-medium">Tool Result</span>
-                        </div>
-                        <div className="ml-6 p-2 bg-background rounded-md border">
-                          <pre className="text-xs font-mono overflow-x-auto whitespace-pre-wrap">
-                            {contentText}
-                          </pre>
-                        </div>
-                      </div>
-                    );
-                  }
-                  
-                  // Text content
-                  if (content.type === "text") {
-                    // Handle both string and object formats
-                    const textContent = typeof content.text === 'string'
-                      ? content.text
-                      : (content.text?.text || JSON.stringify(content.text));
-
-                    // Check if it's an anyon workflow command - show friendly display text with icon
-                    if (isAnyonWorkflowCommand(textContent.trim())) {
-                      const { text, icon } = getPromptDisplayInfo(textContent.trim());
-                      renderedSomething = true;
-                      return (
-                        <div key={idx} className="flex items-center gap-2 text-sm font-medium text-primary">
-                          <WorkflowIcon icon={icon} className="h-4 w-4" />
-                          <span>{text}</span>
-                        </div>
-                      );
-                    }
-
-                    renderedSomething = true;
-                    return (
-                      <div key={idx} className="text-sm">
-                        {textContent}
-                      </div>
-                    );
-                  }
-                  
-                  return null;
-                })}
+      // Handle string content
+      if (typeof msg.content === 'string' || (msg.content && !Array.isArray(msg.content))) {
+        const contentStr = typeof msg.content === 'string' ? msg.content : String(msg.content);
+        if (contentStr.trim()) {
+          hasContent = true;
+          
+          // Command message
+          const commandMatch = contentStr.match(/<command-name>(.+?)<\/command-name>[\s\S]*?<command-message>(.+?)<\/command-message>[\s\S]*?<command-args>(.*?)<\/command-args>/);
+          if (commandMatch) {
+            const [, commandName, commandMessage, commandArgs] = commandMatch;
+            contentParts.push(
+              <CommandWidget 
+                key="cmd"
+                commandName={commandName.trim()} 
+                commandMessage={commandMessage.trim()}
+                commandArgs={commandArgs?.trim()}
+              />
+            );
+          } else if (contentStr.match(/<local-command-stdout>/)) {
+            const stdoutMatch = contentStr.match(/<local-command-stdout>([\s\S]*?)<\/local-command-stdout>/);
+            if (stdoutMatch) {
+              contentParts.push(
+                <CommandOutputWidget key="stdout" output={stdoutMatch[1]} onLinkDetected={onLinkDetected} />
+              );
+            }
+          } else if (isAnyonWorkflowCommand(contentStr.trim())) {
+            const { text, icon } = getPromptDisplayInfo(contentStr.trim());
+            contentParts.push(
+              <div key="workflow" className="flex items-center gap-2 text-sm font-medium text-primary">
+                <WorkflowIcon icon={icon} className="h-4 w-4" />
+                <span>{text}</span>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            );
+          } else {
+            contentParts.push(
+              <div key="text" className="text-sm whitespace-pre-wrap">
+                {contentStr}
+              </div>
+            );
+          }
+        }
+      }
+      
+      // Handle array content
+      if (Array.isArray(msg.content)) {
+        msg.content.forEach((content: any, idx: number) => {
+          if (content.type === "tool_result") {
+            // Skip tool results that have widgets
+            let hasWidget = false;
+            if (content.tool_use_id && streamMessages) {
+              for (let i = streamMessages.length - 1; i >= 0; i--) {
+                const prevMsg = streamMessages[i];
+                if (prevMsg.type === 'assistant' && prevMsg.message?.content && Array.isArray(prevMsg.message.content)) {
+                  const toolUse = prevMsg.message.content.find((c: any) => c.type === 'tool_use' && c.id === content.tool_use_id);
+                  if (toolUse) {
+                    const tn = toolUse.name?.toLowerCase();
+                    const toolsWithWidgets = ['task','edit','multiedit','todowrite','todoread','ls','read','glob','bash','write','grep','websearch','webfetch'];
+                    if (toolsWithWidgets.includes(tn) || toolUse.name?.startsWith('mcp__')) {
+                      hasWidget = true;
+                    }
+                    break;
+                  }
+                }
+              }
+            }
+            if (hasWidget) return;
+            
+            // Render tool result
+            let contentText = '';
+            if (typeof content.content === 'string') {
+              contentText = content.content;
+            } else if (content.content?.text) {
+              contentText = content.content.text;
+            } else if (Array.isArray(content.content)) {
+              contentText = content.content.map((c: any) => (typeof c === 'string' ? c : c.text || JSON.stringify(c))).join('\n');
+            } else if (content.content) {
+              contentText = JSON.stringify(content.content, null, 2);
+            }
+            
+            // System reminder
+            const reminderMatch = contentText.match(/<system-reminder>(.*?)<\/system-reminder>/s);
+            if (reminderMatch) {
+              hasContent = true;
+              contentParts.push(
+                <div key={`reminder-${idx}`}>
+                  <SystemReminderWidget message={reminderMatch[1].trim()} />
+                </div>
+              );
+              return;
+            }
+            
+            if (contentText.trim()) {
+              hasContent = true;
+              contentParts.push(
+                <div key={`result-${idx}`} className="text-xs font-mono bg-muted/30 rounded p-2 overflow-x-auto">
+                  <pre className="whitespace-pre-wrap">{contentText}</pre>
+                </div>
+              );
+            }
+          }
+          
+          if (content.type === "text") {
+            const textContent = typeof content.text === 'string' ? content.text : (content.text?.text || JSON.stringify(content.text));
+            if (textContent.trim()) {
+              hasContent = true;
+              
+              if (isAnyonWorkflowCommand(textContent.trim())) {
+                const { text, icon } = getPromptDisplayInfo(textContent.trim());
+                contentParts.push(
+                  <div key={`wf-${idx}`} className="flex items-center gap-2 text-sm font-medium text-primary">
+                    <WorkflowIcon icon={icon} className="h-4 w-4" />
+                    <span>{text}</span>
+                  </div>
+                );
+              } else {
+                contentParts.push(
+                  <div key={`txt-${idx}`} className="text-sm whitespace-pre-wrap">
+                    {textContent}
+                  </div>
+                );
+              }
+            }
+          }
+        });
+      }
+      
+      if (!hasContent) return null;
+      
+      return (
+        <div className={cn("py-3 px-4 bg-muted/30 rounded-lg", className)}>
+          <div className="space-y-2">
+            {contentParts}
+          </div>
+        </div>
       );
-      if (!renderedSomething) return null;
-      return renderedCard;
     }
 
-    // Result message - show only metadata (text content already shown in assistant message)
+    // Result message - compact metadata bar
     if (message.type === "result") {
       const isError = message.is_error || message.subtype?.includes("error");
       const hasMetadata = message.cost_usd !== undefined || 
@@ -840,16 +403,12 @@ const StreamMessageComponent: React.FC<StreamMessageProps> = ({ message, classNa
                           message.usage !== undefined ||
                           message.error;
       
-      // Skip if no metadata and no error
-      if (!hasMetadata && !isError) {
-        return null;
-      }
+      if (!hasMetadata && !isError) return null;
       
-      // Show compact metadata bar
       return (
         <div className={cn(
-          "flex items-center gap-4 px-3 py-2 rounded-lg text-xs",
-          isError ? "bg-destructive/10 text-destructive" : "bg-muted/50 text-muted-foreground",
+          "flex items-center gap-4 px-4 py-2 text-xs border-t border-border/30",
+          isError ? "bg-destructive/5 text-destructive" : "text-muted-foreground",
           className
         )}>
           {isError ? (
@@ -858,10 +417,7 @@ const StreamMessageComponent: React.FC<StreamMessageProps> = ({ message, classNa
             <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
           )}
           
-          {message.error && (
-            <span className="text-destructive">{message.error}</span>
-          )}
-          
+          {message.error && <span className="text-destructive">{message.error}</span>}
           {(message.cost_usd !== undefined || message.total_cost_usd !== undefined) && (
             <span>${((message.cost_usd || message.total_cost_usd)!).toFixed(4)}</span>
           )}
@@ -878,25 +434,291 @@ const StreamMessageComponent: React.FC<StreamMessageProps> = ({ message, classNa
       );
     }
 
-    // Skip rendering if no meaningful content
     return null;
   } catch (error) {
-    // If any error occurs during rendering, show a safe error message
     console.error("Error rendering stream message:", error, message);
     return (
-      <Card className={cn("border-destructive/20 bg-destructive/5", className)}>
-        <CardContent className="p-4">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
-            <div className="flex-1">
-              <p className="text-sm font-medium">Error rendering message</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {error instanceof Error ? error.message : 'Unknown error'}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className={cn("py-4 px-4 bg-destructive/5 text-destructive text-sm", className)}>
+        <div className="flex items-center gap-2">
+          <AlertCircle className="h-4 w-4" />
+          <span>Error rendering message</span>
+        </div>
+        <p className="text-xs mt-1 text-muted-foreground">
+          {error instanceof Error ? error.message : 'Unknown error'}
+        </p>
+      </div>
+    );
+  }
+  
+  // Helper function to render tool badges
+  function renderToolBadge(
+    toolName: string | undefined, 
+    originalName: string | undefined,
+    input: any, 
+    toolResult: any, 
+    _toolId: string,
+    idx: number
+  ): React.ReactNode {
+    if (!toolName) return null;
+    
+    // Format tool output
+    const formatOutput = (result: any): string | undefined => {
+      if (!result) return undefined;
+      if (typeof result.content === 'string') return result.content;
+      try {
+        return JSON.stringify(result.content, null, 2);
+      } catch {
+        return String(result.content);
+      }
+    };
+    
+    const output = formatOutput(toolResult);
+    
+    // Task tool
+    if (toolName === "task" && input) {
+      return (
+        <InlineToolBadge
+          key={`tool-${idx}`}
+          label="Task"
+          detail={input.description}
+          input={input}
+          output={output}
+        >
+          <TaskWidget description={input.description} prompt={input.prompt} result={toolResult} />
+        </InlineToolBadge>
+      );
+    }
+    
+    // Edit tool
+    if (toolName === "edit" && input?.file_path) {
+      const fileName = input.file_path.split('/').pop() || input.file_path;
+      return (
+        <InlineToolBadge
+          key={`tool-${idx}`}
+          label="Edit"
+          detail={fileName}
+          input={input}
+          output={output}
+        >
+          <EditWidget {...input} result={toolResult} />
+        </InlineToolBadge>
+      );
+    }
+    
+    // MultiEdit tool
+    if (toolName === "multiedit" && input?.file_path) {
+      const fileName = input.file_path.split('/').pop() || input.file_path;
+      return (
+        <InlineToolBadge
+          key={`tool-${idx}`}
+          label="MultiEdit"
+          detail={`${fileName} (${input.edits?.length || 0})`}
+          input={input}
+          output={output}
+        >
+          <MultiEditWidget {...input} result={toolResult} />
+        </InlineToolBadge>
+      );
+    }
+    
+    // MCP tools
+    if (originalName?.startsWith("mcp__")) {
+      const parts = originalName.split('__');
+      const namespace = parts[1] || '';
+      const method = parts[2] || '';
+      return (
+        <InlineToolBadge
+          key={`tool-${idx}`}
+          label={originalName}
+          detail={`${namespace}/${method}`}
+          input={input}
+          output={output}
+        >
+          <MCPWidget toolName={originalName} input={input} result={toolResult} />
+        </InlineToolBadge>
+      );
+    }
+    
+    // TodoWrite
+    if (toolName === "todowrite" && input?.todos) {
+      const count = input.todos?.length || 0;
+      return (
+        <InlineToolBadge
+          key={`tool-${idx}`}
+          label="TodoWrite"
+          detail={`${count} items`}
+          input={input}
+          output={output}
+        >
+          <TodoWidget todos={input.todos} result={toolResult} />
+        </InlineToolBadge>
+      );
+    }
+    
+    // TodoRead
+    if (toolName === "todoread") {
+      return (
+        <InlineToolBadge
+          key={`tool-${idx}`}
+          label="TodoRead"
+          input={input}
+          output={output}
+        >
+          <TodoReadWidget todos={input?.todos} result={toolResult} />
+        </InlineToolBadge>
+      );
+    }
+    
+    // LS
+    if (toolName === "ls" && input?.path) {
+      const dirName = input.path.split('/').pop() || input.path;
+      return (
+        <InlineToolBadge
+          key={`tool-${idx}`}
+          label="LS"
+          detail={dirName}
+          input={input}
+          output={output}
+        >
+          <LSWidget path={input.path} result={toolResult} />
+        </InlineToolBadge>
+      );
+    }
+    
+    // Read
+    if (toolName === "read" && input?.file_path) {
+      const fileName = input.file_path.split('/').pop() || input.file_path;
+      return (
+        <InlineToolBadge
+          key={`tool-${idx}`}
+          label="Read"
+          detail={fileName}
+          input={input}
+          output={output}
+        >
+          <ReadWidget filePath={input.file_path} result={toolResult} />
+        </InlineToolBadge>
+      );
+    }
+    
+    // Glob
+    if (toolName === "glob" && input?.pattern) {
+      return (
+        <InlineToolBadge
+          key={`tool-${idx}`}
+          label="Glob"
+          detail={input.pattern}
+          input={input}
+          output={output}
+        >
+          <GlobWidget pattern={input.pattern} result={toolResult} />
+        </InlineToolBadge>
+      );
+    }
+    
+    // Bash
+    if (toolName === "bash" && input?.command) {
+      const cmdPreview = input.command.length > 30 ? input.command.substring(0, 30) + '...' : input.command;
+      return (
+        <InlineToolBadge
+          key={`tool-${idx}`}
+          label="Bash"
+          detail={input.description || cmdPreview}
+          input={input}
+          output={output}
+        >
+          <BashWidget command={input.command} description={input.description} result={toolResult} />
+        </InlineToolBadge>
+      );
+    }
+    
+    // Write
+    if (toolName === "write" && input?.file_path) {
+      const fileName = input.file_path.split('/').pop() || input.file_path;
+      return (
+        <InlineToolBadge
+          key={`tool-${idx}`}
+          label="Write"
+          detail={fileName}
+          input={input}
+          output={output}
+        >
+          <WriteWidget filePath={input.file_path} content={input.content} result={toolResult} />
+        </InlineToolBadge>
+      );
+    }
+    
+    // Grep
+    if (toolName === "grep" && input?.pattern) {
+      return (
+        <InlineToolBadge
+          key={`tool-${idx}`}
+          label="Grep"
+          detail={input.pattern}
+          input={input}
+          output={output}
+        >
+          <GrepWidget pattern={input.pattern} include={input.include} path={input.path} exclude={input.exclude} result={toolResult} />
+        </InlineToolBadge>
+      );
+    }
+    
+    // WebSearch
+    if (toolName === "websearch" && input?.query) {
+      return (
+        <InlineToolBadge
+          key={`tool-${idx}`}
+          label="WebSearch"
+          detail={input.query}
+          input={input}
+          output={output}
+        >
+          <WebSearchWidget query={input.query} result={toolResult} />
+        </InlineToolBadge>
+      );
+    }
+    
+    // WebFetch
+    if (toolName === "webfetch" && input?.url) {
+      const urlPreview = input.url.length > 40 ? input.url.substring(0, 40) + '...' : input.url;
+      return (
+        <InlineToolBadge
+          key={`tool-${idx}`}
+          label="WebFetch"
+          detail={urlPreview}
+          input={input}
+          output={output}
+        >
+          <WebFetchWidget url={input.url} prompt={input.prompt} result={toolResult} />
+        </InlineToolBadge>
+      );
+    }
+    
+    // Fallback - generic tool badge
+    return (
+      <InlineToolBadge
+        key={`tool-${idx}`}
+        label={originalName || toolName}
+        input={input}
+        output={output}
+      >
+        <div className="space-y-2">
+          <div className="text-sm font-medium">Tool Input</div>
+          <pre className="text-xs font-mono bg-muted rounded p-2 overflow-x-auto">
+            {JSON.stringify(input, null, 2)}
+          </pre>
+          {toolResult && (
+            <>
+              <div className="text-sm font-medium mt-4">Result</div>
+              <pre className="text-xs font-mono bg-muted rounded p-2 overflow-x-auto">
+                {typeof toolResult.content === 'string' 
+                  ? toolResult.content 
+                  : JSON.stringify(toolResult.content, null, 2)}
+              </pre>
+            </>
+          )}
+        </div>
+      </InlineToolBadge>
     );
   }
 };

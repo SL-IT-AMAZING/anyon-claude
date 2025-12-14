@@ -51,10 +51,10 @@ export const CheckpointSettings: React.FC<CheckpointSettingsProps> = ({
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const strategyOptions: SelectOption[] = [
-    { value: "manual", label: "Manual Only" },
-    { value: "per_prompt", label: "After Each Prompt" },
-    { value: "per_tool_use", label: "After Tool Use" },
-    { value: "smart", label: "Smart (Recommended)" },
+    { value: "manual", label: "수동으로만" },
+    { value: "per_prompt", label: "질문할 때마다" },
+    { value: "per_tool_use", label: "도구 사용할 때마다" },
+    { value: "smart", label: "자동 (권장)" },
   ];
 
   useEffect(() => {
@@ -72,7 +72,7 @@ export const CheckpointSettings: React.FC<CheckpointSettingsProps> = ({
       setTotalCheckpoints(settings.total_checkpoints);
     } catch (err) {
       console.error("Failed to load checkpoint settings:", err);
-      setError("Failed to load checkpoint settings");
+      setError("설정을 불러오는 데 실패했어요");
     } finally {
       setIsLoading(false);
     }
@@ -92,11 +92,11 @@ export const CheckpointSettings: React.FC<CheckpointSettingsProps> = ({
         checkpointStrategy
       );
       
-      setSuccessMessage("Settings saved successfully");
+      setSuccessMessage("설정이 저장되었어요");
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
       console.error("Failed to save checkpoint settings:", err);
-      setError("Failed to save checkpoint settings");
+      setError("설정 저장에 실패했어요");
     } finally {
       setIsSaving(false);
     }
@@ -115,14 +115,14 @@ export const CheckpointSettings: React.FC<CheckpointSettingsProps> = ({
         keepCount
       );
       
-      setSuccessMessage(`Removed ${removed} old checkpoints`);
+      setSuccessMessage(`오래된 저장 시점 ${removed}개를 삭제했어요`);
       setTimeout(() => setSuccessMessage(null), 3000);
       
       // Reload settings to get updated count
       await loadSettings();
     } catch (err) {
       console.error("Failed to cleanup checkpoints:", err);
-      setError("Failed to cleanup checkpoints");
+      setError("정리하는 중 오류가 발생했어요");
     } finally {
       setIsLoading(false);
     }
@@ -143,8 +143,8 @@ export const CheckpointSettings: React.FC<CheckpointSettingsProps> = ({
             <Wrench className="h-4 w-4 text-primary" />
           </div>
           <div>
-            <h3 className="text-heading-4 font-semibold">Checkpoint Settings</h3>
-            <p className="text-caption text-muted-foreground mt-0.5">Manage session checkpoints and recovery</p>
+            <h3 className="text-heading-4 font-semibold">자동 저장 설정</h3>
+            <p className="text-caption text-muted-foreground mt-0.5">작업 히스토리 저장 및 복구 관리</p>
           </div>
         </div>
       </div>
@@ -154,9 +154,9 @@ export const CheckpointSettings: React.FC<CheckpointSettingsProps> = ({
         <div className="flex items-start gap-2.5">
           <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-500 mt-0.5 flex-shrink-0" />
           <div className="space-y-0.5">
-            <p className="text-caption font-medium text-amber-900 dark:text-amber-100">Experimental Feature</p>
+            <p className="text-caption font-medium text-amber-900 dark:text-amber-100">베타 기능</p>
             <p className="text-caption text-amber-700 dark:text-amber-300">
-              Checkpointing may affect directory structure or cause data loss. Use with caution.
+              이 기능은 아직 테스트 중이에요. 파일이 예상치 못하게 변경될 수 있으니 중요한 작업 전에 백업해 두세요.
             </p>
           </div>
         </div>
@@ -192,9 +192,9 @@ export const CheckpointSettings: React.FC<CheckpointSettingsProps> = ({
         {/* Auto-checkpoint toggle */}
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
-            <Label htmlFor="auto-checkpoint" className="text-label">Automatic Checkpoints</Label>
+            <Label htmlFor="auto-checkpoint" className="text-label">자동 저장</Label>
             <p className="text-caption text-muted-foreground">
-              Automatically create checkpoints based on the selected strategy
+              선택한 방식에 따라 작업 상태를 자동으로 저장해요
             </p>
           </div>
           <Switch
@@ -207,7 +207,7 @@ export const CheckpointSettings: React.FC<CheckpointSettingsProps> = ({
 
         {/* Checkpoint strategy */}
         <div className="space-y-2">
-          <Label htmlFor="strategy" className="text-label">Checkpoint Strategy</Label>
+          <Label htmlFor="strategy" className="text-label">저장 방식</Label>
           <SelectComponent
             value={checkpointStrategy}
             onValueChange={(value: string) => setCheckpointStrategy(value as CheckpointStrategy)}
@@ -215,10 +215,10 @@ export const CheckpointSettings: React.FC<CheckpointSettingsProps> = ({
             disabled={isLoading || !autoCheckpointEnabled}
           />
           <p className="text-caption text-muted-foreground">
-            {checkpointStrategy === "manual" && "Checkpoints will only be created manually"}
-            {checkpointStrategy === "per_prompt" && "A checkpoint will be created after each user prompt"}
-            {checkpointStrategy === "per_tool_use" && "A checkpoint will be created after each tool use"}
-            {checkpointStrategy === "smart" && "Checkpoints will be created after destructive operations"}
+            {checkpointStrategy === "manual" && "직접 저장 버튼을 눌러야 저장돼요"}
+            {checkpointStrategy === "per_prompt" && "Claude에게 질문할 때마다 자동 저장돼요"}
+            {checkpointStrategy === "per_tool_use" && "Claude가 파일을 수정할 때마다 자동 저장돼요"}
+            {checkpointStrategy === "smart" && "파일 삭제 등 위험한 작업 후에만 자동 저장돼요"}
           </p>
         </div>
 
@@ -236,12 +236,12 @@ export const CheckpointSettings: React.FC<CheckpointSettingsProps> = ({
             {isSaving ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Saving...
+                저장 중...
               </>
             ) : (
               <>
                 <Save className="h-4 w-4 mr-2" />
-                Save Settings
+                설정 저장
               </>
             )}
           </Button>
@@ -254,17 +254,17 @@ export const CheckpointSettings: React.FC<CheckpointSettingsProps> = ({
           <div className="space-y-0.5">
             <div className="flex items-center gap-2">
               <HardDrive className="h-4 w-4 text-muted-foreground" />
-              <Label className="text-label">Storage Management</Label>
+              <Label className="text-label">저장 공간 관리</Label>
             </div>
             <p className="text-caption text-muted-foreground">
-              Total checkpoints: <span className="font-medium text-foreground">{totalCheckpoints}</span>
+              총 저장된 시점: <span className="font-medium text-foreground">{totalCheckpoints}개</span>
             </p>
           </div>
         </div>
 
         {/* Cleanup settings */}
         <div className="space-y-2">
-          <Label htmlFor="keep-count" className="text-label">Keep Recent Checkpoints</Label>
+          <Label htmlFor="keep-count" className="text-label">최근 저장 유지 개수</Label>
           <div className="flex gap-2">
             <Input
               id="keep-count"
@@ -288,12 +288,12 @@ export const CheckpointSettings: React.FC<CheckpointSettingsProps> = ({
                 className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50"
               >
                 <Trash2 className="h-3.5 w-3.5 mr-1.5" />
-                Clean Up
+                정리하기
               </Button>
             </motion.div>
           </div>
           <p className="text-caption text-muted-foreground">
-            Remove old checkpoints, keeping only the most recent {keepCount}
+            오래된 저장 시점을 삭제하고 최근 {keepCount}개만 남겨요
           </p>
         </div>
       </Card>

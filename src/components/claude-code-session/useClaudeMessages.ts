@@ -19,14 +19,25 @@ interface UseClaudeMessagesOptions {
   onStreamingChange?: (isStreaming: boolean, sessionId: string | null) => void;
 }
 
+// Streaming text state for real-time typing effect
+export interface StreamingTextState {
+  text: string;
+  isStreaming: boolean;
+}
+
 export function useClaudeMessages(options: UseClaudeMessagesOptions = {}) {
   const [messages, setMessages] = useState<ClaudeStreamMessage[]>([]);
   const [rawJsonlOutput, setRawJsonlOutput] = useState<string[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   
+  // NEW: Streaming text for typing effect
+  const [streamingText, setStreamingText] = useState<StreamingTextState>({ text: '', isStreaming: false });
+  
   const eventListenerRef = useRef<(() => void) | null>(null);
   const accumulatedContentRef = useRef<{ [key: string]: string }>({});
+  // NEW: Accumulated text for partial messages
+  const accumulatedTextRef = useRef<string>('');
 
   const handleMessage = useCallback((message: ClaudeStreamMessage) => {
     console.log('[TRACE] useClaudeMessages.handleMessage called with:', message);
@@ -35,10 +46,29 @@ export function useClaudeMessages(options: UseClaudeMessagesOptions = {}) {
       console.log('[TRACE] Start message detected - clearing accumulated content and setting streaming=true');
       // Clear accumulated content for new stream
       accumulatedContentRef.current = {};
+      accumulatedTextRef.current = '';
+      setStreamingText({ text: '', isStreaming: true });
       setIsStreaming(true);
       options.onStreamingChange?.(true, currentSessionId);
+    } else if ((message as any).type === "content_block_delta") {
+      // NEW: Handle content block delta for real-time text streaming
+      const delta = (message as any).delta;
+      if (delta?.type === "text_delta" && delta?.text) {
+        accumulatedTextRef.current += delta.text;
+        setStreamingText({ text: accumulatedTextRef.current, isStreaming: true });
+        console.log('[TRACE] Text delta received, accumulated:', accumulatedTextRef.current.length, 'chars');
+      }
     } else if ((message as any).type === "partial") {
       console.log('[TRACE] Partial message detected');
+      
+      // Handle partial text content
+      const partialContent = (message as any).content;
+      if (typeof partialContent === 'string') {
+        accumulatedTextRef.current += partialContent;
+        setStreamingText({ text: accumulatedTextRef.current, isStreaming: true });
+      }
+      
+      // Handle tool calls
       if (message.tool_calls && message.tool_calls.length > 0) {
         message.tool_calls.forEach((toolCall: any) => {
           if (toolCall.content && toolCall.partial_tool_call_index !== undefined) {
@@ -51,6 +81,13 @@ export function useClaudeMessages(options: UseClaudeMessagesOptions = {}) {
           }
         });
       }
+    } else if ((message as any).type === "assistant" && (message as any).message?.content) {
+      // NEW: When full assistant message arrives, clear streaming text
+      // The accumulated text is now part of the message itself
+      if (accumulatedTextRef.current) {
+        accumulatedTextRef.current = '';
+        setStreamingText({ text: '', isStreaming: false });
+      }
     } else if ((message as any).type === "response" && message.message?.usage) {
       console.log('[TRACE] Response message with usage detected');
       const totalTokens = (message.message.usage.input_tokens || 0) + 
@@ -59,6 +96,8 @@ export function useClaudeMessages(options: UseClaudeMessagesOptions = {}) {
       options.onTokenUpdate?.(totalTokens);
     } else if ((message as any).type === "error" || (message as any).type === "response") {
       console.log('[TRACE] Error or response message detected - setting streaming=false');
+      accumulatedTextRef.current = '';
+      setStreamingText({ text: '', isStreaming: false });
       setIsStreaming(false);
       options.onStreamingChange?.(false, currentSessionId);
     } else if ((message as any).type === "output") {
@@ -198,6 +237,7 @@ export function useClaudeMessages(options: UseClaudeMessagesOptions = {}) {
     rawJsonlOutput,
     isStreaming,
     currentSessionId,
+    streamingText,  // NEW: Real-time streaming text
     clearMessages,
     loadMessages,
     handleMessage

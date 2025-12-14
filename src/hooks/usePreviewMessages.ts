@@ -1,6 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { usePreviewStore } from '@/stores/previewStore';
-import type { IframeMessage, ComponentSelection } from '@/types/preview';
+import type { IframeMessage, ComponentSelection, SelectedElement } from '@/types/preview';
 
 /**
  * 프리뷰 iframe 메시지 처리 훅
@@ -15,6 +15,7 @@ export function usePreviewMessages() {
     setComponentSelectorInitialized,
     setCurrentRoute,
     addAppOutput,
+    setSelectedElement,
   } = usePreviewStore();
 
   // 메시지 핸들러
@@ -36,15 +37,34 @@ export function usePreviewMessages() {
       // 컴포넌트 선택됨
       case 'anyon-component-selected':
         if (component) {
+          // CSS selector 기반 선택 (소스 코드 위치 정보 없음)
+          // component 객체에는 id(selector), name, tag, html, text 등이 포함됨
+          const extendedComponent = component as any;
+
           const selection: ComponentSelection = {
-            id: component.id,
-            name: component.name || '<unknown>',
-            relativePath: (component as any).relativePath || '',
-            lineNumber: (component as any).lineNumber || 0,
-            columnNumber: (component as any).columnNumber || 0,
+            id: extendedComponent.id || extendedComponent.selector,
+            name: extendedComponent.name || '<unknown>',
+            // CSS selector 방식에서는 소스 위치를 알 수 없으므로 빈 값
+            relativePath: extendedComponent.relativePath || '',
+            lineNumber: extendedComponent.lineNumber || 0,
+            columnNumber: extendedComponent.columnNumber || 0,
           };
           addSelectedComponent(selection);
-          console.debug('[Preview] Component selected:', selection);
+
+          // SelectedElement로도 저장 (HTML 정보 포함)
+          if (extendedComponent.selector || extendedComponent.tag) {
+            const selectedElement: SelectedElement = {
+              tag: extendedComponent.tag || '',
+              id: extendedComponent.id || null,
+              classes: null, // CSS selector에서 추출 가능하지만 일단 생략
+              selector: extendedComponent.selector || extendedComponent.id,
+              text: extendedComponent.text || null,
+              html: extendedComponent.html,
+            };
+            setSelectedElement(selectedElement);
+          }
+
+          console.debug('[Preview] Component selected:', selection, extendedComponent);
         }
         break;
 
@@ -158,6 +178,7 @@ export function usePreviewMessages() {
     setComponentSelectorInitialized,
     setCurrentRoute,
     addAppOutput,
+    setSelectedElement,
   ]);
 
   // 메시지 리스너 등록

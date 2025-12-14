@@ -41,6 +41,7 @@ import { ActionHeader } from './ActionHeader';
 import { ErrorBanner } from './ErrorBanner';
 import { Problems } from './Problems';
 import { Console } from './Console';
+import { injectSelectorScript } from '@/lib/previewSelector';
 import type { PortInfo, DeviceSize, SelectedElement, ElementAction } from '@/types/preview';
 
 // Tauri 환경 체크 - 여러 방법으로 확인
@@ -192,8 +193,12 @@ export const EnhancedPreviewPanel: React.FC<EnhancedPreviewPanelProps> = ({
       const content = await invoke<string>('read_file_content', { filePath });
       console.log('[Preview] File content loaded, length:', content.length);
 
+      // 요소 선택기 스크립트 주입
+      const injectedContent = injectSelectorScript(content);
+      console.log('[Preview] Selector script injected, new length:', injectedContent.length);
+
       // data URL로 변환하여 iframe에서 직접 렌더링
-      const dataUrl = `data:text/html;charset=utf-8,${encodeURIComponent(content)}`;
+      const dataUrl = `data:text/html;charset=utf-8,${encodeURIComponent(injectedContent)}`;
       setCurrentUrl(dataUrl);
 
       addAppOutput({

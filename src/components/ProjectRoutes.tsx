@@ -170,7 +170,7 @@ export const ProjectRoutes: React.FC<ProjectRoutesProps> = ({ tabId }) => {
     navigate({ type: 'maintenance', projectId });
   }, [navigate]);
 
-  const loadProjects = async (): Promise<Project[]> => {
+  const loadProjects = useCallback(async (): Promise<Project[]> => {
     try {
       setLoading(true);
       setError(null);
@@ -185,7 +185,7 @@ export const ProjectRoutes: React.FC<ProjectRoutesProps> = ({ tabId }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const getProjectById = (id: string): Project | undefined => {
     return projects.find(p => p.id === id);
@@ -193,7 +193,7 @@ export const ProjectRoutes: React.FC<ProjectRoutesProps> = ({ tabId }) => {
 
   useEffect(() => {
     loadProjects();
-  }, []);
+  }, [loadProjects]);
 
   const projectsContextValue = {
     projects,

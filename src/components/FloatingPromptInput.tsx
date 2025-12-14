@@ -22,6 +22,7 @@ import { TooltipProvider, TooltipSimple, Tooltip, TooltipTrigger, TooltipContent
 import { FilePicker } from "./FilePicker";
 import { SlashCommandPicker } from "./SlashCommandPicker";
 import { ImagePreview } from "./ImagePreview";
+import { SelectedComponentsDisplay } from "./preview/SelectedComponentsDisplay";
 import { type FileEntry, type SlashCommand } from "@/lib/api";
 
 // Conditional import for Tauri webview window
@@ -1087,6 +1088,9 @@ const FloatingPromptInputInner = (
             boxShadow: "0 0 0 1px rgba(0,0,0,0.05), 0 10px 30px -5px rgba(0,0,0,0.4), 0 30px 60px -10px rgba(0,0,0,0.5), 0 50px 80px -20px rgba(0,0,0,0.3)"
           }}
         >
+          {/* Selected Components Display */}
+          <SelectedComponentsDisplay />
+
           {/* Image previews */}
           {embeddedImages.length > 0 && (
             <ImagePreview

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FolderOpen, Search, Plus, Download, CheckCircle, AlertCircle, ArrowUpDown, Clock, SortAsc, Calendar, Trash2, X, Loader2 } from 'lucide-react';
 
@@ -14,7 +14,7 @@ import {
 import { ProjectCard } from '@/components/ProjectCard';
 import { MinimalSidebar } from '@/components/MinimalSidebar';
 import { Settings } from '@/components/Settings';
-import { useProjectsNavigation } from '@/components/ProjectRoutes';
+import { useProjects, useProjectsNavigation } from '@/components/ProjectRoutes';
 import { api, type Project } from '@/lib/api';
 
 // Cross-platform project name extractor (handles / and \\)
@@ -34,9 +34,7 @@ const getProjectName = (path: string): string => {
  */
 export const ProjectListView: React.FC = () => {
   const { goToProject } = useProjectsNavigation();
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { projects, loading, error, refreshProjects } = useProjects();
   const [searchQuery, setSearchQuery] = useState('');
   const [isOpeningFolder, setIsOpeningFolder] = useState(false);
   const [isInstallingAnyon, setIsInstallingAnyon] = useState(false);
@@ -92,24 +90,7 @@ export const ProjectListView: React.FC = () => {
     }
   };
 
-  // Load projects from API
-  const refreshProjects = useCallback(async (): Promise<Project[]> => {
-    try {
-      setLoading(true);
-      setError(null);
-      const projectList = await api.listRegisteredProjects();
-      setProjects(projectList);
-      return projectList;
-    } catch (err) {
-      console.error("Failed to load projects:", err);
-      setError("Failed to load projects. Please ensure ~/.claude directory exists.");
-      return [];
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Load projects on mount
+  // Load projects on mount (ensure context stays in sync)
   useEffect(() => {
     refreshProjects();
   }, [refreshProjects]);
