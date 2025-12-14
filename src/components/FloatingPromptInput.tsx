@@ -1299,8 +1299,8 @@ const FloatingPromptInputInner = (
                     </Tooltip>
                   }
                   content={
-                    <div className="w-[300px] p-1">
-                      {MODELS.map((model) => (
+                    <div className="flex flex-col">
+                      {MODELS.map((model, idx) => (
                         <button
                           key={model.id}
                           onClick={() => {
@@ -1308,22 +1308,16 @@ const FloatingPromptInputInner = (
                             setModelPickerOpen(false);
                           }}
                           className={cn(
-                            "w-full flex items-start gap-3 p-3 rounded-md transition-colors text-left",
-                            "hover:bg-accent",
-                            selectedModel === model.id && "bg-accent"
+                            "flex items-center gap-1.5 px-2 py-1 text-xs transition-colors whitespace-nowrap",
+                            "hover:bg-accent/80",
+                            selectedModel === model.id ? "bg-accent text-accent-foreground" : "text-muted-foreground",
+                            idx === 0 && "rounded-t",
+                            idx === MODELS.length - 1 && "rounded-b"
                           )}
                         >
-                          <div className="mt-0.5">
-                            <span className={model.color}>
-                              {model.icon}
-                            </span>
-                          </div>
-                          <div className="flex-1 space-y-1">
-                            <div className="font-medium text-sm">{model.name}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {model.description}
-                            </div>
-                          </div>
+                          <span className={cn("w-3 h-3", model.color)}>{model.icon}</span>
+                          <span>{model.name}</span>
+                          <span className="text-[10px] text-muted-foreground/60 ml-1">{model.description}</span>
                         </button>
                       ))}
                     </div>
@@ -1368,8 +1362,8 @@ const FloatingPromptInputInner = (
                     </Tooltip>
                   }
                   content={
-                    <div className="w-[280px] p-1">
-                      {THINKING_MODES.map((mode) => (
+                    <div className="flex flex-col">
+                      {THINKING_MODES.map((mode, idx) => (
                         <button
                           key={mode.id}
                           onClick={() => {
@@ -1377,22 +1371,16 @@ const FloatingPromptInputInner = (
                             setThinkingModePickerOpen(false);
                           }}
                           className={cn(
-                            "w-full flex items-start gap-3 p-3 rounded-md transition-colors text-left",
-                            "hover:bg-accent",
-                            selectedThinkingMode === mode.id && "bg-accent"
+                            "flex items-center gap-1.5 px-2 py-1 text-xs transition-colors whitespace-nowrap",
+                            "hover:bg-accent/80",
+                            selectedThinkingMode === mode.id ? "bg-accent text-accent-foreground" : "text-muted-foreground",
+                            idx === 0 && "rounded-t",
+                            idx === THINKING_MODES.length - 1 && "rounded-b"
                           )}
                         >
-                          <span className={cn("mt-0.5", mode.color)}>
-                            {mode.icon}
-                          </span>
-                          <div className="flex-1 space-y-1">
-                            <div className="font-medium text-sm">
-                              {mode.name}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {mode.description}
-                            </div>
-                          </div>
+                          <span className={cn("w-3 h-3", mode.color)}>{mode.icon}</span>
+                          <span>{mode.name}</span>
+                          <span className="text-[10px] text-muted-foreground/60 ml-1">{mode.description}</span>
                           <ThinkingModeIndicator level={mode.level} />
                         </button>
                       ))}
@@ -1442,8 +1430,8 @@ const FloatingPromptInputInner = (
                         </Tooltip>
                       }
                       content={
-                        <div className="w-[280px] p-1">
-                          {EXECUTION_MODES.map((mode) => (
+                        <div className="flex flex-col">
+                          {EXECUTION_MODES.map((mode, idx) => (
                             <button
                               key={mode.id}
                               onClick={() => {
@@ -1451,22 +1439,16 @@ const FloatingPromptInputInner = (
                                 setExecutionModePickerOpen(false);
                               }}
                               className={cn(
-                                "w-full flex items-start gap-3 p-3 rounded-md transition-colors text-left",
-                                "hover:bg-accent",
-                                selectedExecutionMode === mode.id && "bg-accent"
+                                "flex items-center gap-1.5 px-2 py-1 text-xs transition-colors whitespace-nowrap",
+                                "hover:bg-accent/80",
+                                selectedExecutionMode === mode.id ? "bg-accent text-accent-foreground" : "text-muted-foreground",
+                                idx === 0 && "rounded-t",
+                                idx === EXECUTION_MODES.length - 1 && "rounded-b"
                               )}
                             >
-                              <span className={cn("mt-0.5", mode.color)}>
-                                {mode.icon}
-                              </span>
-                              <div className="flex-1 space-y-1">
-                                <div className="font-medium text-sm">
-                                  {mode.name}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {mode.description}
-                                </div>
-                              </div>
+                              <span className={cn("w-3 h-3", mode.color)}>{mode.icon}</span>
+                              <span>{mode.name}</span>
+                              <span className="text-[10px] text-muted-foreground/60 ml-1">{mode.description}</span>
                             </button>
                           ))}
                         </div>

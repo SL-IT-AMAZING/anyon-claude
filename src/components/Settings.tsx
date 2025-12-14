@@ -31,6 +31,7 @@ import {
   MessageSquare,
   GitBranch,
   Loader2,
+  Cpu,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -46,6 +47,7 @@ import { Toast, ToastContainer } from "@/components/ui/toast";
 import { ClaudeVersionSelector } from "./ClaudeVersionSelector";
 import { HooksEditor } from "./HooksEditor";
 import { ProxySettings } from "./ProxySettings";
+import { CCAgents } from "./CCAgents";
 import { useTheme, useTrackEvent, useTranslation } from "@/hooks";
 import { analytics } from "@/lib/analytics";
 import { TabPersistenceService } from "@/services/tabPersistence";
@@ -77,6 +79,7 @@ type SettingsSection =
   | "ai-hooks"
   | "ai-proxy"
   | "ai-advanced"
+  | "ai-agents"
   | "account"
   | "subscription";
 
@@ -146,6 +149,7 @@ export const Settings: React.FC<SettingsProps> = ({
     { id: "ai-hooks", label: t('settings.ai.hooks'), icon: Zap, category: "ai" },
     { id: "ai-proxy", label: t('settings.ai.proxy'), icon: Wifi, category: "ai" },
     { id: "ai-advanced", label: t('settings.ai.advanced'), icon: Database, category: "ai" },
+    { id: "ai-agents", label: "CC Agents", icon: Cpu, category: "ai" },
     { id: "account", label: t('settings.account.title'), icon: User, category: "account" },
     { id: "subscription", label: t('settings.account.subscription'), icon: Crown, category: "account" },
   ];
@@ -1003,6 +1007,14 @@ export const Settings: React.FC<SettingsProps> = ({
               </div>
             </div>
           </div>
+        );
+
+      case "ai-agents":
+        return (
+          <CCAgents
+            onBack={() => setActiveSection("ai-version")}
+            className="h-full -m-6"
+          />
         );
 
       case "account":

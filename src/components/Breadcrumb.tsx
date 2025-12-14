@@ -147,9 +147,9 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({ items, className }) => {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -4, scale: 0.95 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute top-full left-0 mt-1.5 min-w-[220px] max-w-[320px] bg-popover border border-border rounded-xl shadow-xl overflow-hidden z-50"
+                      className="absolute top-full left-0 mt-1.5 min-w-[160px] max-w-[240px] bg-popover border border-border rounded-lg shadow-lg overflow-hidden z-50"
                     >
-                      <div className="max-h-72 overflow-y-auto py-1.5">
+                      <div className="max-h-56 overflow-y-auto py-1">
                         {item.isProjectSelector ? (
                           // Project dropdown
                           projects.length === 0 ? (
@@ -174,7 +174,7 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({ items, className }) => {
                                     }
                                   }}
                                   className={cn(
-                                    'w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-left transition-colors',
+                                    'w-full flex items-center gap-2 px-2.5 py-2 text-sm text-left transition-colors',
                                     isActive
                                       ? 'bg-primary/10 text-primary font-medium'
                                       : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
@@ -204,7 +204,7 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({ items, className }) => {
                                   }
                                 }}
                                 className={cn(
-                                  'w-full flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors',
+                                  'w-full flex items-center gap-2 px-2.5 py-2 text-left transition-colors',
                                   isActive
                                     ? 'bg-primary/10 text-primary'
                                     : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
