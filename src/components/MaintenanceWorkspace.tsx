@@ -9,14 +9,12 @@ import {
   Lightbulb,
   PanelRightClose,
   PanelRightOpen,
-  Rocket,
   Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { FileExplorer } from '@/components/FileExplorer';
 import { EnhancedPreviewPanel } from '@/components/preview';
-import { PublishPanel } from '@/components/publish';
 import { WorkspaceSidebar } from '@/components/WorkspaceSidebar';
 import { Settings } from '@/components/Settings';
 import { useProjects, useProjectsNavigation } from '@/components/ProjectRoutes';
@@ -24,7 +22,6 @@ import type { Project, Session } from '@/lib/api';
 import { api } from '@/lib/api';
 import { SessionPersistenceService } from '@/services/sessionPersistence';
 import { cn } from '@/lib/utils';
-import { usePublishStore } from '@/stores/publishStore';
 
 // Lazy load components
 const ClaudeCodeSession = lazy(() =>
@@ -32,51 +29,7 @@ const ClaudeCodeSession = lazy(() =>
 );
 const FileTree = lazy(() => import('@/components/FileTree'));
 
-// Publish Tab Button with deployment status from store
-const PublishTabButton: React.FC<{ isActive: boolean; onClick: () => void }> = ({ isActive, onClick }) => {
-  const { githubConnected, vercelConnected } = usePublishStore();
-  
-  const getStatusBadge = () => {
-    if (githubConnected && vercelConnected) {
-      return (
-        <span className="text-xs px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 flex items-center gap-1">
-          <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-          배포됨
-        </span>
-      );
-    }
-    if (githubConnected) {
-      return (
-        <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
-          GitHub
-        </span>
-      );
-    }
-    return (
-      <span className="text-xs px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-        미연결
-      </span>
-    );
-  };
-
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors border-b-2",
-        isActive
-          ? "border-primary text-primary bg-primary/5"
-          : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
-      )}
-    >
-      <Rocket className="w-4 h-4" />
-      <span>배포</span>
-      {getStatusBadge()}
-    </button>
-  );
-};
-
-type MaintenanceTabType = 'code' | 'preview' | 'publish';
+type MaintenanceTabType = 'code' | 'preview';
 
 interface MaintenanceWorkspaceProps {
   projectId: string;
@@ -479,12 +432,6 @@ export const MaintenanceWorkspace: React.FC<MaintenanceWorkspaceProps> = ({ proj
                     <Monitor className="w-4 h-4" />
                     <span>프리뷰</span>
                   </button>
-
-                  {/* 배포 탭 */}
-                  <PublishTabButton 
-                    isActive={activeTab === 'publish'}
-                    onClick={() => setActiveTab('publish')}
-                  />
                 </div>
               </div>
 
@@ -494,7 +441,6 @@ export const MaintenanceWorkspace: React.FC<MaintenanceWorkspaceProps> = ({ proj
                   <FileExplorer rootPath={project?.path} />
                 )}
                 {activeTab === 'preview' && <EnhancedPreviewPanel projectPath={project?.path} />}
-                {activeTab === 'publish' && <PublishPanel projectPath={project?.path} />}
               </div>
             </motion.div>
           </>

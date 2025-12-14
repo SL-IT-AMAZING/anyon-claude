@@ -10,7 +10,6 @@ import {
   Wrench,
   PanelRightClose,
   PanelRightOpen,
-  Rocket,
   Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,7 +18,6 @@ import { useProjects, useProjectsNavigation } from '@/components/ProjectRoutes';
 import { PlanningDocsPanel } from '@/components/planning';
 import { DevDocsPanel } from '@/components/development';
 import { EnhancedPreviewPanel } from '@/components/preview';
-import { PublishPanel } from '@/components/publish';
 import { WorkspaceSidebar } from '@/components/WorkspaceSidebar';
 import { Settings } from '@/components/Settings';
 import { usePlanningDocs } from '@/hooks/usePlanningDocs';
@@ -30,7 +28,6 @@ import type { ClaudeCodeSessionRef } from '@/components/ClaudeCodeSession';
 import { SessionPersistenceService } from '@/services/sessionPersistence';
 import { cn } from '@/lib/utils';
 import { usePreviewStore } from '@/stores/previewStore';
-import { usePublishStore } from '@/stores/publishStore';
 
 // Lazy load components
 const ClaudeCodeSession = lazy(() =>
@@ -90,51 +87,7 @@ const PreviewTabButton: React.FC<{ isActive: boolean; onClick: () => void }> = (
   );
 };
 
-// Publish Tab Button with deployment status from store
-const PublishTabButton: React.FC<{ isActive: boolean; onClick: () => void }> = ({ isActive, onClick }) => {
-  const { githubConnected, vercelConnected } = usePublishStore();
-  
-  const getStatusBadge = () => {
-    if (githubConnected && vercelConnected) {
-      return (
-        <span className="text-xs px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 flex items-center gap-1">
-          <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-          배포됨
-        </span>
-      );
-    }
-    if (githubConnected) {
-      return (
-        <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
-          GitHub
-        </span>
-      );
-    }
-    return (
-      <span className="text-xs px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-        미연결
-      </span>
-    );
-  };
-
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "flex-1 flex items-center justify-center gap-2 px-3 py-3 text-sm font-medium transition-colors border-b-2",
-        isActive
-          ? "border-primary text-primary bg-primary/5"
-          : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
-      )}
-    >
-      <Rocket className="w-4 h-4" />
-      <span>배포</span>
-      {getStatusBadge()}
-    </button>
-  );
-};
-
-type MvpTabType = 'planning' | 'development' | 'preview' | 'publish';
+type MvpTabType = 'planning' | 'development' | 'preview';
 
 interface MvpWorkspaceProps {
   projectId: string;
@@ -612,15 +565,9 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
                   </button>
 
                   {/* 프리뷰 탭 */}
-                  <PreviewTabButton 
+                  <PreviewTabButton
                     isActive={activeTab === 'preview'}
                     onClick={() => setActiveTab('preview')}
-                  />
-
-                  {/* 배포 탭 */}
-                  <PublishTabButton 
-                    isActive={activeTab === 'publish'}
-                    onClick={() => setActiveTab('publish')}
                   />
                 </div>
               </div>
@@ -648,7 +595,6 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
                     htmlFilePath={workflowPreviewPath || undefined}
                   />
                 )}
-                {activeTab === 'publish' && <PublishPanel projectPath={project?.path} />}
               </div>
             </motion.div>
           </>
