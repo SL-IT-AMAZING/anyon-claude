@@ -999,22 +999,26 @@ pub async fn load_session_history(
 }
 
 /// Execute a new interactive Claude Code session with streaming output
+/// If execution_mode is "plan", uses --permission-mode plan instead of --dangerously-skip-permissions
+/// to allow Claude to ask clarifying questions
 #[tauri::command]
 pub async fn execute_claude_code(
     app: AppHandle,
     project_path: String,
     prompt: String,
     model: String,
+    execution_mode: Option<String>,
 ) -> Result<(), String> {
     log::info!(
-        "Starting new Claude Code session in: {} with model: {}",
+        "Starting new Claude Code session in: {} with model: {}, execution_mode: {:?}",
         project_path,
-        model
+        model,
+        execution_mode
     );
 
     let claude_path = find_claude_binary(&app)?;
 
-    let args = vec![
+    let mut args = vec![
         "-p".to_string(),
         prompt.clone(),
         "--model".to_string(),
@@ -1023,30 +1027,40 @@ pub async fn execute_claude_code(
         "stream-json".to_string(),
         "--include-partial-messages".to_string(),
         "--verbose".to_string(),
-        "--dangerously-skip-permissions".to_string(),
     ];
+
+    // Add permission mode based on execution_mode
+    if execution_mode.as_deref() == Some("plan") {
+        args.push("--permission-mode".to_string());
+        args.push("plan".to_string());
+    } else {
+        args.push("--dangerously-skip-permissions".to_string());
+    }
 
     let cmd = create_system_command(&claude_path, args, &project_path);
     spawn_claude_process(app, cmd, prompt, model, project_path).await
 }
 
 /// Continue an existing Claude Code conversation with streaming output
+/// If execution_mode is "plan", uses --permission-mode plan instead of --dangerously-skip-permissions
 #[tauri::command]
 pub async fn continue_claude_code(
     app: AppHandle,
     project_path: String,
     prompt: String,
     model: String,
+    execution_mode: Option<String>,
 ) -> Result<(), String> {
     log::info!(
-        "Continuing Claude Code conversation in: {} with model: {}",
+        "Continuing Claude Code conversation in: {} with model: {}, execution_mode: {:?}",
         project_path,
-        model
+        model,
+        execution_mode
     );
 
     let claude_path = find_claude_binary(&app)?;
 
-    let args = vec![
+    let mut args = vec![
         "-c".to_string(), // Continue flag
         "-p".to_string(),
         prompt.clone(),
@@ -1056,14 +1070,22 @@ pub async fn continue_claude_code(
         "stream-json".to_string(),
         "--include-partial-messages".to_string(),
         "--verbose".to_string(),
-        "--dangerously-skip-permissions".to_string(),
     ];
+
+    // Add permission mode based on execution_mode
+    if execution_mode.as_deref() == Some("plan") {
+        args.push("--permission-mode".to_string());
+        args.push("plan".to_string());
+    } else {
+        args.push("--dangerously-skip-permissions".to_string());
+    }
 
     let cmd = create_system_command(&claude_path, args, &project_path);
     spawn_claude_process(app, cmd, prompt, model, project_path).await
 }
 
 /// Resume an existing Claude Code session by ID with streaming output
+/// If execution_mode is "plan", uses --permission-mode plan instead of --dangerously-skip-permissions
 #[tauri::command]
 pub async fn resume_claude_code(
     app: AppHandle,
@@ -1071,17 +1093,19 @@ pub async fn resume_claude_code(
     session_id: String,
     prompt: String,
     model: String,
+    execution_mode: Option<String>,
 ) -> Result<(), String> {
     log::info!(
-        "Resuming Claude Code session: {} in: {} with model: {}",
+        "Resuming Claude Code session: {} in: {} with model: {}, execution_mode: {:?}",
         session_id,
         project_path,
-        model
+        model,
+        execution_mode
     );
 
     let claude_path = find_claude_binary(&app)?;
 
-    let args = vec![
+    let mut args = vec![
         "--resume".to_string(),
         session_id.clone(),
         "-p".to_string(),
@@ -1092,8 +1116,15 @@ pub async fn resume_claude_code(
         "stream-json".to_string(),
         "--include-partial-messages".to_string(),
         "--verbose".to_string(),
-        "--dangerously-skip-permissions".to_string(),
     ];
+
+    // Add permission mode based on execution_mode
+    if execution_mode.as_deref() == Some("plan") {
+        args.push("--permission-mode".to_string());
+        args.push("plan".to_string());
+    } else {
+        args.push("--dangerously-skip-permissions".to_string());
+    }
 
     let cmd = create_system_command(&claude_path, args, &project_path);
     spawn_claude_process(app, cmd, prompt, model, project_path).await

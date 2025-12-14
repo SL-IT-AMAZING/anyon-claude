@@ -220,6 +220,7 @@ pub async fn start_dev_workflow(
                 project_clone,
                 PM_ORCHESTRATOR_PROMPT.to_string(),
                 model_clone,
+                None, // execution_mode: default to execute
             )
             .await
             {
@@ -353,6 +354,7 @@ pub async fn on_claude_complete(
             project_path.to_string(),
             next.clone(),
             model.to_string(),
+            None, // execution_mode: default to execute
         )
         .await {
             Ok(_) => {

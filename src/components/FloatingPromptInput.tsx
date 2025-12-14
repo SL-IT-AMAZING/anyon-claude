@@ -13,6 +13,8 @@ import {
   Cpu,
   Rocket,
   Loader2,
+  FileText,
+  Play,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -38,11 +40,16 @@ try {
 // Web-compatible replacement
 const getCurrentWebviewWindow = tauriGetCurrentWebviewWindow || (() => ({ listen: () => Promise.resolve(() => {}) }));
 
+/**
+ * Execution mode type
+ */
+export type ExecutionMode = "execute" | "plan";
+
 interface FloatingPromptInputProps {
   /**
    * Callback when prompt is sent
    */
-  onSend: (prompt: string, model: "sonnet" | "opus") => void;
+  onSend: (prompt: string, model: "haiku" | "sonnet" | "opus", executionMode?: ExecutionMode) => void;
   /**
    * Whether the input is loading
    */
@@ -54,7 +61,7 @@ interface FloatingPromptInputProps {
   /**
    * Default model to select
    */
-  defaultModel?: "sonnet" | "opus";
+  defaultModel?: "haiku" | "sonnet" | "opus";
   /**
    * Project path for file picker
    */
@@ -76,6 +83,15 @@ interface FloatingPromptInputProps {
    * When true, the input will be positioned within its container instead of fixed at bottom
    */
   embedded?: boolean;
+  /**
+   * Whether to show the execution mode toggle (Plan/Execute)
+   * Only shown in maintenance tab
+   */
+  showExecutionMode?: boolean;
+  /**
+   * Default execution mode
+   */
+  defaultExecutionMode?: ExecutionMode;
 }
 
 export interface FloatingPromptInputRef {
@@ -104,52 +120,52 @@ type ThinkingModeConfig = {
 const THINKING_MODES: ThinkingModeConfig[] = [
   {
     id: "auto",
-    name: "Auto",
-    description: "Let Claude decide",
+    name: "자동",
+    description: "알아서 판단",
     level: 0,
     icon: <Sparkles className="h-3.5 w-3.5" />,
     color: "text-muted-foreground",
-    shortName: "A"
+    shortName: "자동"
   },
   {
     id: "think",
-    name: "Think",
-    description: "Basic reasoning",
+    name: "생각",
+    description: "한번 생각해보고 답변",
     level: 1,
     phrase: "think",
     icon: <Lightbulb className="h-3.5 w-3.5" />,
     color: "text-primary",
-    shortName: "T"
+    shortName: "생각"
   },
   {
     id: "think_hard",
-    name: "Think Hard",
-    description: "Deeper analysis",
+    name: "꼼꼼히",
+    description: "꼼꼼하게 분석",
     level: 2,
     phrase: "think hard",
     icon: <Brain className="h-3.5 w-3.5" />,
     color: "text-primary",
-    shortName: "T+"
+    shortName: "꼼꼼"
   },
   {
     id: "think_harder",
-    name: "Think Harder",
-    description: "Extensive reasoning",
+    name: "심층",
+    description: "깊이 있게 고민",
     level: 3,
     phrase: "think harder",
     icon: <Cpu className="h-3.5 w-3.5" />,
     color: "text-primary",
-    shortName: "T++"
+    shortName: "심층"
   },
   {
     id: "ultrathink",
-    name: "Ultrathink",
-    description: "Maximum computation",
+    name: "최대",
+    description: "최선을 다해 생각",
     level: 4,
     phrase: "ultrathink",
     icon: <Rocket className="h-3.5 w-3.5" />,
     color: "text-primary",
-    shortName: "Ultra"
+    shortName: "최대"
   }
 ];
 
@@ -179,7 +195,7 @@ const ThinkingModeIndicator: React.FC<{ level: number; color?: string }> = ({ le
 };
 
 type Model = {
-  id: "sonnet" | "opus";
+  id: "haiku" | "sonnet" | "opus";
   name: string;
   description: string;
   icon: React.ReactNode;
@@ -189,20 +205,59 @@ type Model = {
 
 const MODELS: Model[] = [
   {
+    id: "haiku",
+    name: "Haiku",
+    description: "가장 빠름, 간단한 작업에 적합",
+    icon: <Zap className="h-3.5 w-3.5" />,
+    shortName: "H",
+    color: "text-muted-foreground"
+  },
+  {
     id: "sonnet",
-    name: "Claude 4 Sonnet",
-    description: "Faster, efficient for most tasks",
+    name: "Sonnet",
+    description: "빠르고 효율적, 대부분의 작업에 적합",
     icon: <Zap className="h-3.5 w-3.5" />,
     shortName: "S",
     color: "text-primary"
   },
   {
     id: "opus",
-    name: "Claude 4 Opus",
-    description: "More capable, better for complex tasks",
+    name: "Opus",
+    description: "가장 똑똑함, 복잡한 작업에 적합",
     icon: <Zap className="h-3.5 w-3.5" />,
     shortName: "O",
     color: "text-primary"
+  }
+];
+
+/**
+ * Execution mode configuration
+ */
+type ExecutionModeConfig = {
+  id: ExecutionMode;
+  name: string;
+  description: string;
+  icon: React.ReactNode;
+  color: string;
+  borderColor: string;
+};
+
+const EXECUTION_MODES: ExecutionModeConfig[] = [
+  {
+    id: "execute",
+    name: "실행",
+    description: "바로 코드 수정/실행",
+    icon: <Play className="h-3.5 w-3.5" />,
+    color: "text-primary",
+    borderColor: "border-primary"
+  },
+  {
+    id: "plan",
+    name: "Plan",
+    description: "계획 먼저, 질문으로 구체화",
+    icon: <FileText className="h-3.5 w-3.5" />,
+    color: "text-violet-500",
+    borderColor: "border-violet-500"
   }
 ];
 
@@ -228,15 +283,19 @@ const FloatingPromptInputInner = (
     onCancel,
     extraMenuItems,
     embedded = false,
+    showExecutionMode = false,
+    defaultExecutionMode = "execute",
   }: FloatingPromptInputProps,
   ref: React.Ref<FloatingPromptInputRef>,
 ) => {
   const [prompt, setPrompt] = useState("");
-  const [selectedModel, setSelectedModel] = useState<"sonnet" | "opus">(defaultModel);
+  const [selectedModel, setSelectedModel] = useState<"haiku" | "sonnet" | "opus">(defaultModel);
   const [selectedThinkingMode, setSelectedThinkingMode] = useState<ThinkingMode>("auto");
+  const [selectedExecutionMode, setSelectedExecutionMode] = useState<ExecutionMode>(defaultExecutionMode);
   const [isExpanded, setIsExpanded] = useState(false);
   const [modelPickerOpen, setModelPickerOpen] = useState(false);
   const [thinkingModePickerOpen, setThinkingModePickerOpen] = useState(false);
+  const [executionModePickerOpen, setExecutionModePickerOpen] = useState(false);
   const [showFilePicker, setShowFilePicker] = useState(false);
   const [filePickerQuery, setFilePickerQuery] = useState("");
   const [showSlashCommandPicker, setShowSlashCommandPicker] = useState(false);
@@ -707,13 +766,20 @@ const FloatingPromptInputInner = (
     if (prompt.trim() && !disabled) {
       let finalPrompt = prompt.trim();
 
+      // Check for @plan prefix to override execution mode
+      let effectiveExecutionMode = selectedExecutionMode;
+      if (finalPrompt.toLowerCase().startsWith('@plan ')) {
+        effectiveExecutionMode = 'plan';
+        finalPrompt = finalPrompt.substring(6).trim(); // Remove @plan prefix
+      }
+
       // Append thinking phrase if not auto mode
       const thinkingMode = THINKING_MODES.find(m => m.id === selectedThinkingMode);
       if (thinkingMode && thinkingMode.phrase) {
         finalPrompt = `${finalPrompt}.\n\n${thinkingMode.phrase}.`;
       }
 
-      onSend(finalPrompt, selectedModel);
+      onSend(finalPrompt, selectedModel, showExecutionMode ? effectiveExecutionMode : undefined);
       setPrompt("");
       setEmbeddedImages([]);
       setTextareaHeight(48); // Reset height after sending
@@ -1076,12 +1142,16 @@ const FloatingPromptInputInner = (
         onDragOver={handleDrag}
         onDrop={handleDrop}
       >
-        <div 
+        <div
           className={cn(
             "mx-auto max-w-3xl",
             "bg-background backdrop-blur-xl",
-            "border border-border/20 rounded-2xl",
+            "border rounded-2xl",
             "ring-1 ring-white/10",
+            // Plan mode: violet border
+            showExecutionMode && selectedExecutionMode === "plan"
+              ? "border-violet-500/50"
+              : "border-border/20",
             dragActive && "ring-2 ring-primary ring-offset-2 ring-offset-background"
           )}
           style={{
@@ -1296,6 +1366,81 @@ const FloatingPromptInputInner = (
                   align="start"
                   side="top"
                 />
+
+                {/* Execution Mode Selector (Plan/Execute) - Only shown when showExecutionMode is true */}
+                {showExecutionMode && (
+                  <>
+                    <div className="w-px h-4 bg-border/50 mx-1" />
+                    <Popover
+                      trigger={
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <motion.div
+                              whileTap={{ scale: 0.97 }}
+                              transition={{ duration: 0.15 }}
+                            >
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                disabled={disabled}
+                                className={cn(
+                                  "h-7 px-2 hover:bg-accent/50 gap-1.5 text-xs",
+                                  selectedExecutionMode === "plan" && "text-violet-500"
+                                )}
+                              >
+                                <span className={selectedExecutionMode === "plan" ? "text-violet-500" : "text-primary"}>
+                                  {EXECUTION_MODES.find(m => m.id === selectedExecutionMode)?.icon}
+                                </span>
+                                <span className="font-medium">
+                                  {EXECUTION_MODES.find(m => m.id === selectedExecutionMode)?.name}
+                                </span>
+                                <ChevronUp className="h-3 w-3 opacity-50" />
+                              </Button>
+                            </motion.div>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            <p className="text-xs font-medium">{EXECUTION_MODES.find(m => m.id === selectedExecutionMode)?.name}</p>
+                            <p className="text-xs text-muted-foreground">{EXECUTION_MODES.find(m => m.id === selectedExecutionMode)?.description}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      }
+                      content={
+                        <div className="w-[280px] p-1">
+                          {EXECUTION_MODES.map((mode) => (
+                            <button
+                              key={mode.id}
+                              onClick={() => {
+                                setSelectedExecutionMode(mode.id);
+                                setExecutionModePickerOpen(false);
+                              }}
+                              className={cn(
+                                "w-full flex items-start gap-3 p-3 rounded-md transition-colors text-left",
+                                "hover:bg-accent",
+                                selectedExecutionMode === mode.id && "bg-accent"
+                              )}
+                            >
+                              <span className={cn("mt-0.5", mode.color)}>
+                                {mode.icon}
+                              </span>
+                              <div className="flex-1 space-y-1">
+                                <div className="font-medium text-sm">
+                                  {mode.name}
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  {mode.description}
+                                </div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      }
+                      open={executionModePickerOpen}
+                      onOpenChange={setExecutionModePickerOpen}
+                      align="start"
+                      side="top"
+                    />
+                  </>
+                )}
 
                 {/* Extra menu items */}
                 {extraMenuItems && (

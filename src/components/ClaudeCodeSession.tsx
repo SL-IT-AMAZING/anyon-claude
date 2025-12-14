@@ -42,7 +42,7 @@ type UnlistenFn = () => void;
 const listen = tauriListen;
 import { StreamMessage } from "./StreamMessage";
 import { StreamingText } from "./StreamingText";
-import { FloatingPromptInput, type FloatingPromptInputRef } from "./FloatingPromptInput";
+import { FloatingPromptInput, type FloatingPromptInputRef, type ExecutionMode } from "./FloatingPromptInput";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { TimelineNavigator } from "./TimelineNavigator";
 import { CheckpointSettings } from "./CheckpointSettings";
@@ -122,7 +122,7 @@ interface ClaudeCodeSessionProps {
  * Allows external components to send prompts programmatically
  */
 export interface ClaudeCodeSessionRef {
-  sendPrompt: (prompt: string, model?: "sonnet" | "opus") => void;
+  sendPrompt: (prompt: string, model?: "haiku" | "sonnet" | "opus") => void;
   startNewSession: (initialPrompt: string) => void;
   isLoading: boolean;
 }
@@ -177,7 +177,7 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
   const [forkSessionName, setForkSessionName] = useState("");
   
   // Queued prompts state
-  const [queuedPrompts, setQueuedPrompts] = useState<Array<{ id: string; prompt: string; displayText?: string; icon?: PromptIconType | null; model: "sonnet" | "opus" }>>([]);
+  const [queuedPrompts, setQueuedPrompts] = useState<Array<{ id: string; prompt: string; displayText?: string; icon?: PromptIconType | null; model: "haiku" | "sonnet" | "opus" }>>([]);
   
   // New state for preview feature
   const [showPreview, setShowPreview] = useState(false);
@@ -193,7 +193,7 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
   const unlistenRefs = useRef<UnlistenFn[]>([]);
   const hasActiveSessionRef = useRef(false);
   const floatingPromptRef = useRef<FloatingPromptInputRef>(null);
-  const queuedPromptsRef = useRef<Array<{ id: string; prompt: string; displayText?: string; icon?: PromptIconType | null; model: "sonnet" | "opus" }>>([]);
+  const queuedPromptsRef = useRef<Array<{ id: string; prompt: string; displayText?: string; icon?: PromptIconType | null; model: "haiku" | "sonnet" | "opus" }>>([]);
   const isMountedRef = useRef(true);
   const isListeningRef = useRef(false);
   const sessionStartTime = useRef<number>(Date.now());
@@ -615,7 +615,7 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
 
   // Expose sendPrompt via ref for external components (e.g., PlanningDocsPanel)
   useImperativeHandle(ref, () => ({
-    sendPrompt: (prompt: string, model: "sonnet" | "opus" = "sonnet") => {
+    sendPrompt: (prompt: string, model: "haiku" | "sonnet" | "opus" = "sonnet") => {
       handleSendPrompt(prompt, model);
     },
     startNewSession: (initialPrompt: string) => {
@@ -631,8 +631,8 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
     isLoading,
   }), [isLoading]);
 
-  const handleSendPrompt = async (prompt: string, model: "sonnet" | "opus") => {
-    console.log('[ClaudeCodeSession] handleSendPrompt called with:', { prompt, model, projectPath, claudeSessionId, effectiveSession });
+  const handleSendPrompt = async (prompt: string, model: "haiku" | "sonnet" | "opus", executionMode?: ExecutionMode) => {
+    console.log('[ClaudeCodeSession] handleSendPrompt called with:', { prompt, model, executionMode, projectPath, claudeSessionId, effectiveSession });
 
     if (!projectPath) {
       setError("Please select a project directory first");
@@ -1110,17 +1110,18 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
         });
 
         // Execute the appropriate command
+        // Pass executionMode to use --permission-mode plan when plan mode is selected
         if (effectiveSession && !isFirstPrompt) {
-          console.log('[ClaudeCodeSession] Resuming session:', effectiveSession.id);
+          console.log('[ClaudeCodeSession] Resuming session:', effectiveSession.id, 'executionMode:', executionMode);
           trackEvent.sessionResumed(effectiveSession.id);
           trackEvent.modelSelected(model);
-          await api.resumeClaudeCode(projectPath, effectiveSession.id, prompt, model);
+          await api.resumeClaudeCode(projectPath, effectiveSession.id, prompt, model, executionMode);
         } else {
-          console.log('[ClaudeCodeSession] Starting new session');
+          console.log('[ClaudeCodeSession] Starting new session, executionMode:', executionMode);
           setIsFirstPrompt(false);
           trackEvent.sessionCreated(model, 'prompt_input');
           trackEvent.modelSelected(model);
-          await api.executeClaudeCode(projectPath, prompt, model);
+          await api.executeClaudeCode(projectPath, prompt, model, executionMode);
         }
       }
     } catch (err) {
@@ -1798,6 +1799,7 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
               disabled={!projectPath}
               projectPath={projectPath}
               embedded={embedded}
+              showExecutionMode={tabType === "maintenance"}
               extraMenuItems={
                 <>
                   {effectiveSession && (
