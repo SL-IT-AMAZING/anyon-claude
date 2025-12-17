@@ -19,17 +19,29 @@ export interface PromptDisplayInfo {
  */
 export const getPromptDisplayInfo = (prompt: string): PromptDisplayInfo => {
   // Check planning workflows (슬래시 커맨드 또는 내재화된 프롬프트)
-  const planningStep = WORKFLOW_SEQUENCE.find((s) =>
-    s.workflow === prompt ||
-    prompt.includes(s.workflow) ||
-    (s.prompt && prompt === s.prompt)  // 내재화된 프롬프트 매칭
-  );
+  const planningStep = WORKFLOW_SEQUENCE.find((s) => {
+    // 슬래시 커맨드 매칭
+    if (s.workflow === prompt || prompt.includes(s.workflow)) {
+      return true;
+    }
+    // 내재화된 프롬프트 매칭 - 시작 부분 비교 (첫 200자)
+    if (s.prompt && prompt.startsWith(s.prompt.substring(0, 200))) {
+      return true;
+    }
+    return false;
+  });
   if (planningStep) {
     return { text: planningStep.displayText, icon: planningStep.icon };
   }
 
   // Check development workflows
-  const devStep = DEV_WORKFLOW_SEQUENCE.find((s) => s.prompt === prompt || prompt.includes(s.prompt));
+  const devStep = DEV_WORKFLOW_SEQUENCE.find((s) => {
+    if (s.prompt === prompt) return true;
+    if (prompt.includes(s.prompt)) return true;
+    // 내재화된 프롬프트 시작 부분 비교
+    if (s.prompt && prompt.startsWith(s.prompt.substring(0, 200))) return true;
+    return false;
+  });
   if (devStep) {
     return { text: devStep.displayText, icon: devStep.icon };
   }

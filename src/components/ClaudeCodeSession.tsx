@@ -1086,13 +1086,17 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
         // --------------------------------------------------------------------
 
         // Add the user message immediately to the UI (after setting up listeners)
+        // For workflow prompts, show a friendly display text instead of the full prompt
+        const displayInfo = isAnyonWorkflowCommand(prompt) ? getPromptDisplayInfo(prompt) : null;
+        const displayPrompt = displayInfo ? displayInfo.text : prompt;
+        
         const userMessage: ClaudeStreamMessage = {
           type: "user",
           message: {
             content: [
               {
                 type: "text",
-                text: prompt
+                text: displayPrompt
               }
             ]
           }
@@ -1101,9 +1105,12 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
 
         // Update first message for session if this is the first prompt
         if (isFirstPrompt && tabType && claudeSessionId) {
-          const truncatedPrompt = prompt.length > 100 ? prompt.substring(0, 100) + '...' : prompt;
-          SessionPersistenceService.updateSessionFirstMessage(claudeSessionId, truncatedPrompt);
-          onSessionCreated?.(claudeSessionId, truncatedPrompt);
+          // Use display text for workflow prompts, truncated original for others
+          const messageToSave = displayInfo 
+            ? displayInfo.text 
+            : (prompt.length > 100 ? prompt.substring(0, 100) + '...' : prompt);
+          SessionPersistenceService.updateSessionFirstMessage(claudeSessionId, messageToSave);
+          onSessionCreated?.(claudeSessionId, messageToSave);
         }
 
         // Update session metrics

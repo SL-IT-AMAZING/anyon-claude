@@ -327,6 +327,56 @@ fn create_system_command(claude_path: &str, args: Vec<String>, project_path: &st
     cmd
 }
 
+/// Creates a system binary command using a temporary file for the prompt
+/// This is used on Windows to avoid command line length limits for long prompts
+fn create_system_command_with_stdin(
+    claude_path: &str,
+    mut args: Vec<String>,
+    project_path: &str,
+    prompt: &str,
+) -> Result<Command, String> {
+    use std::io::Write;
+
+    // Create a temporary file for the prompt
+    let temp_dir = std::env::temp_dir();
+    let temp_file_path = temp_dir.join(format!("claude_prompt_{}.txt", uuid::Uuid::new_v4()));
+
+    // Write prompt to temp file
+    let mut temp_file = std::fs::File::create(&temp_file_path)
+        .map_err(|e| format!("Failed to create temp file: {}", e))?;
+    temp_file.write_all(prompt.as_bytes())
+        .map_err(|e| format!("Failed to write to temp file: {}", e))?;
+    temp_file.flush()
+        .map_err(|e| format!("Failed to flush temp file: {}", e))?;
+
+    log::info!("Created temporary prompt file: {}", temp_file_path.display());
+
+    // Use -f flag to read from file instead of -p for inline prompt
+    args.insert(0, temp_file_path.to_string_lossy().to_string());
+    args.insert(0, "-f".to_string());
+
+    let mut cmd = create_command_with_env(claude_path);
+
+    // Add all arguments
+    for arg in args {
+        cmd.arg(arg);
+    }
+
+    cmd.current_dir(project_path)
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+
+    // Windows: Hide console window
+    #[cfg(target_os = "windows")]
+    {
+        const CREATE_NO_WINDOW: u32 = 0x08000000;
+        cmd.creation_flags(CREATE_NO_WINDOW);
+    }
+
+    Ok(cmd)
+}
+
 /// Gets the user's home directory path
 #[tauri::command]
 pub async fn get_home_directory() -> Result<String, String> {
@@ -1010,17 +1060,22 @@ pub async fn execute_claude_code(
     execution_mode: Option<String>,
 ) -> Result<(), String> {
     log::info!(
-        "Starting new Claude Code session in: {} with model: {}, execution_mode: {:?}",
+        "Starting new Claude Code session in: {} with model: {}, execution_mode: {:?}, prompt length: {}",
         project_path,
         model,
-        execution_mode
+        execution_mode,
+        prompt.len()
     );
 
     let claude_path = find_claude_binary(&app)?;
 
+    // For long prompts (>4000 chars) on Windows, use stdin to avoid command line length limits
+    #[cfg(target_os = "windows")]
+    let use_stdin = prompt.len() > 4000;
+    #[cfg(not(target_os = "windows"))]
+    let use_stdin = false;
+
     let mut args = vec![
-        "-p".to_string(),
-        prompt.clone(),
         "--model".to_string(),
         model.clone(),
         "--output-format".to_string(),
@@ -1028,6 +1083,11 @@ pub async fn execute_claude_code(
         "--include-partial-messages".to_string(),
         "--verbose".to_string(),
     ];
+
+    if !use_stdin {
+        args.insert(0, prompt.clone());
+        args.insert(0, "-p".to_string());
+    }
 
     // Add permission mode based on execution_mode
     if execution_mode.as_deref() == Some("plan") {
@@ -1037,8 +1097,14 @@ pub async fn execute_claude_code(
         args.push("--dangerously-skip-permissions".to_string());
     }
 
-    let cmd = create_system_command(&claude_path, args, &project_path);
-    spawn_claude_process(app, cmd, prompt, model, project_path).await
+    if use_stdin {
+        log::info!("Using stdin for prompt delivery due to length: {} chars", prompt.len());
+        let cmd = create_system_command_with_stdin(&claude_path, args, &project_path, &prompt)?;
+        spawn_claude_process(app, cmd, prompt, model, project_path).await
+    } else {
+        let cmd = create_system_command(&claude_path, args, &project_path);
+        spawn_claude_process(app, cmd, prompt, model, project_path).await
+    }
 }
 
 /// Continue an existing Claude Code conversation with streaming output
@@ -1096,20 +1162,25 @@ pub async fn resume_claude_code(
     execution_mode: Option<String>,
 ) -> Result<(), String> {
     log::info!(
-        "Resuming Claude Code session: {} in: {} with model: {}, execution_mode: {:?}",
+        "Resuming Claude Code session: {} in: {} with model: {}, execution_mode: {:?}, prompt length: {}",
         session_id,
         project_path,
         model,
-        execution_mode
+        execution_mode,
+        prompt.len()
     );
 
     let claude_path = find_claude_binary(&app)?;
 
+    // For long prompts (>4000 chars) on Windows, use stdin to avoid command line length limits
+    #[cfg(target_os = "windows")]
+    let use_stdin = prompt.len() > 4000;
+    #[cfg(not(target_os = "windows"))]
+    let use_stdin = false;
+
     let mut args = vec![
         "--resume".to_string(),
         session_id.clone(),
-        "-p".to_string(),
-        prompt.clone(),
         "--model".to_string(),
         model.clone(),
         "--output-format".to_string(),
@@ -1117,6 +1188,11 @@ pub async fn resume_claude_code(
         "--include-partial-messages".to_string(),
         "--verbose".to_string(),
     ];
+
+    if !use_stdin {
+        args.insert(2, prompt.clone());
+        args.insert(2, "-p".to_string());
+    }
 
     // Add permission mode based on execution_mode
     if execution_mode.as_deref() == Some("plan") {
@@ -1126,8 +1202,14 @@ pub async fn resume_claude_code(
         args.push("--dangerously-skip-permissions".to_string());
     }
 
-    let cmd = create_system_command(&claude_path, args, &project_path);
-    spawn_claude_process(app, cmd, prompt, model, project_path).await
+    if use_stdin {
+        log::info!("Using stdin for prompt delivery due to length: {} chars", prompt.len());
+        let cmd = create_system_command_with_stdin(&claude_path, args, &project_path, &prompt)?;
+        spawn_claude_process(app, cmd, prompt, model, project_path).await
+    } else {
+        let cmd = create_system_command(&claude_path, args, &project_path);
+        spawn_claude_process(app, cmd, prompt, model, project_path).await
+    }
 }
 
 /// Cancel the currently running Claude Code execution
