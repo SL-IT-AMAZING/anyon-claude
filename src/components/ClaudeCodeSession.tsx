@@ -411,41 +411,76 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
   }, [isLoading, claudeSessionId, onStreamingChange]);
 
   // Auto-scroll to bottom when new messages arrive
+  const lastMessageCountRef = useRef(0);
+  const isUserScrollingRef = useRef(false);
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+  // Track if user is manually scrolling
   useEffect(() => {
-    if (displayableMessages.length > 0) {
-      // Use a more precise scrolling method to ensure content is fully visible
-      setTimeout(() => {
-        const scrollElement = parentRef.current;
-        if (scrollElement) {
-          // First, scroll using virtualizer to get close to the bottom
-          rowVirtualizer.scrollToIndex(displayableMessages.length - 1, { align: 'end', behavior: 'auto' });
-
-          // Then use direct scroll to ensure we reach the absolute bottom
-          requestAnimationFrame(() => {
-            scrollElement.scrollTo({
-              top: scrollElement.scrollHeight,
-              behavior: 'smooth'
-            });
-          });
-        }
-      }, 50);
+    const scrollElement = parentRef.current;
+    if (!scrollElement) return;
+    
+    const handleScroll = () => {
+      // Check if user is near bottom (within 150px)
+      const isNearBottom = scrollElement.scrollHeight - scrollElement.scrollTop - scrollElement.clientHeight < 150;
+      isUserScrollingRef.current = !isNearBottom;
+    };
+    
+    scrollElement.addEventListener('scroll', handleScroll, { passive: true });
+    return () => scrollElement.removeEventListener('scroll', handleScroll);
+  }, []);
+  
+  useEffect(() => {
+    // Only auto-scroll if:
+    // 1. New messages arrived (not just re-render)
+    // 2. User is not manually scrolling up
+    const messageCountChanged = displayableMessages.length !== lastMessageCountRef.current;
+    lastMessageCountRef.current = displayableMessages.length;
+    
+    if (!messageCountChanged || isUserScrollingRef.current) return;
+    if (displayableMessages.length === 0) return;
+    
+    // Clear any pending scroll
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
     }
-  }, [displayableMessages.length, rowVirtualizer]);
+    
+    // Use a single RAF for smooth scrolling without jitter
+    scrollTimeoutRef.current = setTimeout(() => {
+      const scrollElement = parentRef.current;
+      if (scrollElement) {
+        // Just use direct scroll - virtualizer will handle rendering
+        scrollElement.scrollTo({
+          top: scrollElement.scrollHeight,
+          behavior: 'auto'  // 'auto' instead of 'smooth' to prevent jitter
+        });
+      }
+    }, 16); // Single frame delay
+    
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, [displayableMessages.length]);
 
   // Throttled auto-scroll for streaming text updates (separate from message scroll)
   const lastScrollTimeRef = useRef<number>(0);
   useEffect(() => {
     if (streamingText && isLoading) {
       const now = Date.now();
-      // Throttle scroll updates to max once every 100ms during streaming
-      if (now - lastScrollTimeRef.current > 100) {
+      // Throttle scroll updates to max once every 200ms during streaming (increased from 100ms)
+      if (now - lastScrollTimeRef.current > 200) {
         lastScrollTimeRef.current = now;
-        const scrollElement = parentRef.current;
-        if (scrollElement) {
-          scrollElement.scrollTo({
-            top: scrollElement.scrollHeight,
-            behavior: 'auto'
-          });
+        // Only scroll if user is not manually scrolling
+        if (!isUserScrollingRef.current) {
+          const scrollElement = parentRef.current;
+          if (scrollElement) {
+            scrollElement.scrollTo({
+              top: scrollElement.scrollHeight,
+              behavior: 'auto'
+            });
+          }
         }
       }
     }
@@ -496,22 +531,19 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
       // After loading history, we're continuing a conversation
       setIsFirstPrompt(false);
       
-      // Scroll to bottom after loading history
-      setTimeout(() => {
+      // Scroll to bottom after loading history - use RAF to ensure DOM is ready
+      requestAnimationFrame(() => {
         if (loadedMessages.length > 0) {
           const scrollElement = parentRef.current;
           if (scrollElement) {
-            // Use the same improved scrolling method
-            rowVirtualizer.scrollToIndex(loadedMessages.length - 1, { align: 'end', behavior: 'auto' });
-            requestAnimationFrame(() => {
-              scrollElement.scrollTo({
-                top: scrollElement.scrollHeight,
-                behavior: 'auto'
-              });
+            // Direct scroll without virtualizer to prevent jitter
+            scrollElement.scrollTo({
+              top: scrollElement.scrollHeight,
+              behavior: 'auto'
             });
           }
         }
-      }, 100);
+      });
     } catch (err) {
       console.error("Failed to load session history:", err);
       setError("Failed to load session history");
@@ -1500,32 +1532,27 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
           minHeight: '100px',
         }}
       >
-        <AnimatePresence>
-          {rowVirtualizer.getVirtualItems().map((virtualItem) => {
-            const message = displayableMessages[virtualItem.index];
-            return (
-              <motion.div
-                key={virtualItem.key}
-                data-index={virtualItem.index}
-                ref={(el) => el && rowVirtualizer.measureElement(el)}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="absolute inset-x-0"
-                style={{
-                  top: virtualItem.start,
-                }}
-              >
-                <StreamMessage 
-                  message={message} 
-                  streamMessages={messages}
-                  onLinkDetected={handleLinkDetected}
-                />
-              </motion.div>
-            );
-          })}
-        </AnimatePresence>
+        {/* Remove AnimatePresence to prevent layout jitter with virtualizer */}
+        {rowVirtualizer.getVirtualItems().map((virtualItem) => {
+          const message = displayableMessages[virtualItem.index];
+          return (
+            <div
+              key={virtualItem.key}
+              data-index={virtualItem.index}
+              ref={(el) => el && rowVirtualizer.measureElement(el)}
+              className="absolute inset-x-0"
+              style={{
+                top: virtualItem.start,
+              }}
+            >
+              <StreamMessage 
+                message={message} 
+                streamMessages={messages}
+                onLinkDetected={handleLinkDetected}
+              />
+            </div>
+          );
+        })}
       </div>
 
       {/* Loading indicator with streaming text */}
@@ -1737,74 +1764,44 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
             >
               <div className="flex items-center bg-background/95 backdrop-blur-md border rounded-full shadow-lg overflow-hidden">
                 <TooltipSimple content="Scroll to top" side="top">
-                  <motion.div
-                    whileTap={{ scale: 0.97 }}
-                    transition={{ duration: 0.15 }}
-                  >
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                      // Use virtualizer to scroll to the first item
-                      if (displayableMessages.length > 0) {
-                        // Scroll to top of the container
-                        parentRef.current?.scrollTo({
-                          top: 0,
-                          behavior: 'smooth'
-                        });
-                        
-                        // After smooth scroll completes, trigger a small scroll to ensure rendering
-                        setTimeout(() => {
-                          if (parentRef.current) {
-                            // Scroll down 1px then back to 0 to trigger virtualizer update
-                            parentRef.current.scrollTop = 1;
-                            requestAnimationFrame(() => {
-                              if (parentRef.current) {
-                                parentRef.current.scrollTop = 0;
-                              }
-                            });
-                          }
-                        }, 500); // Wait for smooth scroll to complete
-                      }
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      // Simple direct scroll - no complex virtualizer interaction
+                      parentRef.current?.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                      });
+                      // Reset user scrolling flag
+                      isUserScrollingRef.current = true;
                     }}
-                      className="px-3 py-2 hover:bg-accent rounded-none"
-                    >
-                      <ChevronUp className="h-4 w-4" />
-                    </Button>
-                  </motion.div>
+                    className="px-3 py-2 hover:bg-accent rounded-none"
+                  >
+                    <ChevronUp className="h-4 w-4" />
+                  </Button>
                 </TooltipSimple>
                 <div className="w-px h-4 bg-border" />
                 <TooltipSimple content="Scroll to bottom" side="top">
-                  <motion.div
-                    whileTap={{ scale: 0.97 }}
-                    transition={{ duration: 0.15 }}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      // Simple direct scroll
+                      const scrollElement = parentRef.current;
+                      if (scrollElement) {
+                        scrollElement.scrollTo({
+                          top: scrollElement.scrollHeight,
+                          behavior: 'smooth'
+                        });
+                        // Reset user scrolling flag to allow auto-scroll
+                        isUserScrollingRef.current = false;
+                      }
+                    }}
+                    className="px-3 py-2 hover:bg-accent rounded-none"
                   >
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        // Use the improved scrolling method for manual scroll to bottom
-                        if (displayableMessages.length > 0) {
-                          const scrollElement = parentRef.current;
-                          if (scrollElement) {
-                            // First, scroll using virtualizer to get close to the bottom
-                            rowVirtualizer.scrollToIndex(displayableMessages.length - 1, { align: 'end', behavior: 'auto' });
-
-                            // Then use direct scroll to ensure we reach the absolute bottom
-                            requestAnimationFrame(() => {
-                              scrollElement.scrollTo({
-                                top: scrollElement.scrollHeight,
-                                behavior: 'smooth'
-                              });
-                            });
-                          }
-                        }
-                      }}
-                      className="px-3 py-2 hover:bg-accent rounded-none"
-                    >
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </motion.div>
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
                 </TooltipSimple>
               </div>
             </motion.div>

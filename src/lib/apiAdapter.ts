@@ -299,6 +299,14 @@ function mapCommandToEndpoint(command: string, _params?: any): string {
     // Proxy settings
     'get_proxy_settings': '/api/proxy/settings',
     'save_proxy_settings': '/api/proxy/settings',
+
+    // Claude Auth
+    'claude_auth_check': '/api/claude-auth/status',
+    'claude_auth_open_terminal': '/api/claude-auth/terminal-login',
+    'claude_auth_save_api_key': '/api/claude-auth/api-key',
+    'claude_auth_delete_api_key': '/api/claude-auth/api-key',
+    'claude_auth_validate_api_key': '/api/claude-auth/validate',
+    'claude_auth_logout': '/api/claude-auth/logout',
   };
 
   const endpoint = commandToEndpoint[command];

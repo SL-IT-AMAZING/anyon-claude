@@ -41,6 +41,7 @@ import { ActionHeader } from './ActionHeader';
 import { ErrorBanner } from './ErrorBanner';
 import { Problems } from './Problems';
 import { Console } from './Console';
+import { FileExplorer } from '@/components/FileExplorer';
 import { injectSelectorScript } from '@/lib/previewSelector';
 import type { PortInfo, DeviceSize, SelectedElement, ElementAction } from '@/types/preview';
 
@@ -464,9 +465,7 @@ export const EnhancedPreviewPanel: React.FC<EnhancedPreviewPanelProps> = ({
         return <Console />;
       case 'code':
         return (
-          <div className="flex items-center justify-center h-full text-gray-500">
-            Code view coming soon...
-          </div>
+          <FileExplorer rootPath={projectPath} />
         );
       case 'preview':
       default:

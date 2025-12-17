@@ -1,5 +1,6 @@
 pub mod agents;
 pub mod claude;
+pub mod claude_auth;
 pub mod dev_server;
 pub mod dev_workflow;
 pub mod mcp;

@@ -3,8 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
   Wrench,
-  Code,
-  Monitor,
   X,
   Lightbulb,
   PanelRightClose,
@@ -13,7 +11,6 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Breadcrumb } from '@/components/Breadcrumb';
-import { FileExplorer } from '@/components/FileExplorer';
 import { EnhancedPreviewPanel } from '@/components/preview';
 import { WorkspaceSidebar } from '@/components/WorkspaceSidebar';
 import { Settings } from '@/components/Settings';
@@ -29,7 +26,7 @@ const ClaudeCodeSession = lazy(() =>
 );
 const FileTree = lazy(() => import('@/components/FileTree'));
 
-type MaintenanceTabType = 'code' | 'preview';
+
 
 interface MaintenanceWorkspaceProps {
   projectId: string;
@@ -40,15 +37,17 @@ interface MaintenanceWorkspaceProps {
  *
  * Layout:
  * ┌────────┬─────────────────┬──────────────────────┐
- * │Sidebar │     Chat        │   Code/Preview       │
- * │ (56px) │  (flexible)     │   Tabs               │
+ * │Sidebar │     Chat        │   Preview (default)  │
+ * │ (56px) │  (flexible)     │   or Code (toggle)   │
  * └────────┴─────────────────┴──────────────────────┘
+ *
+ * - Preview is shown by default
+ * - Code view is toggled via </> button in header
  */
 export const MaintenanceWorkspace: React.FC<MaintenanceWorkspaceProps> = ({ projectId }) => {
   const { goToProject, goToProjectList, goToMvp } = useProjectsNavigation();
   const { projects, loading, getProjectById } = useProjects();
   const [project, setProject] = useState<Project | undefined>(undefined);
-  const [activeTab, setActiveTab] = useState<MaintenanceTabType>('preview');
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
   const [sessionKey, setSessionKey] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
@@ -402,45 +401,9 @@ export const MaintenanceWorkspace: React.FC<MaintenanceWorkspaceProps> = ({ proj
               transition={{ duration: 0.2 }}
               className="h-full bg-background border-l border-border overflow-hidden flex flex-col shadow-[-2px_0_8px_rgba(0,0,0,0.08)]"
             >
-              {/* Header - Tabs */}
-              <div className="flex-shrink-0 border-b border-border bg-card/50">
-                <div className="flex">
-                  {/* 코드 탭 */}
-                  <button
-                    onClick={() => setActiveTab('code')}
-                    className={cn(
-                      "flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors border-b-2",
-                      activeTab === 'code'
-                        ? "border-primary text-primary bg-primary/5"
-                        : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                    )}
-                  >
-                    <Code className="w-4 h-4" />
-                    <span>코드</span>
-                  </button>
-
-                  {/* 프리뷰 탭 */}
-                  <button
-                    onClick={() => setActiveTab('preview')}
-                    className={cn(
-                      "flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium transition-colors border-b-2",
-                      activeTab === 'preview'
-                        ? "border-primary text-primary bg-primary/5"
-                        : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                    )}
-                  >
-                    <Monitor className="w-4 h-4" />
-                    <span>프리뷰</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Tab Content */}
+              {/* Panel Content - EnhancedPreviewPanel with built-in tabs (Preview, Problems, Code, Console) */}
               <div className="flex-1 overflow-hidden">
-                {activeTab === 'code' && (
-                  <FileExplorer rootPath={project?.path} />
-                )}
-                {activeTab === 'preview' && <EnhancedPreviewPanel projectPath={project?.path} />}
+                <EnhancedPreviewPanel projectPath={project?.path} />
               </div>
             </motion.div>
           </>

@@ -68,6 +68,7 @@ clap = { version = "4.0", features = ["derive"] }
 futures-util = "0.3"
 jsonwebtoken = "9"
 yup-oauth2 = "11"
+keyring = "2"
 # Pin image to avoid edition2024 requirement
 image = "=0.25.1"
 

@@ -2313,6 +2313,137 @@ export const api = {
   },
 };
 
+// ============================================================
+// Claude Auth Types
+// ============================================================
+
+/**
+ * Claude authentication status
+ */
+export interface ClaudeAuthStatus {
+  /** Whether user is authenticated */
+  is_authenticated: boolean;
+  /** Auth method: "oauth" | "api_key" | "none" */
+  auth_method: string;
+  /** Subscription type: "free" | "pro" | "max" */
+  subscription_type?: string;
+  /** Token expiry timestamp (ms) */
+  expires_at?: number;
+  /** Whether token is expired */
+  is_expired: boolean;
+  /** Display info string */
+  display_info?: string;
+  /** Error message if any */
+  error?: string;
+  /** Platform-specific note */
+  platform_note?: string;
+}
+
+/**
+ * API key validation result
+ */
+export interface ApiKeyValidationResult {
+  valid: boolean;
+  error?: string;
+}
+
+// ============================================================
+// Claude Auth API
+// ============================================================
+
+/**
+ * Claude Auth API for managing Claude Code CLI authentication
+ */
+export const claudeAuthApi = {
+  /**
+   * Check Claude Code authentication status
+   * @returns Promise resolving to auth status
+   */
+  async check(): Promise<ClaudeAuthStatus> {
+    try {
+      return await apiCall<ClaudeAuthStatus>('claude_auth_check');
+    } catch (error) {
+      console.error('Failed to check Claude auth:', error);
+      return {
+        is_authenticated: false,
+        auth_method: 'none',
+        is_expired: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  },
+
+  /**
+   * Open terminal to run claude login
+   * @returns Promise resolving when terminal is opened
+   */
+  async openTerminal(): Promise<void> {
+    try {
+      return await apiCall<void>('claude_auth_open_terminal');
+    } catch (error) {
+      console.error('Failed to open terminal:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Save API key to system keychain
+   * @param apiKey - The Anthropic API key
+   * @returns Promise resolving when key is saved
+   */
+  async saveApiKey(apiKey: string): Promise<void> {
+    try {
+      return await apiCall<void>('claude_auth_save_api_key', { apiKey });
+    } catch (error) {
+      console.error('Failed to save API key:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Delete stored API key
+   * @returns Promise resolving when key is deleted
+   */
+  async deleteApiKey(): Promise<void> {
+    try {
+      return await apiCall<void>('claude_auth_delete_api_key');
+    } catch (error) {
+      console.error('Failed to delete API key:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Validate an API key against Anthropic API
+   * @param apiKey - The API key to validate
+   * @returns Promise resolving to validation result
+   */
+  async validateApiKey(apiKey: string): Promise<ApiKeyValidationResult> {
+    try {
+      return await apiCall<ApiKeyValidationResult>('claude_auth_validate_api_key', { apiKey });
+    } catch (error) {
+      console.error('Failed to validate API key:', error);
+      return {
+        valid: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  },
+
+  /**
+   * Logout from Claude OAuth
+   * @returns Promise resolving when logout is complete
+   */
+  async logout(): Promise<void> {
+    try {
+      return await apiCall<void>('claude_auth_logout');
+    } catch (error) {
+      console.error('Failed to logout:', error);
+      throw error;
+    }
+  },
+};
+
 /**
  * Planning Documents API
  * For managing planning workflow documents in anyon-docs directory

@@ -39,6 +39,10 @@ use commands::mcp::{
     mcp_read_project_config, mcp_remove, mcp_reset_project_choices, mcp_save_project_config,
     mcp_serve, mcp_test_connection,
 };
+use commands::claude_auth::{
+    claude_auth_check, claude_auth_open_terminal, claude_auth_save_api_key,
+    claude_auth_delete_api_key, claude_auth_validate_api_key, claude_auth_logout,
+};
 
 use commands::preview::scan_ports;
 use commands::proxy::{apply_proxy_settings, get_proxy_settings, save_proxy_settings};
@@ -443,6 +447,13 @@ fn main() {
             commands::dev_server::stop_dev_server,
             commands::dev_server::get_dev_server_info,
             commands::dev_server::detect_package_manager,
+            // Claude Auth
+            claude_auth_check,
+            claude_auth_open_terminal,
+            claude_auth_save_api_key,
+            claude_auth_delete_api_key,
+            claude_auth_validate_api_key,
+            claude_auth_logout,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

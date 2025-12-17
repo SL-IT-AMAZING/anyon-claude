@@ -3,7 +3,7 @@ use axum::http::Method;
 use axum::{
     extract::{Path, State as AxumState, WebSocketUpgrade},
     response::{Html, Json, Response},
-    routing::get,
+    routing::{get, post, delete},
     Router,
 };
 use chrono;
@@ -206,6 +206,218 @@ async fn list_slash_commands() -> Json<ApiResponse<Vec<serde_json::Value>>> {
 /// MCP list servers - return empty for web mode
 async fn mcp_list() -> Json<ApiResponse<Vec<serde_json::Value>>> {
     Json(ApiResponse::success(vec![]))
+}
+
+// ============================================================
+// Claude Auth 웹 API 핸들러
+// ============================================================
+
+/// Claude 인증 상태 조회 (웹 모드)
+async fn get_claude_auth_status() -> Json<ApiResponse<serde_json::Value>> {
+    // 웹 모드에서도 파일 기반 credentials는 확인 가능
+    let home = match dirs::home_dir() {
+        Some(h) => h,
+        None => return Json(ApiResponse::error("홈 디렉토리를 찾을 수 없습니다.".to_string())),
+    };
+
+    let creds_path = home.join(".claude").join(".credentials.json");
+
+    if creds_path.exists() {
+        match std::fs::read_to_string(&creds_path) {
+            Ok(content) => {
+                match serde_json::from_str::<serde_json::Value>(&content) {
+                    Ok(creds) => {
+                        if let Some(oauth) = creds.get("claudeAiOauth") {
+                            let expires_at = oauth.get("expiresAt").and_then(|v| v.as_i64()).unwrap_or(0);
+                            let now = std::time::SystemTime::now()
+                                .duration_since(std::time::UNIX_EPOCH)
+                                .map(|d| d.as_millis() as i64)
+                                .unwrap_or(0);
+                            let is_expired = expires_at < now;
+
+                            let subscription_type = oauth.get("subscriptionType")
+                                .and_then(|v| v.as_str())
+                                .map(|s| s.to_string());
+
+                            let display_info = subscription_type.as_ref().map(|t| {
+                                match t.as_str() {
+                                    "max" => "Claude Max".to_string(),
+                                    "pro" => "Claude Pro".to_string(),
+                                    "free" => "무료 플랜".to_string(),
+                                    other => other.to_string(),
+                                }
+                            });
+
+                            return Json(ApiResponse::success(json!({
+                                "is_authenticated": !is_expired,
+                                "auth_method": "oauth",
+                                "subscription_type": subscription_type,
+                                "expires_at": expires_at,
+                                "is_expired": is_expired,
+                                "display_info": display_info,
+                                "error": null,
+                                "platform_note": "웹 모드 (파일 기반)"
+                            })));
+                        }
+                    }
+                    Err(_) => {}
+                }
+            }
+            Err(_) => {}
+        }
+    }
+
+    // credentials 파일이 없거나 읽기 실패
+    Json(ApiResponse::success(json!({
+        "is_authenticated": false,
+        "auth_method": "none",
+        "subscription_type": null,
+        "expires_at": null,
+        "is_expired": false,
+        "display_info": null,
+        "error": null,
+        "platform_note": "웹 모드에서는 ~/.claude/.credentials.json 파일만 확인 가능합니다."
+    })))
+}
+
+/// 터미널 로그인 - 웹 모드에서는 미지원 안내
+async fn claude_auth_terminal_login_web() -> Json<ApiResponse<serde_json::Value>> {
+    Json(ApiResponse::error(
+        "웹 모드에서는 터미널 로그인을 사용할 수 없습니다. 데스크톱 앱을 사용하거나, 서버 터미널에서 직접 'claude login'을 실행해주세요.".to_string()
+    ))
+}
+
+#[derive(Deserialize)]
+struct SaveApiKeyRequest {
+    api_key: String,
+}
+
+/// API 키 저장 (웹 모드)
+async fn claude_auth_save_api_key_web(
+    Json(payload): Json<SaveApiKeyRequest>
+) -> Json<ApiResponse<()>> {
+    if !payload.api_key.starts_with("sk-ant-") {
+        return Json(ApiResponse::error("API 키는 'sk-ant-'로 시작해야 합니다.".to_string()));
+    }
+
+    // 웹 모드에서는 keyring 대신 파일에 저장 (보안 주의 필요)
+    let home = match dirs::home_dir() {
+        Some(h) => h,
+        None => return Json(ApiResponse::error("홈 디렉토리를 찾을 수 없습니다.".to_string())),
+    };
+
+    let api_key_path = home.join(".claude").join(".anyon_api_key");
+
+    // 디렉토리 생성
+    if let Err(e) = std::fs::create_dir_all(home.join(".claude")) {
+        return Json(ApiResponse::error(format!("디렉토리 생성 실패: {}", e)));
+    }
+
+    // 파일에 저장 (권한 600)
+    if let Err(e) = std::fs::write(&api_key_path, &payload.api_key) {
+        return Json(ApiResponse::error(format!("API 키 저장 실패: {}", e)));
+    }
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        if let Ok(metadata) = std::fs::metadata(&api_key_path) {
+            let mut perms = metadata.permissions();
+            perms.set_mode(0o600);
+            let _ = std::fs::set_permissions(&api_key_path, perms);
+        }
+    }
+
+    Json(ApiResponse::success(()))
+}
+
+/// API 키 삭제 (웹 모드)
+async fn claude_auth_delete_api_key_web() -> Json<ApiResponse<()>> {
+    let home = match dirs::home_dir() {
+        Some(h) => h,
+        None => return Json(ApiResponse::error("홈 디렉토리를 찾을 수 없습니다.".to_string())),
+    };
+
+    let api_key_path = home.join(".claude").join(".anyon_api_key");
+
+    if api_key_path.exists() {
+        if let Err(e) = std::fs::remove_file(&api_key_path) {
+            return Json(ApiResponse::error(format!("API 키 삭제 실패: {}", e)));
+        }
+    }
+
+    Json(ApiResponse::success(()))
+}
+
+/// API 키 검증 (웹 모드)
+async fn claude_auth_validate_api_key_web(
+    Json(payload): Json<SaveApiKeyRequest>
+) -> Json<ApiResponse<serde_json::Value>> {
+    if !payload.api_key.starts_with("sk-ant-") {
+        return Json(ApiResponse::success(json!({
+            "valid": false,
+            "error": "API 키 형식이 올바르지 않습니다. 'sk-ant-'로 시작해야 합니다."
+        })));
+    }
+
+    let client = reqwest::Client::new();
+    match client
+        .get("https://api.anthropic.com/v1/models")
+        .header("x-api-key", &payload.api_key)
+        .header("anthropic-version", "2023-06-01")
+        .send()
+        .await
+    {
+        Ok(response) => {
+            match response.status().as_u16() {
+                200 => Json(ApiResponse::success(json!({
+                    "valid": true,
+                    "error": null
+                }))),
+                401 => Json(ApiResponse::success(json!({
+                    "valid": false,
+                    "error": "API 키가 유효하지 않습니다."
+                }))),
+                403 => Json(ApiResponse::success(json!({
+                    "valid": false,
+                    "error": "API 키가 비활성화되었거나 권한이 없습니다."
+                }))),
+                429 => Json(ApiResponse::success(json!({
+                    "valid": false,
+                    "error": "요청 한도 초과 또는 크레딧이 부족합니다."
+                }))),
+                status => Json(ApiResponse::success(json!({
+                    "valid": false,
+                    "error": format!("알 수 없는 오류 (HTTP {})", status)
+                }))),
+            }
+        }
+        Err(e) => Json(ApiResponse::error(format!("API 호출 실패: {}", e))),
+    }
+}
+
+/// Logout from Claude OAuth (web mode - file-based)
+async fn claude_auth_logout_web() -> Json<ApiResponse<()>> {
+    let home = match dirs::home_dir() {
+        Some(h) => h,
+        None => return Json(ApiResponse::error("홈 디렉토리를 찾을 수 없습니다.".to_string())),
+    };
+
+    // 1. credentials 파일 삭제
+    let creds_path = home.join(".claude").join(".credentials.json");
+    if creds_path.exists() {
+        if let Err(e) = std::fs::remove_file(&creds_path) {
+            return Json(ApiResponse::error(format!("credentials 파일 삭제 실패: {}", e)));
+        }
+    }
+
+    // 2. Anyon API key도 삭제 (웹 모드는 파일 기반)
+    let api_key_path = home.join(".claude").join(".anyon_api_key");
+    if api_key_path.exists() {
+        let _ = std::fs::remove_file(&api_key_path);
+    }
+
+    Json(ApiResponse::success(()))
 }
 
 /// Load session history from JSONL file
@@ -809,6 +1021,13 @@ pub async fn create_web_server(port: u16) -> Result<(), Box<dyn std::error::Erro
         .route("/api/slash-commands", get(list_slash_commands))
         // MCP
         .route("/api/mcp/servers", get(mcp_list))
+        // Claude Auth
+        .route("/api/claude-auth/status", get(get_claude_auth_status))
+        .route("/api/claude-auth/terminal-login", post(claude_auth_terminal_login_web))
+        .route("/api/claude-auth/api-key", post(claude_auth_save_api_key_web))
+        .route("/api/claude-auth/api-key", delete(claude_auth_delete_api_key_web))
+        .route("/api/claude-auth/validate", post(claude_auth_validate_api_key_web))
+        .route("/api/claude-auth/logout", post(claude_auth_logout_web))
         // Session history
         .route(
             "/api/sessions/{session_id}/history/{project_id}",

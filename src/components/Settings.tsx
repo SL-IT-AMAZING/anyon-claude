@@ -32,6 +32,7 @@ import {
   GitBranch,
   Loader2,
   Cpu,
+  Key,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -48,6 +49,7 @@ import { ClaudeVersionSelector } from "./ClaudeVersionSelector";
 import { HooksEditor } from "./HooksEditor";
 import { ProxySettings } from "./ProxySettings";
 import { CCAgents } from "./CCAgents";
+import { ClaudeAuthSettings } from "./ClaudeAuthSettings";
 import { useTheme, useTrackEvent, useTranslation } from "@/hooks";
 import { analytics } from "@/lib/analytics";
 import { TabPersistenceService } from "@/services/tabPersistence";
@@ -72,6 +74,7 @@ interface EnvironmentVariable {
 type SettingsSection =
   | "appearance"
   | "privacy"
+  | "ai-auth"
   | "ai-version"
   | "ai-behavior"
   | "ai-permissions"
@@ -142,6 +145,7 @@ export const Settings: React.FC<SettingsProps> = ({
   const navItems: NavItem[] = [
     { id: "appearance", label: t('settings.simple.appearance'), icon: Palette, category: "general" },
     { id: "privacy", label: t('settings.simple.privacy'), icon: Shield, category: "general" },
+    { id: "ai-auth", label: t('settings.claudeAuth.title'), icon: Key, category: "ai" },
     { id: "ai-version", label: t('settings.ai.version'), icon: Bot, category: "ai" },
     { id: "ai-behavior", label: t('settings.ai.behavior'), icon: MessageSquare, category: "ai" },
     { id: "ai-permissions", label: t('settings.ai.permissions'), icon: Shield, category: "ai" },
@@ -600,6 +604,13 @@ export const Settings: React.FC<SettingsProps> = ({
               </div>
             </div>
           </div>
+        );
+
+      case "ai-auth":
+        return (
+          <ClaudeAuthSettings
+            setToast={setToast}
+          />
         );
 
       case "ai-version":
