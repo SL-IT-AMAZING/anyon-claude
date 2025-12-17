@@ -331,49 +331,28 @@ fn create_system_command(claude_path: &str, args: Vec<String>, project_path: &st
 /// This is used on Windows to avoid command line length limits for long prompts
 fn create_system_command_with_stdin(
     claude_path: &str,
-    mut args: Vec<String>,
+    args: Vec<String>,
     project_path: &str,
-    prompt: &str,
+    _prompt: &str,
 ) -> Result<Command, String> {
-    use std::io::Write;
-
-    // Create a temporary file for the prompt
-    let temp_dir = std::env::temp_dir();
-    let temp_file_path = temp_dir.join(format!("claude_prompt_{}.txt", uuid::Uuid::new_v4()));
-
-    // Write prompt to temp file
-    let mut temp_file = std::fs::File::create(&temp_file_path)
-        .map_err(|e| format!("Failed to create temp file: {}", e))?;
-    temp_file.write_all(prompt.as_bytes())
-        .map_err(|e| format!("Failed to write to temp file: {}", e))?;
-    temp_file.flush()
-        .map_err(|e| format!("Failed to flush temp file: {}", e))?;
-
-    log::info!("Created temporary prompt file: {}", temp_file_path.display());
-
-    // Use -f flag to read from file instead of -p for inline prompt
-    args.insert(0, temp_file_path.to_string_lossy().to_string());
-    args.insert(0, "-f".to_string());
-
+    // stdin은 spawn_claude_process에서 직접 처리
     let mut cmd = create_command_with_env(claude_path);
-
-    // Add all arguments
+    
     for arg in args {
         cmd.arg(arg);
     }
-
+    
     cmd.current_dir(project_path)
-        .stdin(Stdio::null())
+        .stdin(Stdio::piped())  // stdin 파이프 열기
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
-
-    // Windows: Hide console window
+    
     #[cfg(target_os = "windows")]
     {
         const CREATE_NO_WINDOW: u32 = 0x08000000;
         cmd.creation_flags(CREATE_NO_WINDOW);
     }
-
+    
     Ok(cmd)
 }
 
@@ -1377,12 +1356,23 @@ async fn spawn_claude_process(
     project_path: String,
 ) -> Result<(), String> {
     use std::sync::Mutex;
-    use tokio::io::{AsyncBufReadExt, BufReader};
+    use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 
     // Spawn the process
     let mut child = cmd
         .spawn()
         .map_err(|e| format!("Failed to spawn Claude: {}", e))?;
+
+    // stdin이 있으면 프롬프트 작성 (stdin 사용 모드일 때)
+    if let Some(mut stdin) = child.stdin.take() {
+        log::info!("Writing prompt to stdin ({} bytes)", prompt.len());
+        stdin.write_all(prompt.as_bytes()).await
+            .map_err(|e| format!("Failed to write to stdin: {}", e))?;
+        stdin.flush().await
+            .map_err(|e| format!("Failed to flush stdin: {}", e))?;
+        drop(stdin); // stdin 닫기 (EOF 전송)
+        log::info!("Prompt written to stdin successfully");
+    }
 
     // Get stdout and stderr
     let stdout = child.stdout.take().ok_or("Failed to get stdout")?;
