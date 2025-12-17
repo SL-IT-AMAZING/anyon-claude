@@ -1,11 +1,11 @@
 # PM Opensource - Open Source Repository Clone Workflow
 name: "pm-opensource"
-description: "PRD 문서에서 오픈소스 레포지토리 정보를 찾아 현재 작업 디렉토리에 clone한 후, PRD에 clone 경로를 업데이트합니다. PM Orchestrator 실행 전에 수행합니다."
+description: "anyon-docs/planning/open-source.md 문서를 읽고 필요한 오픈소스 레포지토리들을 현재 작업 디렉토리에 clone한 후, 문서에 clone 경로를 업데이트합니다. PM Orchestrator 실행 전에 수행합니다."
 author: "Anyon"
 
 # Critical variables from config
 config_source: "{project-root}/.anyon/anyon-method/config.yaml"
-output_folder: "{project-root}/anyon-docs/planning"
+output_folder: "{config_source}:output_folder"
 user_name: "{config_source}:user_name"
 communication_language: "{config_source}:communication_language"
 date: system-generated
@@ -16,8 +16,8 @@ template: false
 instructions: "{installed_path}/instructions.md"
 validation: "{installed_path}/checklist.md"
 
-# Input/Output document - PRD 파일 사용
-prd_doc: "{output_folder}/prd.md"
+# Input document
+opensource_doc: "{project-root}/anyon-docs/planning/open-source.md"
 
 # Clone location - 현재 작업 디렉토리 (Claude Code 실행 위치)
 clone_base_path: "{project-root}"

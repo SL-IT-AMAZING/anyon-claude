@@ -67,8 +67,12 @@ input_file_patterns:
     required: true
     description: "기술 스택, 기술 요구사항, 성능 지표"
 
-  # 오픈소스 정보는 PRD에 포함되어 있음 (pm-opensource가 PRD를 업데이트)
-  # 별도 파일 필요 없음 - PRD의 Open Source References 섹션 참조
+  # 실제 파일명: open-source.md
+  open_source:
+    whole: "{project-root}/anyon-docs/planning/open-source.md"
+    load_strategy: FULL_LOAD
+    required: false
+    description: "Clone된 오픈소스 레포지토리 정보 - 참조할 코드베이스"
 
 # Output configuration
 # 출력 경로: {project-root}/anyon-docs/dev-plan/

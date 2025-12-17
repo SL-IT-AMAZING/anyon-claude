@@ -1,0 +1,76 @@
+# Founder PRD - 비개발자 창업자를 위한 PRD 작성 워크플로우
+name: "founder-prd"
+description: "비개발자 창업자를 위한 대화형 PRD 작성 워크플로우. 투자자 관점의 날카로운 질문과 구체적인 객관식 선지를 통해 개발에 필요한 제품 요구사항을 정의합니다."
+author: "Anyon"
+
+# Critical variables from config
+config_source: "{project-root}/.anyon/anyon-method/config.yaml"
+user_name: "{config_source}:user_name"
+communication_language: "{config_source}:communication_language"
+date: system-generated
+
+# Module path and component files
+installed_path: "{project-root}/.anyon/anyon-method/workflows/founder-prd"
+template: "{installed_path}/template.md"
+instructions: "{installed_path}/instructions.md"
+validation: "{installed_path}/checklist.md"
+
+# Output configuration - 고정 경로
+default_output_file: "{project-root}/anyon-docs/planning/prd.md"
+
+# Tool Requirements
+required_tools:
+  - "WebSearch":
+      description: "경쟁사 분석을 위한 웹 검색 도구. 시장 현황과 경쟁 서비스를 자동으로 리서치합니다."
+      mandatory: true
+
+# PRD 섹션 구성
+prd_sections:
+  - id: "product_overview"
+    name: "제품 개요"
+    order: 1
+  - id: "core_problem"
+    name: "핵심 문제"
+    order: 2
+  - id: "target_user"
+    name: "타겟 사용자"
+    order: 3
+  - id: "competitor_analysis"
+    name: "경쟁사 분석"
+    order: 4
+    requires_web_search: true
+  - id: "core_features"
+    name: "핵심 기능 목록"
+    order: 5
+  - id: "mvp_scope"
+    name: "MVP 범위"
+    order: 6
+  - id: "user_flow"
+    name: "사용자 플로우"
+    order: 7
+
+# 질문 생성 규칙
+question_rules:
+  min_options: 4
+  max_options: 8
+  allow_multiple_selection: true
+  show_recommendation: true
+  recommendation_marker: "(추천)"
+  always_include_other: true
+  other_option_text: "기타 (직접 입력)"
+  questions_per_section:
+    min: 2
+    max: 5
+
+# AI 페르소나
+ai_persona:
+  role: "스타트업 투자 경험이 있는 비즈니스 전문가"
+  tone: "투자자 관점으로 날카롭고 핵심을 찌르는 질문"
+  principles:
+    - "모든 선지는 구체적 수치나 사례를 포함해야 함"
+    - "모호한 표현 금지 (예: '더 좋은', '편리한' 등)"
+    - "창업자가 미처 생각 못한 부분을 짚어주기"
+    - "시장에서 검증된 실제 옵션들로 선지 구성"
+
+# Invocation control
+standalone: true

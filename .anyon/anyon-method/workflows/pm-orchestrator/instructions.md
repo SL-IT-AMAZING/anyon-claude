@@ -98,12 +98,12 @@
 
 <step n="0a" goal="Clone된 오픈소스 레포 분석 및 활용 계획 수립">
 
-<action>PRD 문서에서 Open Source References 섹션 확인</action>
+<action>open-source.md 문서 확인</action>
 
-<check if="PRD에 Open Source References 섹션 존재">
+<check if="open-source.md exists">
   <action>🔍 **Clone된 오픈소스 레포지토리 분석**:
 
-PRD의 Open Source References 섹션에서 Clone된 레포 정보 추출:
+open-source.md에서 Clone된 레포 정보 추출:
 - 레포 이름
 - Clone 경로
 - 용도/목적 설명
@@ -205,8 +205,8 @@ Clone된 오픈소스 레포지토리들을 분석하고, 프로젝트에서 어
   </action>
 </check>
 
-<check if="PRD에 Open Source References 섹션 없음">
-  <action>ℹ️ PRD에 Open Source References 섹션이 없습니다. 외부 오픈소스 참조 없이 진행합니다.</action>
+<check if="open-source.md not exists">
+  <action>ℹ️ open-source.md 문서가 없습니다. 외부 오픈소스 참조 없이 진행합니다.</action>
 </check>
 
 </step>
