@@ -403,7 +403,7 @@ export const MaintenanceWorkspace: React.FC<MaintenanceWorkspaceProps> = ({ proj
             >
               {/* Panel Content - EnhancedPreviewPanel with built-in tabs (Preview, Problems, Code, Console) */}
               <div className="flex-1 overflow-hidden">
-                <EnhancedPreviewPanel projectPath={project?.path} />
+                <EnhancedPreviewPanel projectPath={project?.path} projectId={project?.id} />
               </div>
             </motion.div>
           </>

@@ -578,20 +578,47 @@ pub async fn detect_package_manager(project_path: String) -> Result<String, Stri
 pub async fn start_dev_server(
     app: AppHandle,
     project_path: String,
+    project_id: Option<String>,
 ) -> Result<(), String> {
     log::info!("Starting dev server for: {}", project_path);
+
+    // Calculate fixed port if project_id is provided
+    let fixed_port = project_id.as_ref().map(|id| {
+        let hash = id.chars().fold(0u32, |acc, c| {
+            acc.wrapping_mul(31).wrapping_add(c as u32)
+        });
+        32100 + (hash % 10000) as u16
+    });
+
+    if let Some(port) = fixed_port {
+        log::info!("Using fixed port: {}", port);
+    } else {
+        log::info!("No project_id provided, using dynamic port detection");
+    }
 
     // Detect package manager
     let pm = detect_package_manager(project_path.clone()).await?;
     log::info!("Using package manager: {}", pm);
 
-    // Build command
-    let (cmd, args) = match pm.as_str() {
+    // Build command with port option
+    let (cmd, base_args) = match pm.as_str() {
         "bun" => ("bun", vec!["run", "dev"]),
         "pnpm" => ("pnpm", vec!["run", "dev"]),
         "yarn" => ("yarn", vec!["dev"]),
         _ => ("npm", vec!["run", "dev"]),
     };
+
+    // Build args list with port if available
+    let port_str = fixed_port.map(|p| p.to_string());
+    let mut args: Vec<&str> = base_args;
+
+    // Add port argument if fixed port is available
+    // This works for most frameworks: Vite, Next.js, Create React App, etc.
+    if let Some(ref port_string) = port_str {
+        args.push("--");
+        args.push("--port");
+        args.push(port_string.as_str());
+    }
 
     // Start process
     let process = Command::new(cmd)
@@ -605,14 +632,23 @@ pub async fn start_dev_server(
     let pid = process.id();
     let stop_flag = Arc::new(Mutex::new(false));
 
-    // Create entry
+    // Create entry with fixed port if available
+    let (initial_port, initial_proxy_port, initial_urls) = if let Some(port) = fixed_port {
+        let proxy_port = find_available_port(port + 10000);
+        let original_url = Some(format!("http://localhost:{}", port));
+        let proxy_url = proxy_port.map(|p| format!("http://localhost:{}", p));
+        (Some(port), proxy_port, (original_url, proxy_url))
+    } else {
+        (None, None, (None, None))
+    };
+
     let info = DevServerInfo {
         project_path: project_path.clone(),
         pid,
-        detected_port: None,
-        original_url: None,
-        proxy_port: None,
-        proxy_url: None,
+        detected_port: initial_port,
+        original_url: initial_urls.0,
+        proxy_port: initial_proxy_port,
+        proxy_url: initial_urls.1,
     };
 
     let entry = DevServerEntry {
@@ -626,6 +662,23 @@ pub async fn start_dev_server(
     {
         let mut servers = DEV_SERVERS.lock().unwrap();
         servers.servers.insert(project_path.clone(), entry);
+    }
+
+    // If we have a fixed port, start proxy immediately and notify
+    if let (Some(port), Some(proxy_port)) = (initial_port, initial_proxy_port) {
+        let proxy_stop = stop_flag.clone();
+        thread::spawn(move || {
+            run_proxy_server(proxy_port, "localhost".to_string(), port, proxy_stop);
+        });
+
+        // Notify frontend immediately
+        let _ = app.emit("dev-server-output", DevServerOutput {
+            project_path: project_path.clone(),
+            output_type: "port-detected".to_string(),
+            message: format!("Dev server configured to use port {}", port),
+            port: Some(port),
+            proxy_url: Some(format!("http://localhost:{}", proxy_port)),
+        });
     }
 
     // Spawn thread to read output
@@ -659,38 +712,47 @@ pub async fn start_dev_server(
                                         proxy_url: None,
                                     });
 
-                                    // Try to detect port
-                                    if let Some(port) = detect_dev_server_port(&output) {
-                                        log::info!("Detected dev server port: {}", port);
+                                    // Try to detect port (only if not already set with fixed port)
+                                    let port_already_set = {
+                                        let servers = DEV_SERVERS.lock().unwrap();
+                                        servers.servers.get(&project)
+                                            .and_then(|e| e.info.detected_port)
+                                            .is_some()
+                                    };
 
-                                        // Start proxy server
-                                        if let Some(proxy_port) = find_available_port(port + 10000) {
-                                            let stop_flag = {
-                                                let mut servers = DEV_SERVERS.lock().unwrap();
-                                                if let Some(entry) = servers.servers.get_mut(&project) {
-                                                    entry.info.detected_port = Some(port);
-                                                    entry.info.original_url = Some(format!("http://localhost:{}", port));
-                                                    entry.info.proxy_port = Some(proxy_port);
-                                                    entry.info.proxy_url = Some(format!("http://localhost:{}", proxy_port));
-                                                    entry.stop_flag.clone()
-                                                } else {
-                                                    return;
-                                                }
-                                            };
+                                    if !port_already_set {
+                                        if let Some(port) = detect_dev_server_port(&output) {
+                                            log::info!("Detected dev server port from output: {}", port);
 
-                                            // Start proxy in background
-                                            let proxy_stop = stop_flag.clone();
-                                            thread::spawn(move || {
-                                                run_proxy_server(proxy_port, "localhost".to_string(), port, proxy_stop);
-                                            });
+                                            // Start proxy server
+                                            if let Some(proxy_port) = find_available_port(port + 10000) {
+                                                let stop_flag = {
+                                                    let mut servers = DEV_SERVERS.lock().unwrap();
+                                                    if let Some(entry) = servers.servers.get_mut(&project) {
+                                                        entry.info.detected_port = Some(port);
+                                                        entry.info.original_url = Some(format!("http://localhost:{}", port));
+                                                        entry.info.proxy_port = Some(proxy_port);
+                                                        entry.info.proxy_url = Some(format!("http://localhost:{}", proxy_port));
+                                                        entry.stop_flag.clone()
+                                                    } else {
+                                                        return;
+                                                    }
+                                                };
 
-                                            let _ = app.emit("dev-server-output", DevServerOutput {
-                                                project_path: project.clone(),
-                                                output_type: "port-detected".to_string(),
-                                                message: format!("Dev server ready at http://localhost:{}", port),
-                                                port: Some(port),
-                                                proxy_url: Some(format!("http://localhost:{}", proxy_port)),
-                                            });
+                                                // Start proxy in background
+                                                let proxy_stop = stop_flag.clone();
+                                                thread::spawn(move || {
+                                                    run_proxy_server(proxy_port, "localhost".to_string(), port, proxy_stop);
+                                                });
+
+                                                let _ = app.emit("dev-server-output", DevServerOutput {
+                                                    project_path: project.clone(),
+                                                    output_type: "port-detected".to_string(),
+                                                    message: format!("Dev server ready at http://localhost:{}", port),
+                                                    port: Some(port),
+                                                    proxy_url: Some(format!("http://localhost:{}", proxy_port)),
+                                                });
+                                            }
                                         }
                                     }
                                 }

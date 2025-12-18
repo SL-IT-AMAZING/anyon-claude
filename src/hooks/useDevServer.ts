@@ -31,7 +31,10 @@ interface DevServerInfo {
  * Dev server 관리 훅
  * 프로젝트 열 때 자동으로 dev server 시작하고 프록시 URL 연결
  */
-export function useDevServer(projectPath: string | undefined) {
+export function useDevServer(
+  projectPath: string | undefined,
+  projectId?: string | undefined
+) {
   const {
     setDevServerRunning,
     setDevServerPort,
@@ -53,13 +56,18 @@ export function useDevServer(projectPath: string | undefined) {
       const pm = await invoke<string>('detect_package_manager', { projectPath });
       setPackageManager(pm);
 
-      // Dev server 시작
-      await invoke('start_dev_server', { projectPath });
+      // Dev server 시작 (projectId 전달하여 고정 포트 사용)
+      await invoke('start_dev_server', {
+        projectPath,
+        projectId: projectId || null,
+      });
 
       setDevServerRunning(true);
       addAppOutput({
         type: 'info',
-        message: `[anyon] Starting dev server with ${pm}...`,
+        message: projectId
+          ? `[anyon] Starting dev server with ${pm} (fixed port mode)...`
+          : `[anyon] Starting dev server with ${pm}...`,
         timestamp: Date.now(),
         projectPath,
       });
@@ -74,7 +82,7 @@ export function useDevServer(projectPath: string | undefined) {
     } finally {
       setIsLoading(false);
     }
-  }, [projectPath, setDevServerRunning, setPackageManager, setIsLoading, addAppOutput]);
+  }, [projectPath, projectId, setDevServerRunning, setPackageManager, setIsLoading, addAppOutput]);
 
   // Dev server 중지
   const stopDevServer = useCallback(async () => {

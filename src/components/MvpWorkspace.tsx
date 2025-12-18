@@ -592,6 +592,7 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
                 {activeTab === 'preview' && (
                   <EnhancedPreviewPanel
                     projectPath={project?.path}
+                    projectId={project?.id}
                     htmlFilePath={workflowPreviewPath || undefined}
                   />
                 )}

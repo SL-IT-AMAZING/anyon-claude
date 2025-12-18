@@ -75,6 +75,8 @@ interface EnhancedPreviewPanelProps {
   htmlFilePath?: string;
   /** Project root path for resolving relative paths in HTML */
   projectPath?: string;
+  /** Project ID for fixed port allocation */
+  projectId?: string;
   /** Callback when element is selected in selector mode */
   onElementSelected?: (element: SelectedElement | null) => void;
   /** Callback when element action is triggered */
@@ -90,6 +92,7 @@ interface EnhancedPreviewPanelProps {
 export const EnhancedPreviewPanel: React.FC<EnhancedPreviewPanelProps> = ({
   htmlFilePath,
   projectPath,
+  projectId,
   onElementSelected,
   onElementAction: _onElementAction,
   onAIFix,
@@ -116,7 +119,7 @@ export const EnhancedPreviewPanel: React.FC<EnhancedPreviewPanelProps> = ({
   // 메시지 훅
   usePreviewMessages();
   const { isSelectorActive, isComponentSelectorInitialized } = useComponentSelectorShortcut();
-  const { startDevServer, stopDevServer } = useDevServer(projectPath);
+  const { startDevServer, stopDevServer } = useDevServer(projectPath, projectId);
 
   // 로컬 상태
   const [sourceMode, setSourceMode] = useState<'port' | 'file'>(htmlFilePath ? 'file' : 'port');
@@ -325,6 +328,41 @@ export const EnhancedPreviewPanel: React.FC<EnhancedPreviewPanelProps> = ({
       return () => clearInterval(interval);
     }
   }, [sourceMode, devServerProxyUrl]);
+
+  // AI가 코드 생성 후 package.json 생성 감지
+  useEffect(() => {
+    if (!projectPath || !isTauri) return;
+    if (devServerRunning || sourceMode === 'port') return; // 이미 실행 중이면 체크 안 함
+
+    let checkCount = 0;
+    const maxChecks = 30; // 최대 1분 (2초 * 30)
+
+    const checkInterval = setInterval(async () => {
+      checkCount++;
+
+      try {
+        const hasPackageJson = await invoke<boolean>('check_file_exists', {
+          filePath: `${projectPath}/package.json`
+        });
+
+        if (hasPackageJson) {
+          console.log('[Preview] package.json detected, starting dev server automatically');
+          clearInterval(checkInterval);
+          setSourceMode('port');
+          startDevServer();
+        }
+
+        // 1분 후 체크 중단
+        if (checkCount >= maxChecks) {
+          clearInterval(checkInterval);
+        }
+      } catch (err) {
+        console.error('[Preview] Failed to check package.json:', err);
+      }
+    }, 2000); // 2초마다 체크
+
+    return () => clearInterval(checkInterval);
+  }, [projectPath, devServerRunning, sourceMode, startDevServer]);
 
   const scanPorts = async () => {
     try {
