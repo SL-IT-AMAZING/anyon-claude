@@ -58,6 +58,9 @@ interface PreviewState {
   devServerProxyUrl: string | null;
   packageManager: string | null;
 
+  // 현재 FileExplorer에서 열린 파일
+  currentEditorFile: string | null;
+
   // Actions
   setPreviewMode: (mode: PreviewMode) => void;
   setIsPreviewOpen: (isOpen: boolean) => void;
@@ -105,6 +108,9 @@ interface PreviewState {
   setDevServerProxyUrl: (url: string | null) => void;
   setPackageManager: (pm: string | null) => void;
 
+  // 현재 에디터 파일
+  setCurrentEditorFile: (filePath: string | null) => void;
+
   // iframe 메시지 전송
   postMessageToIframe: (message: { type: string; [key: string]: unknown }) => void;
 
@@ -140,6 +146,7 @@ const previewStore: StateCreator<
   devServerPort: null,
   devServerProxyUrl: null,
   packageManager: null,
+  currentEditorFile: null,
 
   // 프리뷰 모드 설정
   setPreviewMode: (mode) => set({ previewMode: mode }),
@@ -214,6 +221,9 @@ const previewStore: StateCreator<
   setDevServerPort: (port) => set({ devServerPort: port }),
   setDevServerProxyUrl: (url) => set({ devServerProxyUrl: url, appUrl: url }),
   setPackageManager: (pm) => set({ packageManager: pm }),
+
+  // 현재 에디터 파일
+  setCurrentEditorFile: (filePath) => set({ currentEditorFile: filePath }),
 
   // iframe 메시지 전송
   postMessageToIframe: (message) => {

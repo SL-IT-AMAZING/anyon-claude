@@ -35,14 +35,15 @@ export function usePlanningDocs(projectPath: string | undefined): UsePlanningDoc
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const docsDir = projectPath ? `${projectPath}/${ANYON_DOCS_DIR}` : '';
-
   const checkDocuments = useCallback(async () => {
     if (!projectPath) {
       setDocuments([]);
       setIsLoading(false);
       return;
     }
+
+    // docsDir을 함수 내부에서 계산 - dependency 문제 해결
+    const docsDir = `${projectPath}/${ANYON_DOCS_DIR}`;
 
     try {
       // First, get list of existing files in anyon-docs
@@ -87,7 +88,7 @@ export function usePlanningDocs(projectPath: string | undefined): UsePlanningDoc
     } finally {
       setIsLoading(false);
     }
-  }, [projectPath, docsDir]);
+  }, [projectPath]);
 
   // Initial load and polling (every 2 seconds - same as anyon-mvp)
   useEffect(() => {

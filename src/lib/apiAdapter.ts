@@ -341,7 +341,7 @@ async function handleStreamingCommand<T>(command: string, params?: any): Promise
     console.log(`[TRACE]   command: ${command}`);
     console.log(`[TRACE]   params:`, params);
     console.log(`[TRACE]   WebSocket URL: ${wsUrl}`);
-    
+
     const ws = new WebSocket(wsUrl);
     
     ws.onopen = () => {
@@ -396,14 +396,14 @@ async function handleStreamingCommand<T>(command: string, params?: any): Promise
           }
         } else if (message.type === 'completion') {
           console.log(`[TRACE] Completion message:`, message);
-          
+
           // Dispatch claude-complete event for UI state management
           const completeEvent = new CustomEvent('claude-complete', {
             detail: message.status === 'success'
           });
           console.log(`[TRACE] Dispatching claude-complete event:`, completeEvent.detail);
           window.dispatchEvent(completeEvent);
-          
+
           ws.close();
           if (message.status === 'success') {
             console.log(`[TRACE] Resolving promise with success`);
@@ -414,14 +414,14 @@ async function handleStreamingCommand<T>(command: string, params?: any): Promise
           }
         } else if (message.type === 'error') {
           console.log(`[TRACE] Error message:`, message);
-          
+
           // Dispatch claude-error event for UI error handling
           const errorEvent = new CustomEvent('claude-error', {
             detail: message.message || 'Unknown error'
           });
           console.log(`[TRACE] Dispatching claude-error event:`, errorEvent.detail);
           window.dispatchEvent(errorEvent);
-          
+
           reject(new Error(message.message || 'Unknown error'));
         } else {
           console.log(`[TRACE] Unknown message type: ${message.type}`);
@@ -434,20 +434,20 @@ async function handleStreamingCommand<T>(command: string, params?: any): Promise
     
     ws.onerror = (error) => {
       console.error('[TRACE] WebSocket error:', error);
-      
+
       // Dispatch claude-error event for connection errors
       const errorEvent = new CustomEvent('claude-error', {
         detail: 'WebSocket connection failed'
       });
       console.log(`[TRACE] Dispatching claude-error event for WebSocket error`);
       window.dispatchEvent(errorEvent);
-      
+
       reject(new Error('WebSocket connection failed'));
     };
-    
+
     ws.onclose = (event) => {
       console.log(`[TRACE] WebSocket closed - code: ${event.code}, reason: ${event.reason}`);
-      
+
       // If connection closed unexpectedly (not a normal close), dispatch cancelled event
       if (event.code !== 1000 && event.code !== 1001) {
         const cancelEvent = new CustomEvent('claude-complete', {

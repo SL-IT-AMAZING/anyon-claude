@@ -111,6 +111,7 @@ export const EnhancedPreviewPanel: React.FC<EnhancedPreviewPanelProps> = ({
     packageManager,
     isLoading,
     setSelectorActive,
+    currentEditorFile,
   } = usePreviewStore();
 
   // 메시지 훅
@@ -174,6 +175,40 @@ export const EnhancedPreviewPanel: React.FC<EnhancedPreviewPanelProps> = ({
       loadHtmlFile(htmlFilePath);
     }
   }, [htmlFilePath]);
+
+  // Dev server 우선순위 - 실행 중이면 자동으로 Port 모드로 전환
+  useEffect(() => {
+    if (devServerRunning && devServerProxyUrl) {
+      console.log('[Preview] Dev server detected, switching to port mode:', devServerProxyUrl);
+      setSourceMode('port');
+      setCurrentUrl(devServerProxyUrl);
+    }
+  }, [devServerRunning, devServerProxyUrl]);
+
+  // FileExplorer에서 파일 선택 감지 - 자동으로 Preview 전환
+  useEffect(() => {
+    if (!currentEditorFile) return;
+
+    // HTML 파일인지 확인
+    if (currentEditorFile.endsWith('.html')) {
+      console.log('[Preview] HTML file detected from FileExplorer:', currentEditorFile);
+
+      // Dev server가 실행 중이면 Port 모드 우선
+      if (devServerRunning && devServerProxyUrl) {
+        console.log('[Preview] Dev server running, keeping port mode');
+        // Port 모드 유지, 나중에 URL path 업데이트 로직 추가 가능
+        return;
+      }
+
+      // File 모드로 전환
+      if (currentFilePath !== currentEditorFile) {
+        console.log('[Preview] Switching to file mode for:', currentEditorFile);
+        setSourceMode('file');
+        setCurrentFilePath(currentEditorFile);
+        loadHtmlFile(currentEditorFile);
+      }
+    }
+  }, [currentEditorFile, devServerRunning, devServerProxyUrl, currentFilePath]);
 
   const loadHtmlFile = async (filePath: string) => {
     console.log('[Preview] loadHtmlFile called:', { filePath, isTauri, projectPath });

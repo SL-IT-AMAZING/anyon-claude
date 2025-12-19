@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 import { SplitPane } from '@/components/ui/split-pane';
 import { FileTree } from '@/components/FileTree';
 import { useTheme } from '@/hooks/useTheme';
+import { usePreviewStore } from '@/stores/previewStore';
 
 interface FileExplorerProps {
   /**
@@ -77,6 +78,9 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
+  // PreviewStore에서 setCurrentEditorFile 가져오기
+  const setCurrentEditorFile = usePreviewStore((state) => state.setCurrentEditorFile);
+
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [fileContent, setFileContent] = useState<string | null>(null);
   const [isLoadingFile, setIsLoadingFile] = useState(false);
@@ -87,6 +91,10 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
     setIsLoadingFile(true);
     setFileError(null);
 
+    // PreviewStore 업데이트 - Preview가 이 파일을 추적할 수 있도록
+    setCurrentEditorFile(filePath);
+    console.log('[FileExplorer] File selected, updating PreviewStore:', filePath);
+
     try {
       const content = await api.readFileContent(filePath);
       setFileContent(content);
@@ -96,7 +104,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
     } finally {
       setIsLoadingFile(false);
     }
-  }, []);
+  }, [setCurrentEditorFile]);
 
   const detectedLanguage = selectedFile ? getLanguageFromPath(selectedFile) : 'text';
 
