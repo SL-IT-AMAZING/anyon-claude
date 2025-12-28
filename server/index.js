@@ -1041,14 +1041,15 @@ app.get('/api/claude/status', (req, res) => {
 const server = app.listen(PORT, () => {
   console.log(`\n🚀 Auth Server running on http://localhost:${PORT}`);
   console.log(`📦 Environment: ${NODE_ENV}`);
-  console.log(`🔐 Google OAuth: ${process.env.GOOGLE_CLIENT_ID ? '✅ Configured' : '❌ Not configured'}`);
   console.log(`🤖 Gemini AI: ${process.env.GEMINI_API_KEY ? '✅ Configured' : '❌ Not configured'}`);
   console.log(`🧠 Claude API: ${process.env.ANYON_ANTHROPIC_API_KEY ? '✅ Configured' : '❌ Not configured'}`);
+  console.log(`📧 SMTP: ${process.env.SMTP_HOST ? '✅ Configured' : '❌ Not configured'}`);
   console.log(`\n📝 Development endpoints:`);
   console.log(`   POST /dev/create-user - Create test user`);
   console.log(`   GET  /dev/users - List all users`);
   console.log(`\n🔐 Auth endpoints:`);
-  console.log(`   GET  /auth/google/url - Get OAuth URL`);
+  console.log(`   POST /auth/register - Register with email/password`);
+  console.log(`   POST /auth/login - Login with email/password`);
   console.log(`   GET  /auth/me - Get current user`);
   console.log(`   GET  /auth/verify - Verify token`);
   console.log(`   POST /auth/logout - Logout (invalidate token)`);

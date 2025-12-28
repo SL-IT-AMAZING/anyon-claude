@@ -10,6 +10,7 @@ import logo4 from '@/assets/logo4.png';
 
 export const LoginPage: React.FC = () => {
   const login = useAuthStore((state) => state.login);
+  const devLogin = useAuthStore((state) => state.devLogin);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -37,24 +38,12 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const handleDevLogin = async () => {
+  const handleDevLogin = () => {
     try {
       setIsLoading(true);
       setError(null);
-
-      const response = await tauriFetch(`${API_URL}/auth/dev/login`, {
-        method: 'POST',
-      });
-
-      if (!response.ok) {
-        throw new Error('Dev login failed');
-      }
-
-      const data = await response.json();
-      if (data.token) {
-        console.log('Dev Login successful!');
-        await login(data.token);
-      }
+      devLogin();
+      console.log('Dev Login successful!');
     } catch (error) {
       console.error('Dev login failed:', error);
       setError('Dev 로그인에 실패했습니다.');

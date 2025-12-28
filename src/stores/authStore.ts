@@ -40,6 +40,9 @@ interface AuthState {
   getUserSettings: () => Promise<any>;
   saveUserSettings: (settings: any) => Promise<void>;
   updateUserSetting: (key: string, value: any) => Promise<void>;
+
+  // Dev
+  devLogin: () => void;
 }
 
 const API_URL = import.meta.env.VITE_AUTH_API_URL || 'https://auth.any-on.com';
@@ -393,6 +396,18 @@ export const useAuthStore = create<AuthState>()(
           console.error(`Failed to update setting ${key}:`, error);
           throw error;
         }
+      },
+
+      // Dev 로그인 (개발 환경 전용)
+      devLogin: () => {
+        set({
+          user: DEV_USER,
+          subscription: DEV_SUBSCRIPTION,
+          accessToken: 'dev-token',
+          isAuthenticated: true,
+          isLoading: false,
+          error: null,
+        });
       },
     }),
     {
