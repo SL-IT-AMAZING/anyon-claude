@@ -76,7 +76,7 @@ export const PanelHeader: React.FC<PanelHeaderProps> = ({
 }) => {
   return (
     <div className={cn(
-      'flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30',
+      'flex items-center justify-between px-4 pt-6 pb-3 border-b border-border bg-muted/30',
       className
     )}>
       {/* 왼쪽: 아이콘 + 제목 + 배지 */}
