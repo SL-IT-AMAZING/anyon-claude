@@ -684,7 +684,7 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: versionPanelWidth, opacity: 0 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="fixed right-0 top-0 h-full border-l border-border bg-background flex flex-col overflow-hidden shadow-2xl z-50"
+              className="fixed right-0 top-9 h-[calc(100%-36px)] border-l border-border bg-background flex flex-col overflow-hidden shadow-2xl z-50"
               style={{ width: versionPanelWidth }}
             >
               <VersionControlPanel
