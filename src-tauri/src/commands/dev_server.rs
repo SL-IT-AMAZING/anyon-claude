@@ -60,6 +60,41 @@ lazy_static::lazy_static! {
 // ============================================================================
 
 const ELEMENT_SELECTOR_SCRIPT: &str = r####"
+// Console capture - iframe 콘솔 로그를 부모로 전달
+(() => {
+  if (window.__anyonConsoleCapture__) return;
+  window.__anyonConsoleCapture__ = true;
+
+  const methods = ['log', 'warn', 'error', 'info', 'debug'];
+  methods.forEach(method => {
+    const original = console[method];
+    console[method] = function(...args) {
+      try {
+        window.parent.postMessage({
+          type: 'anyon-console',
+          level: method,
+          args: args.map(arg => {
+            try {
+              if (arg === null) return 'null';
+              if (arg === undefined) return 'undefined';
+              if (typeof arg === 'function') return '[Function]';
+              if (typeof arg === 'object') {
+                if (arg instanceof HTMLElement) return '<' + arg.tagName.toLowerCase() + '>';
+                if (arg instanceof Error) return arg.stack || arg.message;
+                return JSON.stringify(arg, null, 2);
+              }
+              return String(arg);
+            } catch (e) { return '[Unserializable]'; }
+          }),
+          timestamp: Date.now(),
+        }, '*');
+      } catch (e) {}
+      original.apply(console, args);
+    };
+  });
+})();
+
+// Element selector
 (() => {
   const OVERLAY_CLASS = "__anyon_overlay__";
   let overlays = [];

@@ -8,7 +8,7 @@ export type PreviewMode = 'preview' | 'code' | 'problems' | 'console';
 
 // 앱 출력 타입
 export interface AppOutput {
-  type: 'stdout' | 'stderr' | 'info' | 'client-error' | 'hmr';
+  type: 'stdout' | 'stderr' | 'info' | 'client-error' | 'hmr' | 'console-warn';
   message: string;
   timestamp: number;
   projectPath: string;
@@ -97,6 +97,7 @@ export type IframeMessageType =
   | 'anyon-component-selector-initialized'
   | 'anyon-select-component-shortcut'
   | 'anyon-shim-loaded'
+  | 'anyon-console'
   | 'window-error'
   | 'unhandled-rejection'
   | 'iframe-sourcemapped-error'
