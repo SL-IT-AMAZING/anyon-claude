@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "ANYON",
-  "version": "0.0.8",
+  "version": "0.0.10",
   "identifier": "com.anyon.app",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -59,11 +59,6 @@
     "shell": {
       "open": true
     },
-    "deepLink": {
-      "schemes": [
-        "anyon"
-      ]
-    },
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDM5ODc5RkQxQkQyNjhDMTUKUldRVmpDYTkwWitIT2RpN1ZUcEhkWm44RUZzOWx0VTUwdlB1eE9SUk9rQnU0Q09WUGFsS3lMcW8K",
       "endpoints": [
@@ -111,7 +106,7 @@
     },
     "windows": {
       "nsis": {
-        "installerHooks": "nsis-hooks.nsh"
+        "installerHooks": "./nsis-hooks.nsh"
       }
     },
     "macOS": {

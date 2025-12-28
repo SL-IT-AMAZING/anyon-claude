@@ -61,7 +61,6 @@
     "clipboard-manager:default",
     "global-shortcut:default",
     "updater:default",
-    "deep-link:default",
     "core:window:allow-minimize",
     "core:window:allow-maximize",
     "core:window:allow-unmaximize", 

@@ -2,7 +2,6 @@ import express from 'express';
 import cors from 'cors';
 import jwt from 'jsonwebtoken';
 import { v4 as uuidv4 } from 'uuid';
-import { OAuth2Client } from 'google-auth-library';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import Anthropic from '@anthropic-ai/sdk';
 import dotenv from 'dotenv';
@@ -14,6 +13,20 @@ import { createUser } from './models/userFactory.js';
 import { closeDatabase } from './db/index.js';
 import userRepository from './db/repositories/userRepository.js';
 import settingsRepository from './db/repositories/settingsRepository.js';
+import authCodeRepository from './db/repositories/authCodeRepository.js';
+import {
+  hashPassword,
+  verifyPassword,
+  generateVerificationCode,
+  validatePassword,
+  validateEmail,
+  getExpirationTime,
+  isExpired
+} from './utils/auth.js';
+import {
+  sendVerificationCode,
+  sendPasswordResetCode
+} from './utils/emailService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -47,13 +60,6 @@ const EFFECTIVE_JWT_SECRET = JWT_SECRET || (() => {
     console.warn('⚠️ WARNING: Using development JWT secret. Do NOT use in production!');
     return 'dev-secret-key-UNSAFE-DO-NOT-USE-IN-PRODUCTION';
 })();
-
-// Google OAuth Client
-const oauth2Client = new OAuth2Client(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  process.env.OAUTH_REDIRECT_URI || 'http://localhost:4000/auth/google/callback'
-);
 
 // Gemini AI Client for Support Chat
 const genAI = process.env.GEMINI_API_KEY
@@ -143,11 +149,24 @@ const strictLimiter = rateLimit({
 app.use('/auth', authLimiter);
 app.use('/dev', strictLimiter);
 
-// Load OAuth callback HTML template
-const oauthCallbackTemplate = readFileSync(
-  path.join(__dirname, 'views', 'oauth-callback.html'),
-  'utf-8'
-);
+// Stricter rate limiting for login attempts (brute force protection)
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 login attempts
+  skipSuccessfulRequests: true,
+  message: { error: '로그인 시도 횟수를 초과했습니다. 15분 후 다시 시도해주세요.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Rate limiting for code operations
+const codeLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // 10 code requests
+  message: { error: '인증 코드 요청 횟수를 초과했습니다. 15분 후 다시 시도해주세요.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // Helper: Generate JWT token
 function generateToken(userId) {
@@ -222,98 +241,325 @@ app.post('/auth/dev/login', (req, res) => {
   });
 });
 
-// Get Google OAuth URL
-app.get('/auth/google/url', (req, res) => {
-  // Always return Google OAuth URL
-  const scopes = [
-    'https://www.googleapis.com/auth/userinfo.email',
-    'https://www.googleapis.com/auth/userinfo.profile',
-  ];
+// ============================================
+// Local Authentication Endpoints
+// ============================================
 
-  const authUrl = oauth2Client.generateAuthUrl({
-    access_type: 'offline',
-    scope: scopes,
-    prompt: 'consent',
-  });
-
-  res.json({
-    url: authUrl,
-    devMode: false, // Always false for this endpoint to force redirect
-  });
-});
-
-// Google OAuth callback
-app.get('/auth/google/callback', async (req, res) => {
-  const { code } = req.query;
-
-  if (!code) {
-    return res.status(400).json({ error: 'Authorization code is missing' });
-  }
+// Register new user with email/password
+app.post('/auth/register', async (req, res) => {
+  const { email, password, name } = req.body;
 
   try {
-    // Exchange authorization code for tokens
-    const { tokens } = await oauth2Client.getToken(code);
-    oauth2Client.setCredentials(tokens);
-
-    // Get user info from Google
-    const ticket = await oauth2Client.verifyIdToken({
-      idToken: tokens.id_token,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
-
-    const payload = ticket.getPayload();
-    const googleId = payload.sub;
-    const email = payload.email;
-    const name = payload.name;
-    const picture = payload.picture;
-
-    // Check if user exists - prioritize googleId lookup
-    let user = userRepository.findByGoogleId(googleId);
-
-    if (!user) {
-      // Fallback to email lookup (for users created before googleId tracking)
-      user = userRepository.findByEmail(email);
+    // Validate input
+    if (!email || !password || !name) {
+      return res.status(400).json({ error: '이메일, 비밀번호, 이름은 필수입니다' });
     }
 
-    if (user) {
-      // Update existing user's profile if changed
-      const needsUpdate =
-        user.name !== name ||
-        user.profilePicture !== picture ||
-        user.googleId !== googleId;
+    if (!validateEmail(email)) {
+      return res.status(400).json({ error: '유효하지 않은 이메일 형식입니다' });
+    }
 
-      if (needsUpdate) {
-        user = userRepository.update(user.id, {
-          ...user,
-          name,
-          profilePicture: picture,
-          googleId,
-        });
-        console.log(`✅ Updated user profile: ${email}`);
-      }
-    } else {
-      // Create new user
-      user = createUser({
-        email,
-        name,
-        googleId,
-        profilePicture: picture,
-        planType: 'FREE',
-      });
-      userRepository.create(user);
-      console.log(`✅ Created new user: ${email}`);
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      return res.status(400).json({ error: passwordValidation.errors[0] });
+    }
+
+    // Check if user already exists
+    const existingUser = userRepository.findByEmail(email);
+    if (existingUser) {
+      return res.status(409).json({ error: '이미 등록된 이메일입니다' });
+    }
+
+    // Hash password
+    const passwordHash = await hashPassword(password);
+
+    // Create new user (email_verified = 0)
+    const user = createUser({
+      email,
+      name,
+      planType: 'FREE',
+    });
+
+    // Add password_hash and email_verified to user object for DB
+    const userWithPassword = {
+      ...user,
+      passwordHash,
+      emailVerified: false,
+    };
+
+    // Store in database
+    userRepository.create(userWithPassword);
+
+    // Generate verification code (15 minutes expiration)
+    const code = generateVerificationCode();
+    const expiresAt = getExpirationTime(15);
+
+    // Delete any existing codes for this user
+    authCodeRepository.deleteUserCodes(user.id, 'EMAIL_VERIFY');
+
+    // Store verification code
+    authCodeRepository.createCode(user.id, 'EMAIL_VERIFY', code, expiresAt);
+
+    // Send verification email
+    await sendVerificationCode(email, name, code);
+
+    console.log(`✅ User registered: ${email}`);
+    res.json({
+      success: true,
+      message: '인증 코드를 이메일로 전송했습니다',
+    });
+  } catch (error) {
+    console.error('❌ Registration error:', error);
+    res.status(500).json({ error: '회원가입에 실패했습니다', details: error.message });
+  }
+});
+
+// Verify email with code
+app.post('/auth/verify-email', async (req, res) => {
+  const { email, code } = req.body;
+
+  try {
+    if (!email || !code) {
+      return res.status(400).json({ error: '이메일과 인증 코드는 필수입니다' });
+    }
+
+    // Find user
+    const user = userRepository.findByEmail(email);
+    if (!user) {
+      return res.status(404).json({ error: '사용자를 찾을 수 없습니다' });
+    }
+
+    // Check if already verified
+    if (user.emailVerified) {
+      return res.status(400).json({ error: '이미 인증된 이메일입니다' });
+    }
+
+    // Find verification code
+    const authCode = authCodeRepository.findByCode(code, 'EMAIL_VERIFY');
+    if (!authCode || authCode.user_id !== user.id) {
+      return res.status(400).json({ error: '유효하지 않은 인증 코드입니다' });
+    }
+
+    // Check expiration
+    if (isExpired(authCode.expires_at)) {
+      authCodeRepository.deleteCode(authCode.id);
+      return res.status(400).json({ error: '인증 코드가 만료되었습니다' });
+    }
+
+    // Check attempts
+    if (authCode.attempts >= 5) {
+      authCodeRepository.deleteCode(authCode.id);
+      return res.status(400).json({ error: '인증 시도 횟수를 초과했습니다. 코드를 재전송해주세요.' });
+    }
+
+    // Increment attempts
+    authCodeRepository.incrementAttempts(authCode.id);
+
+    // Verify email
+    userRepository.verifyEmail(user.id);
+
+    // Delete code
+    authCodeRepository.deleteCode(authCode.id);
+
+    // Generate JWT token
+    const token = generateToken(user.id);
+
+    // Get updated user
+    const updatedUser = userRepository.findById(user.id);
+
+    console.log(`✅ Email verified: ${email}`);
+    res.json({
+      token,
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        name: updatedUser.name,
+        profilePicture: updatedUser.profilePicture,
+      },
+      subscription: updatedUser.subscription,
+    });
+  } catch (error) {
+    console.error('❌ Email verification error:', error);
+    res.status(500).json({ error: '이메일 인증에 실패했습니다', details: error.message });
+  }
+});
+
+// Login with email/password
+app.post('/auth/login', loginLimiter, async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    if (!email || !password) {
+      return res.status(400).json({ error: '이메일과 비밀번호는 필수입니다' });
+    }
+
+    // Find user
+    const user = userRepository.findByEmail(email);
+    if (!user || !user.passwordHash) {
+      return res.status(401).json({ error: '이메일 또는 비밀번호가 올바르지 않습니다' });
+    }
+
+    // Verify password
+    const isValidPassword = await verifyPassword(password, user.passwordHash);
+    if (!isValidPassword) {
+      return res.status(401).json({ error: '이메일 또는 비밀번호가 올바르지 않습니다' });
+    }
+
+    // Check email verification
+    if (!user.emailVerified) {
+      return res.status(403).json({ error: '이메일 인증이 필요합니다' });
     }
 
     // Generate JWT token
-    const jwtToken = generateToken(user.id);
+    const token = generateToken(user.id);
 
-    // Serve HTML page with deep link
-    const deepLink = `anyon://auth/callback?token=${jwtToken}`;
-    const html = oauthCallbackTemplate.replace(/\{\{DEEP_LINK\}\}/g, deepLink);
-    res.send(html);
+    console.log(`✅ User logged in: ${email}`);
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        profilePicture: user.profilePicture,
+      },
+      subscription: user.subscription,
+    });
   } catch (error) {
-    console.error('❌ OAuth callback error:', error);
-    res.status(500).json({ error: 'Authentication failed', details: error.message });
+    console.error('❌ Login error:', error);
+    res.status(500).json({ error: '로그인에 실패했습니다', details: error.message });
+  }
+});
+
+// Resend verification code
+app.post('/auth/resend-code', codeLimiter, async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    if (!email) {
+      return res.status(400).json({ error: '이메일은 필수입니다' });
+    }
+
+    // Find user
+    const user = userRepository.findByEmail(email);
+    if (!user) {
+      // Don't reveal if user exists (security)
+      return res.json({ success: true, message: '인증 코드를 이메일로 전송했습니다' });
+    }
+
+    // Check if already verified
+    if (user.emailVerified) {
+      return res.status(400).json({ error: '이미 인증된 이메일입니다' });
+    }
+
+    // Delete old codes
+    authCodeRepository.deleteUserCodes(user.id, 'EMAIL_VERIFY');
+
+    // Generate new code
+    const code = generateVerificationCode();
+    const expiresAt = getExpirationTime(15);
+
+    authCodeRepository.createCode(user.id, 'EMAIL_VERIFY', code, expiresAt);
+
+    // Send email
+    await sendVerificationCode(email, user.name, code);
+
+    console.log(`✅ Verification code resent: ${email}`);
+    res.json({ success: true, message: '인증 코드를 이메일로 전송했습니다' });
+  } catch (error) {
+    console.error('❌ Resend code error:', error);
+    res.status(500).json({ error: '인증 코드 전송에 실패했습니다', details: error.message });
+  }
+});
+
+// Forgot password - send reset code
+app.post('/auth/forgot-password', codeLimiter, async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    if (!email) {
+      return res.status(400).json({ error: '이메일은 필수입니다' });
+    }
+
+    // Find user
+    const user = userRepository.findByEmail(email);
+    if (!user) {
+      // Don't reveal if user exists (security)
+      return res.json({ success: true, message: '비밀번호 재설정 코드를 이메일로 전송했습니다' });
+    }
+
+    // Delete old reset codes
+    authCodeRepository.deleteUserCodes(user.id, 'PASSWORD_RESET');
+
+    // Generate reset code (1 hour expiration)
+    const code = generateVerificationCode();
+    const expiresAt = getExpirationTime(60);
+
+    authCodeRepository.createCode(user.id, 'PASSWORD_RESET', code, expiresAt);
+
+    // Send email
+    await sendPasswordResetCode(email, user.name, code);
+
+    console.log(`✅ Password reset code sent: ${email}`);
+    res.json({ success: true, message: '비밀번호 재설정 코드를 이메일로 전송했습니다' });
+  } catch (error) {
+    console.error('❌ Forgot password error:', error);
+    res.status(500).json({ error: '비밀번호 재설정 요청에 실패했습니다', details: error.message });
+  }
+});
+
+// Reset password with code
+app.post('/auth/reset-password', async (req, res) => {
+  const { email, code, newPassword } = req.body;
+
+  try {
+    if (!email || !code || !newPassword) {
+      return res.status(400).json({ error: '이메일, 인증 코드, 새 비밀번호는 필수입니다' });
+    }
+
+    // Validate new password
+    const passwordValidation = validatePassword(newPassword);
+    if (!passwordValidation.valid) {
+      return res.status(400).json({ error: passwordValidation.errors[0] });
+    }
+
+    // Find user
+    const user = userRepository.findByEmail(email);
+    if (!user) {
+      return res.status(404).json({ error: '사용자를 찾을 수 없습니다' });
+    }
+
+    // Find reset code
+    const authCode = authCodeRepository.findByCode(code, 'PASSWORD_RESET');
+    if (!authCode || authCode.user_id !== user.id) {
+      return res.status(400).json({ error: '유효하지 않은 인증 코드입니다' });
+    }
+
+    // Check expiration
+    if (isExpired(authCode.expires_at)) {
+      authCodeRepository.deleteCode(authCode.id);
+      return res.status(400).json({ error: '인증 코드가 만료되었습니다' });
+    }
+
+    // Check attempts
+    if (authCode.attempts >= 5) {
+      authCodeRepository.deleteCode(authCode.id);
+      return res.status(400).json({ error: '인증 시도 횟수를 초과했습니다. 코드를 재전송해주세요.' });
+    }
+
+    // Hash new password
+    const passwordHash = await hashPassword(newPassword);
+
+    // Update password
+    userRepository.updatePassword(user.id, passwordHash);
+
+    // Delete code
+    authCodeRepository.deleteCode(authCode.id);
+
+    console.log(`✅ Password reset: ${email}`);
+    res.json({ success: true, message: '비밀번호가 재설정되었습니다' });
+  } catch (error) {
+    console.error('❌ Password reset error:', error);
+    res.status(500).json({ error: '비밀번호 재설정에 실패했습니다', details: error.message });
   }
 });
 

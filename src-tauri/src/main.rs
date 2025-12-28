@@ -116,20 +116,6 @@ fn setup_linux_ime() {
     // No-op on non-Linux platforms
 }
 
-/// Extract deep link URL from command line argument, handling Windows formatting
-/// Handles: quotes, --prefix, url= prefix, and embedded anyon:// URLs
-fn extract_deep_link(arg: &str) -> Option<String> {
-    // Strip surrounding quotes
-    let trimmed = arg.trim_matches(['"', '\'']);
-    // Strip common prefixes
-    let trimmed = trimmed.strip_prefix("--").unwrap_or(trimmed);
-    let trimmed = trimmed.strip_prefix("url=").unwrap_or(trimmed);
-    // Find and extract anyon:// URL
-    trimmed
-        .find("anyon://")
-        .map(|pos| trimmed[pos..].to_string())
-}
-
 /// Initialize Tauri plugins
 fn init_tauri_plugins() -> impl Fn(tauri::Builder<tauri::Wry>) -> tauri::Builder<tauri::Wry> {
     |builder| {
@@ -137,62 +123,14 @@ fn init_tauri_plugins() -> impl Fn(tauri::Builder<tauri::Wry>) -> tauri::Builder
             .plugin(tauri_plugin_dialog::init())
             .plugin(tauri_plugin_shell::init())
             .plugin(tauri_plugin_http::init())
-            .plugin(tauri_plugin_deep_link::init())
-            .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
-                eprintln!("🔄 [SINGLE-INSTANCE] Triggered with args: {:?}", args);
-                log::info!("🔄 Single instance triggered with args: {:?}", args);
-
-                // Extract all deep link URLs from arguments (handles Windows formatting)
-                let urls: Vec<String> = args
-                    .iter()
-                    .filter_map(|arg| {
-                        eprintln!("🔍 [SINGLE-INSTANCE] Checking arg: {}", arg);
-                        extract_deep_link(arg)
-                    })
-                    .collect();
-
-                if !urls.is_empty() {
-                    eprintln!("📥 [SINGLE-INSTANCE] Extracted deep links: {:?}", urls);
-                    log::info!("📥 Extracted deep links: {:?}", urls);
-
-                    // Emit all deep link URLs to the frontend
-                    if let Err(e) = app.emit("plugin:deep-link://urls", urls.clone()) {
-                        eprintln!("❌ [SINGLE-INSTANCE] Failed to emit deep link event: {}", e);
-                        log::error!("Failed to emit deep link event: {}", e);
-                    } else {
-                        eprintln!("✅ [SINGLE-INSTANCE] Emitted deep link event: {:?}", urls);
-                        log::info!("✅ Emitted deep link event: {:?}", urls);
-                    }
-
-                    // Focus the main window
-                    if let Some(window) = app.get_webview_window("main") {
-                        let _ = window.set_focus();
-                        let _ = window.unminimize();
-                    }
+            .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+                // Focus the main window when another instance is launched
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.set_focus();
+                    let _ = window.unminimize();
                 }
             }))
     }
-}
-
-/// Setup deep link registration
-fn setup_deep_links(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
-    use tauri_plugin_deep_link::DeepLinkExt;
-
-    eprintln!("🔧 [SETUP] Starting Deep Link registration...");
-    log::info!("🔧 [SETUP] Starting Deep Link registration...");
-
-    match app.deep_link().register_all() {
-        Ok(_) => {
-            eprintln!("✅ [SETUP] Deep link protocols registered successfully");
-            log::info!("✅ Deep link protocols registered successfully");
-        }
-        Err(e) => {
-            eprintln!("⚠️ [SETUP] Failed to register deep link protocols: {}", e);
-            log::warn!("⚠️ Failed to register deep link protocols: {}", e);
-        }
-    }
-
-    Ok(())
 }
 
 /// Setup database and initialize tables
@@ -215,17 +153,22 @@ fn setup_process_registries(app: &mut tauri::App) -> Result<(), Box<dyn std::err
 
 /// Setup auth server
 fn setup_auth_server() -> Result<(), Box<dyn std::error::Error>> {
-    let jwt_secret = match std::env::var("JWT_SECRET") {
-        Ok(secret) => secret,
-        Err(_) => {
-            if std::env::var("NODE_ENV").unwrap_or_default() == "production" {
-                panic!("JWT_SECRET must be set in production environment");
-            }
-            eprintln!("⚠️ WARNING: Using development JWT secret. Do NOT use in production!");
-            "dev-secret-key-UNSAFE-DO-NOT-USE-IN-PRODUCTION".to_string()
-        }
-    };
     let node_env = std::env::var("NODE_ENV").unwrap_or_else(|_| "development".to_string());
+    let enable_local_auth = node_env != "production"
+        || std::env::var("ENABLE_LOCAL_AUTH_SERVER").map(|v| v == "1").unwrap_or(false);
+
+    if !enable_local_auth {
+        log::info!(
+            "🛑 Local auth server disabled (NODE_ENV={}, ENABLE_LOCAL_AUTH_SERVER not set)",
+            node_env
+        );
+        return Ok(());
+    }
+
+    let jwt_secret = std::env::var("JWT_SECRET").unwrap_or_else(|_| {
+        eprintln!("⚠️ WARNING: Using development JWT secret. Do NOT use in production!");
+        "dev-secret-key-UNSAFE-DO-NOT-USE-IN-PRODUCTION".to_string()
+    });
 
     tauri::async_runtime::spawn(async move {
         if let Err(e) = auth_server::start_auth_server(4000, jwt_secret, node_env).await {
@@ -287,7 +230,6 @@ fn setup_window_effects(app: &mut tauri::App) -> Result<(), Box<dyn std::error::
 
 /// Setup application state and services
 fn setup_application(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
-    setup_deep_links(app)?;
     setup_database(app)?;
     setup_process_registries(app)?;
     setup_auth_server()?;

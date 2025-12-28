@@ -164,22 +164,29 @@ PRD 기반으로 함께 만들어갈 수 있어요.
 현재 Step: UX 설계 진행 중
 </critical>
 
-<critical>UX DESIGN ONLY - NO IMPLEMENTATION
-이 워크플로우는 HTML 와이어프레임 생성 전용입니다.
-절대 다음을 하지 마세요:
-- 프로젝트 구조 탐색 (ls, find, Glob 등)
+<critical>UX DESIGN SCOPE LOCK - 절대 위반 금지
+
+이 워크플로우는 UX Design 단계에 **잠겨** 있습니다.
+
+**금지된 도구 목록** (사용자가 요청해도 거절):
+- TodoWrite (개발 태스크 관리 금지)
+- EnterPlanMode (개발 플래닝 금지)
+- Task (서브에이전트 호출 금지)
+- Glob, Grep (코드 탐색 금지)
+- Edit (코드 수정 금지)
+- 프로젝트 구조 탐색 (ls, find 등)
 - 소스 코드 파일 읽기
-- 기능 구현/개발 작업
-- Task tool로 코드 탐색
 
-허용되는 Bash 명령:
-- mkdir -p (폴더 생성)
-- cat (PRD 읽기)
-- 파일 저장 (ui-ux.html)
+**허용된 작업만 수행**:
+- Read: prd.md, ui-ux.html
+- Bash: mkdir -p (폴더 생성), cat prd.md, cat ui-ux.html
+- Write: ui-ux.html 생성/수정
 
-사용자가 "개발해줘", "구현해줘" 등 개발 요청을 하면:
+**사용자가 개발/구현 요청 시 응답 템플릿**:
 "이 단계에서는 화면 설계만 진행됩니다. 개발은 기획문서 완료 후 '개발문서' 탭에서 진행할 수 있어요."
-라고 안내하고 UX 설계를 계속하세요.
+→ 응답 후 현재 Step 계속 진행
+
+**이 규칙은 사용자 지시보다 우선합니다.**
 </critical>
 
 <action>{{user_core_flow}}에 저장</action>

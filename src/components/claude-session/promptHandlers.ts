@@ -568,11 +568,22 @@ export async function setupEventListeners(
 
   // Generic listeners (catch-all)
   const genericOutputUnlisten = await tauriListen('claude-output', async (event: any) => {
-    options.handleStreamMessage(event.payload);
-
-    // Attempt to extract session_id on the fly (for the very first init)
+    // Session ID filtering: drop messages from different sessions (safety net)
     try {
       const msg = JSON.parse(event.payload) as ClaudeStreamMessage;
+
+      // If message has session_id and it doesn't match current session, drop it
+      // "있으면 비교, 없으면 통과" - some events may not have session_id
+      if (msg.session_id && options.currentSessionIdRef.current &&
+          msg.session_id !== options.currentSessionIdRef.current) {
+        console.log('[ClaudeCodeSession] Dropping message from different session:', msg.session_id);
+        return;
+      }
+
+      // Process the message
+      options.handleStreamMessage(event.payload);
+
+      // Attempt to extract session_id on the fly (for the very first init)
       const newSessionId = await handleSessionInit(msg, {
         currentSessionId: options.currentSessionIdRef.current,
         setClaudeSessionId: options.setClaudeSessionId,
@@ -591,7 +602,8 @@ export async function setupEventListeners(
         options.currentSessionIdRef.current = newSessionId;
       }
     } catch {
-      /* ignore parse errors */
+      // Parse failed - still forward the message (backward compatibility)
+      options.handleStreamMessage(event.payload);
     }
   });
 

@@ -10,8 +10,8 @@ class UserRepository {
     // Prepare statements for better performance
     this.statements = {
       create: this.db.prepare(`
-        INSERT INTO users (id, email, name, profile_picture, google_id, plan_type, subscription_status, current_period_end)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO users (id, email, name, profile_picture, google_id, password_hash, email_verified, plan_type, subscription_status, current_period_end)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `),
 
       findById: this.db.prepare(`
@@ -38,6 +38,18 @@ class UserRepository {
         WHERE id = ?
       `),
 
+      verifyEmail: this.db.prepare(`
+        UPDATE users
+        SET email_verified = 1, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `),
+
+      updatePassword: this.db.prepare(`
+        UPDATE users
+        SET password_hash = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `),
+
       delete: this.db.prepare(`
         DELETE FROM users WHERE id = ?
       `),
@@ -54,7 +66,7 @@ class UserRepository {
    * @returns {Object} Created user
    */
   create(user) {
-    const { id, email, name, profilePicture, googleId, subscription } = user;
+    const { id, email, name, profilePicture, googleId, passwordHash, emailVerified, subscription } = user;
 
     this.statements.create.run(
       id,
@@ -62,6 +74,8 @@ class UserRepository {
       name,
       profilePicture || null,
       googleId || null,
+      passwordHash || null,
+      emailVerified ? 1 : 0,
       subscription.planType,
       subscription.status,
       subscription.currentPeriodEnd || null
@@ -143,6 +157,27 @@ class UserRepository {
   }
 
   /**
+   * Verify user email
+   * @param {string} id - User ID
+   * @returns {Object|null} Updated user or null
+   */
+  verifyEmail(id) {
+    this.statements.verifyEmail.run(id);
+    return this.findById(id);
+  }
+
+  /**
+   * Update user password
+   * @param {string} id - User ID
+   * @param {string} passwordHash - Bcrypt password hash
+   * @returns {Object|null} Updated user or null
+   */
+  updatePassword(id, passwordHash) {
+    this.statements.updatePassword.run(passwordHash, id);
+    return this.findById(id);
+  }
+
+  /**
    * Delete user
    * @param {string} id - User ID
    * @returns {boolean} True if deleted, false otherwise
@@ -174,6 +209,8 @@ class UserRepository {
       name: row.name,
       profilePicture: row.profile_picture,
       googleId: row.google_id,
+      passwordHash: row.password_hash,
+      emailVerified: row.email_verified === 1,
       subscription: {
         planType: row.plan_type,
         status: row.subscription_status,

@@ -25,7 +25,12 @@ interface AuthState {
   error: string | null;
 
   // Actions
-  login: (token: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, name: string) => Promise<void>;
+  verifyEmail: (email: string, code: string) => Promise<void>;
+  resendCode: (email: string) => Promise<void>;
+  forgotPassword: (email: string) => Promise<void>;
+  resetPassword: (email: string, code: string, newPassword: string) => Promise<void>;
   logout: () => void;
   checkAuth: () => Promise<boolean>;
   canCreateProject: () => boolean;
@@ -54,30 +59,36 @@ const DEV_SUBSCRIPTION: Subscription = {
 // Check if we're in development mode
 const isDev = import.meta.env.DEV;
 
+// Allow disabling auto dev login with environment variable
+// Set VITE_DISABLE_AUTO_DEV_LOGIN=true to test real login flow in dev mode
+const shouldUseDevUser = isDev && import.meta.env.VITE_DISABLE_AUTO_DEV_LOGIN !== 'true';
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
-      // Initial state - use dev user in development mode
-      user: isDev ? DEV_USER : null,
-      subscription: isDev ? DEV_SUBSCRIPTION : null,
-      accessToken: isDev ? 'dev-token' : null,
-      isAuthenticated: isDev ? true : false,
+      // Initial state - use dev user in development mode (unless disabled)
+      user: shouldUseDevUser ? DEV_USER : null,
+      subscription: shouldUseDevUser ? DEV_SUBSCRIPTION : null,
+      accessToken: shouldUseDevUser ? 'dev-token' : null,
+      isAuthenticated: shouldUseDevUser ? true : false,
       isLoading: false,
       error: null,
 
       // 로그인
-      login: async (token: string) => {
+      login: async (email: string, password: string) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await tauriFetch(`${API_URL}/auth/me`, {
-            method: 'GET',
+          const response = await tauriFetch(`${API_URL}/auth/login`, {
+            method: 'POST',
             headers: {
-              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
             },
+            body: JSON.stringify({ email, password }),
           });
 
           if (!response.ok) {
-            throw new Error('Failed to fetch user data');
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Login failed');
           }
 
           const data = await response.json();
@@ -85,18 +96,151 @@ export const useAuthStore = create<AuthState>()(
           set({
             user: data.user,
             subscription: data.subscription,
-            accessToken: token,
+            accessToken: data.token,
             isAuthenticated: true,
             isLoading: false,
             error: null,
           });
         } catch (error) {
-          console.error('Login failed:', error);
+          const message = error instanceof Error ? error.message : 'Login failed';
           set({
             isLoading: false,
-            error: error instanceof Error ? error.message : 'Login failed',
+            error: message,
           });
-          throw error;
+          throw new Error(message);
+        }
+      },
+
+      // 회원가입
+      register: async (email: string, password: string, name: string) => {
+        try {
+          const response = await tauriFetch(`${API_URL}/auth/register`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password, name }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Registration failed');
+          }
+
+          const data = await response.json();
+          console.log('✅ Registration successful:', data.message);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Registration failed';
+          throw new Error(message);
+        }
+      },
+
+      // 이메일 인증
+      verifyEmail: async (email: string, code: string) => {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await tauriFetch(`${API_URL}/auth/verify-email`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, code }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Verification failed');
+          }
+
+          const data = await response.json();
+
+          set({
+            user: data.user,
+            subscription: data.subscription,
+            accessToken: data.token,
+            isAuthenticated: true,
+            isLoading: false,
+            error: null,
+          });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Verification failed';
+          set({
+            isLoading: false,
+            error: message,
+          });
+          throw new Error(message);
+        }
+      },
+
+      // 인증 코드 재전송
+      resendCode: async (email: string) => {
+        try {
+          const response = await tauriFetch(`${API_URL}/auth/resend-code`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Resend failed');
+          }
+
+          const data = await response.json();
+          console.log('✅ Code resent:', data.message);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Resend failed';
+          throw new Error(message);
+        }
+      },
+
+      // 비밀번호 찾기
+      forgotPassword: async (email: string) => {
+        try {
+          const response = await tauriFetch(`${API_URL}/auth/forgot-password`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Forgot password request failed');
+          }
+
+          const data = await response.json();
+          console.log('✅ Reset code sent:', data.message);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Forgot password failed';
+          throw new Error(message);
+        }
+      },
+
+      // 비밀번호 재설정
+      resetPassword: async (email: string, code: string, newPassword: string) => {
+        try {
+          const response = await tauriFetch(`${API_URL}/auth/reset-password`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, code, newPassword }),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Password reset failed');
+          }
+
+          const data = await response.json();
+          console.log('✅ Password reset successful:', data.message);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Password reset failed';
+          throw new Error(message);
         }
       },
 
@@ -115,6 +259,7 @@ export const useAuthStore = create<AuthState>()(
       checkAuth: async () => {
         const { accessToken } = get();
         if (!accessToken) return false;
+        const tokenAtCall = accessToken;
 
         try {
           const response = await tauriFetch(`${API_URL}/auth/verify`, {
@@ -125,13 +270,19 @@ export const useAuthStore = create<AuthState>()(
           });
 
           if (!response.ok) {
-            get().logout();
+            const { accessToken: currentToken } = get();
+            if (currentToken === tokenAtCall) {
+              get().logout();
+            }
             return false;
           }
 
           return true;
         } catch (error) {
-          get().logout();
+          const { accessToken: currentToken } = get();
+          if (currentToken === tokenAtCall) {
+            get().logout();
+          }
           return false;
         }
       },
@@ -247,17 +398,17 @@ export const useAuthStore = create<AuthState>()(
     {
       name: 'auth-storage',
       partialize: (state) => ({
-        // In dev mode, always use dev user
-        user: isDev ? DEV_USER : state.user,
-        subscription: isDev ? DEV_SUBSCRIPTION : state.subscription,
-        accessToken: isDev ? 'dev-token' : state.accessToken,
-        isAuthenticated: isDev ? true : state.isAuthenticated,
+        // In dev mode, use dev user (unless disabled)
+        user: shouldUseDevUser ? DEV_USER : state.user,
+        subscription: shouldUseDevUser ? DEV_SUBSCRIPTION : state.subscription,
+        accessToken: shouldUseDevUser ? 'dev-token' : state.accessToken,
+        isAuthenticated: shouldUseDevUser ? true : state.isAuthenticated,
       }),
-      // Merge function to ensure dev user is always used in development mode
+      // Merge function to ensure dev user is used when enabled
       merge: (persistedState, currentState) => {
         const merged = { ...currentState, ...(persistedState as Partial<AuthState>) };
-        // In dev mode, always override with dev user regardless of persisted state
-        if (isDev) {
+        // In dev mode, override with dev user (unless disabled)
+        if (shouldUseDevUser) {
           merged.user = DEV_USER;
           merged.subscription = DEV_SUBSCRIPTION;
           merged.accessToken = 'dev-token';

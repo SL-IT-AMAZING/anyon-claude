@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
-import { HashRouter } from "react-router-dom";
-import { listen } from "@tauri-apps/api/event";
+import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import logoAnyon from "@/assets/logo-anyon.png";
 import { useAuthStore } from "@/stores/authStore";
 import { LoginPage } from "@/components/LoginPage";
+import { SignupPage } from "@/components/SignupPage";
+import { VerifyEmailPage } from "@/components/VerifyEmailPage";
+import { ForgotPasswordPage } from "@/components/ForgotPasswordPage";
+import { ResetPasswordPage } from "@/components/ResetPasswordPage";
 import { api as _api } from "@/lib/api";
 import { initializeWebMode } from "@/lib/apiAdapter";
 import { OutputCacheProvider } from "@/lib/outputCache";
@@ -83,64 +86,31 @@ function App() {
 
   // Check authentication on mount
   useEffect(() => {
+    let cancelled = false;
+
     const verifyAuth = async () => {
       try {
         const result = await checkAuth();
-        console.log('Auth check result:', result);
+        if (!cancelled) {
+          console.log('Auth check result:', result);
+        }
       } catch (error) {
-        console.error('Auth check failed:', error);
+        if (!cancelled) {
+          console.error('Auth check failed:', error);
+        }
       } finally {
-        setIsChecking(false);
+        if (!cancelled) {
+          setIsChecking(false);
+        }
       }
     };
 
     verifyAuth();
-  }, [checkAuth]);
-
-  // Deep link listener - handles OAuth callback from any app state
-  // Must be at app root level so it works regardless of which page is mounted
-  useEffect(() => {
-    console.log('🎧 [App] Setting up deep link listener...');
-
-    const setupDeepLinkListener = async () => {
-      const unlisten = await listen<string[]>('plugin:deep-link://urls', async (event) => {
-        console.log('📥 [App] Deep link received:', event.payload);
-
-        try {
-          const urls = event.payload;
-          if (urls && urls.length > 0) {
-            // Process all URLs (in case multiple are passed)
-            for (const urlString of urls) {
-              try {
-                const url = new URL(urlString);
-                const token = url.searchParams.get('token');
-
-                if (token) {
-                  console.log('🔑 [App] Token found, logging in...');
-                  await useAuthStore.getState().login(token);
-                  console.log('✅ [App] Login successful via deep link');
-                  break; // Only process first valid token
-                }
-              } catch (parseError) {
-                console.error('❌ [App] Failed to parse deep link URL:', urlString, parseError);
-              }
-            }
-          }
-        } catch (error) {
-          console.error('❌ [App] Deep link handling failed:', error);
-        }
-      });
-
-      console.log('✅ [App] Deep link listener registered');
-      return unlisten;
-    };
-
-    const unlistenPromise = setupDeepLinkListener();
 
     return () => {
-      unlistenPromise.then((unlisten) => unlisten());
+      cancelled = true;
     };
-  }, []);
+  }, [checkAuth]);
 
   // Check analytics consent and onboarding after authentication
   useEffect(() => {
@@ -174,13 +144,20 @@ function App() {
     );
   }
 
-  // Show login page if not authenticated
+  // Show auth pages if not authenticated
   if (!isAuthenticated) {
     return (
       <HashRouter>
         <ThemeProvider>
           <div className="h-screen overflow-hidden">
-            <LoginPage />
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignupPage />} />
+              <Route path="/verify-email" element={<VerifyEmailPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="*" element={<Navigate to="/login" replace />} />
+            </Routes>
           </div>
         </ThemeProvider>
       </HashRouter>
