@@ -454,10 +454,7 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
       </AnimatePresence>
 
       {/* Main Chat Area */}
-      <div
-        className="flex-1 h-full overflow-hidden flex flex-col"
-        style={{ width: rightPanelVisible ? `${100 - rightPanelWidth}%` : '100%' }}
-      >
+      <div className="flex-1 h-full overflow-hidden flex flex-col">
         {/* Header with Breadcrumb */}
         <div className="flex-shrink-0 h-12 flex items-center justify-between px-4">
           <Breadcrumb
@@ -505,14 +502,15 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
             <button
               onClick={() => setVersionPanelOpen(prev => !prev)}
               className={cn(
-                'p-2 rounded-md transition-colors',
+                'flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm font-medium transition-colors',
                 versionPanelOpen
-                  ? 'text-primary hover:bg-primary/10'
+                  ? 'text-primary bg-primary/10'
                   : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
               )}
               title={versionPanelOpen ? '버전 관리 닫기 (Cmd+H)' : '버전 관리 열기 (Cmd+H)'}
             >
-              <History className="w-5 h-5" />
+              <History className="w-4 h-4" />
+              <span>버전기록</span>
             </button>
 
             {/* Panel Toggle Button */}
@@ -550,24 +548,6 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
           </Suspense>
         </div>
       </div>
-
-      {/* Version Control Panel */}
-      <AnimatePresence>
-        {versionPanelOpen && (
-          <motion.div
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: versionPanelWidth, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="h-full border-l border-border bg-background flex flex-col overflow-hidden flex-shrink-0"
-          >
-            <VersionControlPanel
-              projectPath={project?.path}
-              onClose={() => setVersionPanelOpen(false)}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Right Panel (Planning/Dev/Preview) */}
       <AnimatePresence>
@@ -684,8 +664,40 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
         )}
       </AnimatePresence>
 
+      {/* Version Control Panel - 오버레이 형태 */}
+      <AnimatePresence>
+        {versionPanelOpen && (
+          <>
+            {/* 어두운 배경 */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-black/50 z-40"
+              onClick={() => setVersionPanelOpen(false)}
+            />
+
+            {/* 패널 */}
+            <motion.div
+              initial={{ x: versionPanelWidth, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: versionPanelWidth, opacity: 0 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="fixed right-0 top-0 h-full border-l border-border bg-background flex flex-col overflow-hidden shadow-2xl z-50"
+              style={{ width: versionPanelWidth }}
+            >
+              <VersionControlPanel
+                projectPath={project?.path}
+                onClose={() => setVersionPanelOpen(false)}
+              />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* Drag overlay */}
-      {isDragging && <div className="fixed inset-0 z-50 cursor-col-resize" />}
+      {isDragging && <div className="fixed inset-0 z-30 cursor-col-resize" />}
 
       {/* Floating Help Button */}
       <FloatingHelpButton />

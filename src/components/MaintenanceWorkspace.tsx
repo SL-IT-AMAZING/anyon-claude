@@ -15,6 +15,7 @@ import {
   History,
 } from "@/lib/icons";
 import type { ExecutionMode } from './FloatingPromptInput';
+import type { ClaudeCodeSessionRef } from '@/components/ClaudeCodeSession';
 import { Button } from '@/components/ui/button';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { EnhancedPreviewPanel } from '@/components/preview';
@@ -64,8 +65,8 @@ export const MaintenanceWorkspace: React.FC<MaintenanceWorkspaceProps> = ({ proj
   const [sessionKey, _setSessionKey] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
 
-  // Tab state - default to planning mode
-  const [activeTab, setActiveTab] = useState<MaintenanceTabType>('planning');
+  // Tab state - default to development mode
+  const [activeTab, setActiveTab] = useState<MaintenanceTabType>('development');
 
   // Session loading state - to prevent tab switching during AI work
   const [isSessionLoading, setIsSessionLoading] = useState(false);
@@ -78,6 +79,9 @@ export const MaintenanceWorkspace: React.FC<MaintenanceWorkspaceProps> = ({ proj
   // Version control panel state
   const [versionPanelOpen, setVersionPanelOpen] = useState(false);
   const versionPanelWidth = 320;
+
+  // ClaudeCodeSession ref for programmatic prompt sending
+  const sessionRef = useRef<ClaudeCodeSessionRef>(null);
 
   // Right panel state
   const [rightPanelVisible, setRightPanelVisible] = useState(true);
@@ -236,6 +240,13 @@ export const MaintenanceWorkspace: React.FC<MaintenanceWorkspaceProps> = ({ proj
     setIsSessionLoading(isStreaming);
   }, []);
 
+  // Handle AI fix requests from preview panel
+  const handleAIFixFromPreview = useCallback((prompt: string) => {
+    if (sessionRef.current) {
+      sessionRef.current.sendPrompt(prompt, "sonnet");
+    }
+  }, []);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -318,10 +329,7 @@ export const MaintenanceWorkspace: React.FC<MaintenanceWorkspaceProps> = ({ proj
       </AnimatePresence>
 
       {/* Main Chat Area */}
-      <div
-        className="flex-1 h-full overflow-hidden flex flex-col"
-        style={{ width: rightPanelVisible ? `${100 - rightPanelWidth}%` : '100%' }}
-      >
+      <div className="flex-1 h-full overflow-hidden flex flex-col">
         {/* Header with Breadcrumb */}
         <div className="flex-shrink-0 h-12 flex items-center justify-between px-4">
           <Breadcrumb
@@ -400,6 +408,7 @@ export const MaintenanceWorkspace: React.FC<MaintenanceWorkspaceProps> = ({ proj
         <div className="flex-1 overflow-hidden">
           <Suspense fallback={<div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
             <ClaudeCodeSession
+              ref={sessionRef}
               key={sessionKey}
               session={currentSession || undefined}
               initialProjectPath={project?.path}
@@ -409,30 +418,12 @@ export const MaintenanceWorkspace: React.FC<MaintenanceWorkspaceProps> = ({ proj
               embedded={true}
               tabType="maintenance"
               onSessionCreated={handleSessionCreated}
-              defaultExecutionMode={activeTab === 'planning' ? 'plan' : 'execute'}
+              defaultExecutionMode={activeTab === 'development' ? 'execute' : 'plan'}
               onExecutionModeChange={handleExecutionModeChange}
             />
           </Suspense>
         </div>
       </div>
-
-      {/* Version Control Panel */}
-      <AnimatePresence>
-        {versionPanelOpen && (
-          <motion.div
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: versionPanelWidth, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="h-full border-l border-border bg-background flex flex-col overflow-hidden flex-shrink-0"
-          >
-            <VersionControlPanel
-              projectPath={project?.path}
-              onClose={() => setVersionPanelOpen(false)}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Right Panel (Planning/Development) */}
       <AnimatePresence>
@@ -530,7 +521,11 @@ export const MaintenanceWorkspace: React.FC<MaintenanceWorkspaceProps> = ({ proj
                   </div>
                 ) : (
                   // 개발: EnhancedPreviewPanel
-                  <EnhancedPreviewPanel projectPath={project?.path} projectId={project?.id} />
+                  <EnhancedPreviewPanel
+                    projectPath={project?.path}
+                    projectId={project?.id}
+                    onAIFix={handleAIFixFromPreview}
+                  />
                 )}
               </div>
             </motion.div>
@@ -538,8 +533,40 @@ export const MaintenanceWorkspace: React.FC<MaintenanceWorkspaceProps> = ({ proj
         )}
       </AnimatePresence>
 
+      {/* Version Control Panel - 오버레이 형태 */}
+      <AnimatePresence>
+        {versionPanelOpen && (
+          <>
+            {/* 어두운 배경 */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-black/50 z-40"
+              onClick={() => setVersionPanelOpen(false)}
+            />
+
+            {/* 패널 */}
+            <motion.div
+              initial={{ x: versionPanelWidth, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: versionPanelWidth, opacity: 0 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="fixed right-0 top-0 h-full border-l border-border bg-background flex flex-col overflow-hidden shadow-2xl z-50"
+              style={{ width: versionPanelWidth }}
+            >
+              <VersionControlPanel
+                projectPath={project?.path}
+                onClose={() => setVersionPanelOpen(false)}
+              />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* Drag overlay */}
-      {isDragging && <div className="fixed inset-0 z-50 cursor-col-resize" />}
+      {isDragging && <div className="fixed inset-0 z-30 cursor-col-resize" />}
     </div>
   );
 };

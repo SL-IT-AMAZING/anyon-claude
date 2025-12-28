@@ -12,6 +12,8 @@ function getOutputStyle(type: AppOutput['type']): string {
     case 'stderr':
     case 'client-error':
       return 'text-red-500 dark:text-red-400';
+    case 'console-warn':
+      return 'text-yellow-500 dark:text-yellow-400';
     case 'info':
       return 'text-blue-500 dark:text-blue-400';
     case 'hmr':

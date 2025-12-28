@@ -166,6 +166,28 @@ export function usePreviewMessages() {
         });
         break;
 
+      // iframe 콘솔 로그 캡처
+      case 'anyon-console': {
+        const data = event.data as any;
+        const level = data.level || 'log';
+        const args = data.args || [];
+        const message = args.join(' ');
+
+        // 레벨에 따른 타입 매핑
+        let outputType: 'stdout' | 'stderr' | 'info' | 'client-error' | 'hmr' | 'console-warn' = 'stdout';
+        if (level === 'error') outputType = 'client-error';
+        else if (level === 'warn') outputType = 'console-warn';
+        else if (level === 'info') outputType = 'info';
+
+        addAppOutput({
+          type: outputType,
+          message: `[console.${level}] ${message}`,
+          timestamp: data.timestamp || Date.now(),
+          projectPath: '',
+        });
+        break;
+      }
+
       default:
         // 알 수 없는 메시지 타입은 무시
         break;
