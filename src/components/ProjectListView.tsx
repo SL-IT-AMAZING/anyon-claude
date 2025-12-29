@@ -15,7 +15,7 @@ import { ProjectCard } from '@/components/ProjectCard';
 import { MinimalSidebar } from '@/components/MinimalSidebar';
 import { Settings } from '@/components/Settings';
 import { useProjects, useProjectsNavigation } from '@/components/ProjectRoutes';
-import { api, type Project } from '@/lib/api';
+import { api, environmentApi, type Project } from '@/lib/api';
 import type { TemplateId } from '@/types/template';
 
 // Cross-platform project name extractor (handles / and \\)
@@ -148,11 +148,23 @@ export const ProjectListView: React.FC = () => {
     setIsOpeningFolder(true);
     try {
       const { open } = await import('@tauri-apps/plugin-dialog');
+
+      // Windows에서는 C 드라이브를 기본 경로로 추천
+      let defaultPath = await api.getHomeDirectory();
+      try {
+        const envStatus = await environmentApi.checkEnvironmentStatus();
+        if (envStatus.platform === 'windows') {
+          defaultPath = 'C:\\';
+        }
+      } catch {
+        // 환경 체크 실패 시 홈 디렉토리 사용
+      }
+
       const selected = await open({
         directory: true,
         multiple: false,
         title: 'Select Project Folder',
-        defaultPath: await api.getHomeDirectory(),
+        defaultPath,
       });
 
       if (selected && typeof selected === 'string') {

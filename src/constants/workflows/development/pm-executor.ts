@@ -20,6 +20,50 @@ const TICKET_EXECUTOR_PROMPT = `# Ticket Executor - 단일 티켓 TDD 실행
 - 구현 파일 생성 및 완료
 - 성공/실패 상태 리포트
 
+## 📋 플랜 모드 (신중한 구현이 필요한 경우)
+
+**플랜 모드 진입 조건:**
+티켓에 다음 조건 중 하나라도 해당하면 바로 구현하지 말고 플랜부터 작성:
+
+1. **difficulty: hard** - 복잡한 티켓
+2. **버그 수정** - ticket_type이 "bugfix" 또는 제목에 "fix", "버그", "오류" 포함
+3. **아키텍처 변경** - 3개 이상 파일 수정 필요
+4. **기존 코드 수정** - 신규 파일이 아닌 기존 파일 변경
+5. **통합 작업** - 여러 시스템/모듈 연결
+
+**플랜 모드 실행:**
+\`\`\`
+1. EnterPlanMode 도구 호출
+2. 코드베이스 탐색 (관련 파일 읽기)
+3. 영향 범위 분석
+4. 구현 계획 작성:
+   - 수정할 파일 목록
+   - 각 파일의 변경 내용
+   - 예상 위험 요소
+   - 테스트 전략
+5. 플랜 파일에 저장
+6. ExitPlanMode → 구현 시작
+\`\`\`
+
+**플랜 파일 형식:**
+\`\`\`markdown
+# TICKET-XXX 구현 계획
+
+## 분석 결과
+- 영향 파일: [파일 목록]
+- 의존성: [관련 모듈]
+- 위험 요소: [주의사항]
+
+## 구현 단계
+1. [단계 1]
+2. [단계 2]
+...
+
+## 테스트 계획
+- [테스트 케이스 1]
+- [테스트 케이스 2]
+\`\`\`
+
 ## 🔄 TDD 사이클 (자동 실행)
 
 ### RED Phase
@@ -388,6 +432,32 @@ const INSTRUCTIONS = `# PM Executor 지시사항 (서브에이전트 병렬 실�
 
 <critical>🚀 핵심: pm-orchestrator가 설정한 parallel_execution 메타데이터에 따라 병렬 실행!</critical>
 
+<action>📂 오픈소스 참조 코드 확인 (있는 경우):
+
+**opensource/ 폴더 존재 확인:**
+Bash로 확인: ls -la opensource/ 2>/dev/null || echo "없음"
+
+**오픈소스가 있으면 티켓 실행 전 참고 코드 분석:**
+
+1. 티켓의 기능 유형 파악:
+   - 인증(auth): login, signup, session, token
+   - 결제(payment): checkout, billing, subscription
+   - 목록(list): table, grid, pagination
+   - 폼(form): input, validation, submit
+   - 대시보드(dashboard): chart, stats, metrics
+
+2. opensource/ 에서 유사 기능 검색:
+   \`\`\`bash
+   # 기능별 키워드로 검색
+   grep -r "login\\|auth\\|signin" opensource/ --include="*.tsx" -l | head -5
+   grep -r "useForm\\|handleSubmit" opensource/ --include="*.tsx" -l | head -5
+   \`\`\`
+
+3. 발견된 참고 코드를 ticket-executor에 전달:
+   - 파일 경로와 핵심 패턴 요약
+   - "이 오픈소스의 패턴을 참고하여 구현"
+</action>
+
 <action>병렬 실행 가능 티켓 판별 (pm-orchestrator 메타데이터 기반):
 
 **각 티켓의 parallel_execution 설정 확인:**
@@ -465,6 +535,15 @@ parallel_execution:
     project_context: |
       # 프로젝트 컨텍스트
       {{Read: CLAUDE.md}}
+
+    opensource_reference: |
+      # 참고할 오픈소스 코드 (있는 경우)
+      {{opensource_files}}
+
+      **참고 방법:**
+      - 위 파일들의 패턴과 구조를 분석
+      - 동일한 기능이면 유사한 방식으로 구현
+      - 단, 프로젝트 컨텍스트에 맞게 조정
     \`\`\`
   </parameter>
 </invoke>
@@ -490,6 +569,45 @@ parallel_execution:
   - 성공 티켓 → completed_count 증가
   - 실패 티켓 → blocked_count 증가, blocked_tickets에 추가
   - 의존성 업데이트: 완료 티켓에 의존하던 티켓 → ready_queue로 이동
+</action>
+
+<action>🖥️ 프리뷰 감지 및 자동 열기:
+
+**페이지 컴포넌트 생성 감지:**
+생성된 파일들 중 페이지 컴포넌트 확인:
+- src/pages/**/*.tsx
+- src/screens/**/*.tsx
+- app/**/page.tsx
+- src/app/**/page.tsx
+
+**첫 페이지 생성 시 (최초 1회만):**
+프로젝트에 첫 페이지가 생성되면 사용자에게 질문:
+
+\`\`\`
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🖥️ 첫 번째 페이지가 만들어졌어요!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📄 생성된 페이지: {{page_file_path}}
+
+프리뷰로 확인하시겠어요?
+브라우저에서 바로 볼 수 있어요.
+
+1. 네, 프리뷰 열기
+2. 아니요, 계속 진행
+
+(이후 Wave부터는 자동으로 프리뷰가 새로고침됩니다)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+\`\`\`
+
+**사용자가 1번 선택 시:**
+- dev server 시작 (이미 실행 중이 아니면): npm run dev
+- 프리뷰 탭 열기 안내
+- {{preview_enabled}} = true 설정
+
+**이후 Wave 완료 시 (preview_enabled = true):**
+- 자동 프리뷰 새로고침 (별도 질문 없음)
+- Step 4 완료 메시지에 "🖥️ 프리뷰 자동 새로고침" 포함
 </action>
 
 <check if="ready_queue not empty">

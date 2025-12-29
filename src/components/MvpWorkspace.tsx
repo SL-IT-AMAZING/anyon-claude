@@ -700,7 +700,7 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
       {isDragging && <div className="fixed inset-0 z-30 cursor-col-resize" />}
 
       {/* Floating Help Button */}
-      <FloatingHelpButton />
+      <FloatingHelpButton bottomOffset={activeTab === 'preview' ? 80 : undefined} />
 
       {/* AI Chat Modal */}
       <AIChatModal

@@ -81,11 +81,36 @@ Create a comprehensive Entity Relationship Diagram (ERD) document that:
    - 추출: 데이터베이스 아키텍처 섹션, 테이블 프리뷰, 관계 프리뷰
    - 이해: 이미 정의된 고수준 데이터 모델 구조
 
+6. **클론된 오픈소스 DB 스키마 분석** (있는 경우):
+   Bash로 opensource/ 폴더 확인: ls -la opensource/ 2>/dev/null || echo "없음"
+
+   오픈소스가 클론되어 있으면:
+   - Prisma 스키마 분석: Read opensource/[프로젝트]/prisma/schema.prisma
+   - Drizzle 스키마 분석: Read opensource/[프로젝트]/src/db/schema.ts
+   - TypeORM 엔티티 분석: Glob opensource/[프로젝트]/**/entities/*.ts
+   - Sequelize 모델 분석: Glob opensource/[프로젝트]/**/models/*.ts
+   - migrations 폴더 분석: Glob opensource/[프로젝트]/**/migrations/*.sql
+
+   발견된 스키마 정리:
+   "**클론된 오픈소스 DB 스키마:**
+
+   **[프로젝트명]의 테이블 구조:**
+   - users: id, email, name, created_at...
+   - posts: id, user_id, title, content...
+   - [기타 테이블들]
+
+   **관계:**
+   - users 1:N posts
+   - posts N:M tags
+
+   이 스키마를 참고해서 우리 서비스에 맞게 설계할게요."
+
 <critical>
 The ERD MUST use the exact database system from TRD.
 The ERD MUST include tables for ALL features from PRD.
 The ERD MUST support ALL user flows from UX Design.
 The ERD MUST expand on the table previews from Architecture.
+If opensource schema exists, use it as primary reference for table structure.
 </critical>
 </action>
 

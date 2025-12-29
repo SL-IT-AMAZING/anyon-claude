@@ -7,9 +7,10 @@ import { cn } from '@/lib/utils';
 
 interface FloatingHelpButtonProps {
   className?: string;
+  bottomOffset?: number;
 }
 
-export function FloatingHelpButton({ className }: FloatingHelpButtonProps) {
+export function FloatingHelpButton({ className, bottomOffset }: FloatingHelpButtonProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   const handleClick = useCallback(async () => {
@@ -20,7 +21,7 @@ export function FloatingHelpButton({ className }: FloatingHelpButtonProps) {
     <div
       className={cn('fixed z-50', className)}
       style={{
-        bottom: SUPPORT_CONFIG.UI.FLOATING_BUTTON_OFFSET,
+        bottom: bottomOffset ?? SUPPORT_CONFIG.UI.FLOATING_BUTTON_OFFSET,
         right: SUPPORT_CONFIG.UI.FLOATING_BUTTON_OFFSET,
       }}
       onMouseEnter={() => setIsHovered(true)}

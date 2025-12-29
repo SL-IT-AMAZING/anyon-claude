@@ -113,36 +113,65 @@ TRD에서 선택한 기술들을 바탕으로 최적의 구조를 설계해드�
 <action>{{reference_architectures}}에 저장</action>
 </step>
 
-<step n="2" goal="오픈소스 기반 분석" if="{{has_base_opensource}} == true">
+<step n="2" goal="클론된 오픈소스 폴더 구조 분석" if="{{has_base_opensource}} == true">
+
+<action>클론된 오픈소스 폴더 구조 분석 (로컬):
+Bash로 opensource/ 폴더 확인: ls -la opensource/ 2>/dev/null || echo "없음"
+
+오픈소스가 클론되어 있으면:
+1. 폴더 구조 분석:
+   Bash: tree -L 2 opensource/[프로젝트명] 또는 ls -la로 구조 파악
+
+2. 주요 설정 파일 분석:
+   - Read: opensource/[프로젝트명]/README.md
+   - Read: opensource/[프로젝트명]/docs/architecture.md (있으면)
+   - Read: opensource/[프로젝트명]/package.json
+   - Read: opensource/[프로젝트명]/docker-compose.yml (있으면)
+
+3. 아키텍처 패턴 파악:
+   - 폴더 구조로 패턴 추론 (모놀리식/마이크로서비스)
+   - src/ 하위 구조 분석 (pages, components, services, lib 등)
+</action>
 
 <action>If {{opensource_mode}} == "complete":
-WebFetch: {{opensource.base_repo}} - README, docs/architecture
-WebSearch: "{{opensource.base_project}} architecture", "{{opensource.base_project}} deployment"
+로컬 클론된 코드 분석 우선, 없으면 WebFetch:
 → 기존 아키텍처 자동 분석 후 {{base_architecture}}에 저장
 
 Present:
-"{{opensource.base_project}}의 기존 아키텍처를 분석했어요!
+"클론된 {{opensource.base_project}}의 아키텍처를 분석했어요!
+
+**폴더 구조:**
+\`\`\`
+opensource/{{프로젝트명}}/
+├── src/          - 메인 소스코드
+│   ├── pages/    - 화면 컴포넌트
+│   ├── components/ - UI 컴포넌트
+│   └── lib/      - 유틸리티
+├── server/       - 백엔드 (있으면)
+└── prisma/       - DB 스키마 (있으면)
+\`\`\`
 
 **아키텍처 패턴:** [분석 결과]
-**시스템 구성:** [다이어그램]
 **데이터 흐름:** [분석 결과]
 
 이 구조를 기반으로 {{project_name}}에 맞게 확장할게요."
 </action>
 
 <action>If {{opensource_mode}} == "combine":
+클론된 각 라이브러리 프로젝트 분석:
 For each library in {{opensource.feature_map}}:
-- WebFetch: [library docs] - architecture, integration guide
-- Check: how it integrates, required infrastructure
+- Read: opensource/[library]/README.md
+- Read: opensource/[library]/package.json
+- 폴더 구조 확인
 → 통합 아키텍처 자동 설계
 
 Present:
 "기능별 라이브러리 통합 구조를 설계했어요!
 
-| 기능 | 라이브러리 | 통합 위치 |
-|------|-----------|----------|
-| {{기능1}} | {{lib1}} | [위치] |
-| {{기능2}} | {{lib2}} | [위치] |
+| 기능 | 라이브러리 | 통합 위치 | 참고 코드 |
+|------|-----------|----------|----------|
+| {{기능1}} | {{lib1}} | [위치] | opensource/{{lib1}}/ |
+| {{기능2}} | {{lib2}} | [위치] | opensource/{{lib2}}/ |
 
 이 라이브러리들을 조합해서 최적의 구조를 만들게요."
 </action>

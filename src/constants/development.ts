@@ -24,7 +24,17 @@ export interface DevWorkflowStep {
 
 /**
  * PM Workflow Sequence
- * pm-orchestrator → pm-executor ↔ pm-reviewer (cycles until complete)
+ * 완전 자동화: pm-orchestrator → pm-executor → pm-reviewer → pm-executor → ... (완료까지)
+ *
+ * UI 버튼:
+ * - "개발 시작하기": pm-orchestrator부터 시작하여 완료까지 자동 진행
+ * - "이어서 개발하기": 중단된 지점(pm-executor)부터 재개
+ *
+ * 자동 전환:
+ * - Orchestrator 완료 → Executor 자동 시작
+ * - Executor 완료 → Reviewer 자동 시작
+ * - Reviewer 완료 → Executor 자동 시작 (사이클)
+ * - 에러 발생 시에만 중단
  */
 export const DEV_WORKFLOW_SEQUENCE: DevWorkflowStep[] = [
   {

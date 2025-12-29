@@ -4,7 +4,7 @@
 use std::collections::HashMap;
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -53,6 +53,47 @@ lazy_static::lazy_static! {
     static ref DEV_SERVERS: Arc<Mutex<DevServerState>> = Arc::new(Mutex::new(DevServerState {
         servers: HashMap::new(),
     }));
+}
+
+// ============================================================================
+// Path Normalization (Windows compatibility)
+// ============================================================================
+
+/// Normalize file path for cross-platform compatibility
+/// Windows paths may come with forward slashes from JavaScript, convert them to backslashes
+fn normalize_path(path: &str) -> PathBuf {
+    // Windows에서 슬래시를 백슬래시로 변환
+    #[cfg(windows)]
+    let path_str = path.replace('/', "\\");
+    #[cfg(not(windows))]
+    let path_str = path.to_string();
+
+    let path_buf = PathBuf::from(&path_str);
+
+    // canonicalize로 절대 경로로 변환 (존재하는 경로만)
+    // 존재하지 않으면 원래 경로 반환
+    match path_buf.canonicalize() {
+        Ok(canonical) => {
+            // Windows에서 \\?\ prefix 제거 (long path prefix)
+            #[cfg(windows)]
+            {
+                let path_str = canonical.to_string_lossy();
+                if path_str.starts_with("\\\\?\\") {
+                    PathBuf::from(&path_str[4..])
+                } else {
+                    canonical
+                }
+            }
+            #[cfg(not(windows))]
+            canonical
+        }
+        Err(_) => path_buf,
+    }
+}
+
+/// Get normalized path as String for HashMap keys
+fn normalize_path_string(path: &str) -> String {
+    normalize_path(path).to_string_lossy().to_string()
 }
 
 // ============================================================================
@@ -1077,25 +1118,45 @@ pub async fn wait_for_server_ready(port: u16, timeout_secs: Option<u64>) -> Resu
 
 #[tauri::command]
 pub async fn detect_package_manager(project_path: String) -> Result<String, String> {
-    let path = Path::new(&project_path);
+    // Normalize path for Windows compatibility (forward slashes -> backslashes)
+    let path = normalize_path(&project_path);
+
+    log::info!(
+        "detect_package_manager: original='{}', normalized='{:?}'",
+        project_path,
+        path
+    );
 
     if path.join("bun.lockb").exists() {
+        log::info!("Detected package manager: bun");
         return Ok("bun".to_string());
     }
     if path.join("pnpm-lock.yaml").exists() {
+        log::info!("Detected package manager: pnpm");
         return Ok("pnpm".to_string());
     }
     if path.join("yarn.lock").exists() {
+        log::info!("Detected package manager: yarn");
         return Ok("yarn".to_string());
     }
     if path.join("package-lock.json").exists() {
+        log::info!("Detected package manager: npm (package-lock.json)");
         return Ok("npm".to_string());
     }
     if path.join("package.json").exists() {
+        log::info!("Detected package manager: npm (package.json)");
         return Ok("npm".to_string());
     }
 
-    Err("No package manager detected".to_string())
+    log::warn!(
+        "No package manager detected at {:?}, package.json exists: {}",
+        path,
+        path.join("package.json").exists()
+    );
+    Err(format!(
+        "No package manager detected at {:?}",
+        path
+    ))
 }
 
 #[tauri::command]
@@ -1104,7 +1165,13 @@ pub async fn start_dev_server(
     project_path: String,
     project_id: Option<String>,
 ) -> Result<(), String> {
-    log::info!("Starting dev server for: {}", project_path);
+    // Normalize path for consistent HashMap key and file operations
+    let normalized_path = normalize_path_string(&project_path);
+    log::info!(
+        "Starting dev server for: {} (normalized: {})",
+        project_path,
+        normalized_path
+    );
 
     // Calculate fixed port if project_id is provided
     let fixed_port = project_id.as_ref().map(|id| {
@@ -1167,7 +1234,7 @@ pub async fn start_dev_server(
     };
 
     let info = DevServerInfo {
-        project_path: project_path.clone(),
+        project_path: normalized_path.clone(),
         pid,
         detected_port: initial_port,
         original_url: initial_urls.0,
@@ -1182,10 +1249,10 @@ pub async fn start_dev_server(
         stop_flag: stop_flag.clone(),
     };
 
-    // Store in global state
+    // Store in global state with normalized path as key
     {
         let mut servers = DEV_SERVERS.lock().unwrap();
-        servers.servers.insert(project_path.clone(), entry);
+        servers.servers.insert(normalized_path.clone(), entry);
     }
 
     // If we have a fixed port, start proxy immediately and notify
@@ -1195,11 +1262,11 @@ pub async fn start_dev_server(
             run_proxy_server(proxy_port, "localhost".to_string(), port, proxy_stop);
         });
 
-        // Notify frontend immediately
+        // Notify frontend immediately with normalized path
         let _ = app.emit(
             "dev-server-output",
             DevServerOutput {
-                project_path: project_path.clone(),
+                project_path: normalized_path.clone(),
                 output_type: "port-detected".to_string(),
                 message: format!("Dev server configured to use port {}", port),
                 port: Some(port),
@@ -1210,7 +1277,7 @@ pub async fn start_dev_server(
 
     // Spawn thread to read output
     let app_clone = app.clone();
-    let project_clone = project_path.clone();
+    let project_clone = normalized_path.clone();
     thread::spawn(move || {
         // Get stdout/stderr from process
         let mut servers = DEV_SERVERS.lock().unwrap();
@@ -1347,10 +1414,16 @@ pub async fn start_dev_server(
 
 #[tauri::command]
 pub async fn stop_dev_server(project_path: String) -> Result<(), String> {
-    log::info!("Stopping dev server for: {}", project_path);
+    // Use normalized path for consistent HashMap lookup
+    let normalized_path = normalize_path_string(&project_path);
+    log::info!(
+        "Stopping dev server for: {} (normalized: {})",
+        project_path,
+        normalized_path
+    );
 
     let mut servers = DEV_SERVERS.lock().unwrap();
-    if let Some(entry) = servers.servers.remove(&project_path) {
+    if let Some(entry) = servers.servers.remove(&normalized_path) {
         // Set stop flag for proxy
         *entry.stop_flag.lock().unwrap() = true;
 
@@ -1365,8 +1438,10 @@ pub async fn stop_dev_server(project_path: String) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn get_dev_server_info(project_path: String) -> Result<Option<DevServerInfo>, String> {
+    // Use normalized path for consistent HashMap lookup
+    let normalized_path = normalize_path_string(&project_path);
     let servers = DEV_SERVERS.lock().unwrap();
-    Ok(servers.servers.get(&project_path).map(|e| e.info.clone()))
+    Ok(servers.servers.get(&normalized_path).map(|e| e.info.clone()))
 }
 
 /// Connect to an already running external dev server
@@ -1377,10 +1452,13 @@ pub async fn connect_to_existing_server(
     project_path: String,
     port: u16,
 ) -> Result<String, String> {
+    // Normalize path for consistent HashMap key
+    let normalized_path = normalize_path_string(&project_path);
     log::info!(
-        "connect_to_existing_server: port={}, project_path={}",
+        "connect_to_existing_server: port={}, project_path={} (normalized: {})",
         port,
-        project_path
+        project_path,
+        normalized_path
     );
 
     // Check if port is actually in use by trying to connect to it
@@ -1420,7 +1498,7 @@ pub async fn connect_to_existing_server(
     let stop_flag = Arc::new(Mutex::new(false));
 
     let info = DevServerInfo {
-        project_path: project_path.clone(),
+        project_path: normalized_path.clone(),
         pid: 0, // No process, external server
         detected_port: Some(port),
         original_url: Some(format!("http://localhost:{}", port)),
@@ -1435,10 +1513,10 @@ pub async fn connect_to_existing_server(
         stop_flag: stop_flag.clone(),
     };
 
-    // Store in global state
+    // Store in global state with normalized path as key
     {
         let mut servers = DEV_SERVERS.lock().unwrap();
-        servers.servers.insert(project_path.clone(), entry);
+        servers.servers.insert(normalized_path.clone(), entry);
     }
 
     // Start proxy server
@@ -1455,11 +1533,11 @@ pub async fn connect_to_existing_server(
     let proxy_url = format!("http://localhost:{}", proxy_port);
     log::info!("connect_to_existing_server: Proxy URL = {}", proxy_url);
 
-    // Notify frontend
+    // Notify frontend with normalized path
     let _ = app.emit(
         "dev-server-output",
         DevServerOutput {
-            project_path: project_path.clone(),
+            project_path: normalized_path.clone(),
             output_type: "port-detected".to_string(),
             message: format!("Connected to existing server at localhost:{}", port),
             port: Some(port),

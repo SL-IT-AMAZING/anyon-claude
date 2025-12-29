@@ -67,7 +67,7 @@ const INSTRUCTIONS = `
 
 <workflow>
 
-<step n="1" goal="PRD 읽기 + 유저 플로우 개념 설명">
+<step n="1" goal="PRD 읽기 + 오픈소스 참조 + 유저 플로우 개념 설명">
 <action>PRD 문서 로드 from {input_prd}</action>
 
 <action>PRD에서 추출:
@@ -76,6 +76,39 @@ const INSTRUCTIONS = `
 - platform
 - core_features
 - target_users_summary
+- opensource 메타데이터 (있으면)
+</action>
+
+<action>클론된 오픈소스가 있는지 확인:
+Bash로 opensource/ 폴더 확인: ls -la opensource/ 2>/dev/null || echo "없음"
+
+오픈소스가 있으면:
+- 프로젝트별 폴더 구조 확인
+- 화면/컴포넌트 관련 폴더 탐색 (src/pages/, src/screens/, src/components/, app/ 등)
+- 주요 화면 구조 파악
+</action>
+
+<action>오픈소스 화면 구조 분석 (있는 경우):
+"PRD에서 참고하기로 한 오픈소스가 있네요!
+
+**클론된 오픈소스:**
+{{opensource_projects}}
+
+화면 설계할 때 이 프로젝트들의 UX 패턴을 참고할게요.
+잠깐 어떤 화면 구조인지 살펴볼게요..."
+
+Glob으로 화면 파일 탐색:
+- opensource/[프로젝트명]/src/pages/**/*.tsx
+- opensource/[프로젝트명]/src/screens/**/*.tsx
+- opensource/[프로젝트명]/app/**/*.tsx
+
+주요 화면 목록 정리:
+"**[프로젝트명]의 화면 구조:**
+- 홈/메인: [파일 경로]
+- 리스트: [파일 경로]
+- 상세: [파일 경로]
+- 설정: [파일 경로]
+..."
 </action>
 
 <action>유저 플로우 개념을 쉽게 설명:

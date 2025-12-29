@@ -261,12 +261,12 @@ const extractBlockedTickets = (content: string): BlockedTicket[] => {
 
 /**
  * Get next workflow step based on current step
- * Orchestrator는 수동, Executor ↔ Reviewer만 자동 반복
+ * 완전 자동화: Orchestrator → Executor → Reviewer → Executor → ... (완료까지)
  */
 const getNextStep = (currentStepId: string): typeof DEV_WORKFLOW_SEQUENCE[0] | null => {
-  // Orchestrator → 수동 (자동 전환 안 함)
+  // Orchestrator → Executor (자동)
   if (currentStepId === 'pm-orchestrator') {
-    return null; // 사용자가 Executor 버튼을 직접 눌러야 함
+    return DEV_WORKFLOW_SEQUENCE[1]; // pm-executor
   }
   // Executor → Reviewer (자동)
   if (currentStepId === 'pm-executor') {
@@ -703,76 +703,83 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
         </div>
       )}
 
-      {/* 워크플로우 시각화 */}
+      {/* 워크플로우 버튼 (간소화: 2개 버튼) */}
       <div className="flex-shrink-0 p-4 border-b">
-        <div className="flex items-center justify-center gap-2">
-          {DEV_WORKFLOW_SEQUENCE.map((step, index) => {
-            const status = getStepStatus(step.id);
-            return (
-              <React.Fragment key={step.id}>
-                <button
-                  onClick={() => handleStart(step.id, getDevWorkflowPrompt(step), step.displayText)}
-                  disabled={!onStartWorkflow || isRunningWorkflow}
-                  className={cn(
-                    'flex flex-col items-center gap-1.5 px-4 py-3 rounded-lg transition-all',
-                    'border hover:shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed',
-                    status === 'running' && 'bg-primary/10 border-primary shadow-md',
-                    status === 'completed' && 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700',
-                    status === 'idle' && 'bg-background border-border hover:border-primary/50'
-                  )}
-                >
-                  <div className="relative">
-                    {status === 'running' ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : status === 'completed' ? (
-                      <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
-                    ) : (
-                      <PlayCircle className="h-5 w-5 text-muted-foreground" />
-                    )}
-                  </div>
-                  <span className={cn(
-                    'text-xs font-medium',
-                    status === 'running' && 'text-primary',
-                    status === 'completed' && 'text-green-600 dark:text-green-400',
-                    status === 'idle' && 'text-muted-foreground'
-                  )}>
-                    {step.title}
-                  </span>
-                </button>
-                {index < DEV_WORKFLOW_SEQUENCE.length - 1 && (
-                  <div className="flex items-center text-muted-foreground/50">
-                    <div className="w-4 h-px bg-current" />
-                    <div className="text-xs mx-1">→</div>
-                    <div className="w-4 h-px bg-current" />
-                  </div>
-                )}
-              </React.Fragment>
-            );
-          })}
+        <div className="flex items-center justify-center gap-4">
+          {/* 개발 시작하기 버튼 */}
+          <button
+            onClick={() => {
+              const orchestrator = DEV_WORKFLOW_SEQUENCE[0];
+              handleStart(orchestrator.id, getDevWorkflowPrompt(orchestrator), orchestrator.displayText);
+            }}
+            disabled={!onStartWorkflow || isRunningWorkflow || isOrchestratorComplete}
+            className={cn(
+              'flex items-center gap-2 px-6 py-3 rounded-lg transition-all font-medium',
+              'border hover:shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed',
+              isOrchestratorComplete
+                ? 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700 text-green-700 dark:text-green-300'
+                : 'bg-primary text-primary-foreground border-primary hover:bg-primary/90'
+            )}
+          >
+            {currentRunningStep && !isOrchestratorComplete ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : isOrchestratorComplete ? (
+              <CheckCircle2 className="h-4 w-4" />
+            ) : (
+              <PlayCircle className="h-4 w-4" />
+            )}
+            <span>
+              {isOrchestratorComplete ? '개발 완료' : isRunningWorkflow ? '개발 중...' : '개발 시작하기'}
+            </span>
+          </button>
+
+          {/* 이어서 개발하기 버튼 */}
+          <button
+            onClick={() => {
+              // 현재 상태에 따라 적절한 단계부터 재개
+              const resumeStep = isOrchestratorComplete
+                ? DEV_WORKFLOW_SEQUENCE[1]  // pm-executor
+                : DEV_WORKFLOW_SEQUENCE[0]; // pm-orchestrator
+              handleStart(resumeStep.id, getDevWorkflowPrompt(resumeStep), resumeStep.displayText);
+            }}
+            disabled={!onStartWorkflow || isRunningWorkflow || isDevComplete || !isOrchestratorComplete}
+            className={cn(
+              'flex items-center gap-2 px-6 py-3 rounded-lg transition-all font-medium',
+              'border hover:shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed',
+              'bg-background border-border hover:border-primary/50 text-foreground'
+            )}
+          >
+            <RefreshCw className="h-4 w-4" />
+            <span>이어서 개발하기</span>
+          </button>
         </div>
 
-        {/* Orchestrator 완료 시 Executor 버튼 클릭 유도 */}
-        {isOrchestratorComplete && !currentRunningStep && !isDevComplete && (
+        {/* 진행 상태 표시 */}
+        {isRunningWorkflow && currentRunningStep && (
           <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-            <div className="flex items-start gap-2">
-              <CheckCircle2 className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-              <div className="flex-1 space-y-1">
-                <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                  기획 문서 생성 완료!
-                </p>
-                <p className="text-xs text-blue-700 dark:text-blue-300">
-                  개발을 시작하려면 <span className="font-semibold">PM Executor</span> 버튼을 클릭하세요
-                </p>
-              </div>
+            <div className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+              <span className="text-sm text-blue-700 dark:text-blue-300">
+                {DEV_WORKFLOW_SEQUENCE.find(s => s.id === currentRunningStep)?.title || currentRunningStep} 실행 중...
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* 완료 상태 */}
+        {isDevComplete && (
+          <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              <span className="text-sm text-green-700 dark:text-green-300">
+                개발이 완료되었습니다!
+              </span>
             </div>
           </div>
         )}
 
         <p className="text-xs text-center text-muted-foreground mt-3">
-          {isOrchestratorComplete 
-            ? "Executor ↔ Reviewer는 자동 반복 / Orchestrator는 수동"
-            : "각 단계를 클릭하여 시작 / Executor ↔ Reviewer는 자동 반복"
-          }
+          버튼 클릭 시 처음부터 끝까지 자동으로 진행됩니다
         </p>
       </div>
 

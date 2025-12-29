@@ -66,6 +66,32 @@ const INSTRUCTIONS = `
 - opensource.decision, opensource.base_project (있으면)
 </action>
 
+<action>클론된 오픈소스 기술 스택 분석 (있는 경우):
+Bash로 opensource/ 폴더 확인: ls -la opensource/ 2>/dev/null || echo "없음"
+
+오픈소스가 있으면:
+1. 각 프로젝트의 package.json 분석:
+   - Read: opensource/[프로젝트명]/package.json
+   - dependencies, devDependencies에서 기술 스택 추출
+
+2. 기술 스택 정리:
+   "**클론된 오픈소스 기술 분석:**
+
+   **[프로젝트명]의 기술 스택:**
+   - 프론트엔드: [React/Vue/Svelte 등]
+   - 백엔드: [Node/Python/Go 등]
+   - DB: [PostgreSQL/MongoDB 등]
+   - UI: [Tailwind/MUI 등]
+   - 인증: [NextAuth/Clerk 등]
+   - 기타: [주요 라이브러리들]
+
+   이 기술 스택을 참고해서 우리 서비스에 맞게 조정할게요."
+
+3. 검증된 기술 조합으로 활용:
+   - 오픈소스에서 이미 잘 작동하는 기술 조합 참고
+   - 무리한 커스텀 피하기
+</action>
+
 <action>기능 요구사항 자동 분석:
 - 로그인/회원가입 필요? → PRD에서 파악
 - 파일 업로드 필요? → PRD에서 파악
