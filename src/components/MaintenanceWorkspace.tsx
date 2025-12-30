@@ -13,7 +13,9 @@ import {
   Code,
   Search,
   History,
+  LayoutGrid,
 } from "@/lib/icons";
+import { WorkflowProgress } from '@/components/shared/WorkflowProgress';
 import type { ExecutionMode } from './FloatingPromptInput';
 import type { ClaudeCodeSessionRef } from '@/components/ClaudeCodeSession';
 import { Button } from '@/components/ui/button';
@@ -491,31 +493,48 @@ export const MaintenanceWorkspace: React.FC<MaintenanceWorkspaceProps> = ({ proj
               {/* Tab Content */}
               <div className="flex-1 overflow-hidden">
                 {activeTab === 'planning' ? (
-                  // 계획 세우기: 심플한 안내 화면
-                  <div className="h-full flex flex-col items-center justify-center p-8">
-                    <div className="text-center max-w-sm">
-                      <div className="w-16 h-16 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center mx-auto mb-4">
-                        <Search className="w-8 h-8 text-violet-600 dark:text-violet-400" />
+                  // 계획 세우기: 진행률 + 안내 화면
+                  <div className="h-full flex flex-col overflow-y-auto">
+                    {/* SDD Pattern: 실시간 진행률 표시 */}
+                    <div className="p-4 border-b border-border">
+                      <div className="flex items-center gap-2 mb-3">
+                        <LayoutGrid className="w-4 h-4 text-violet-500" />
+                        <span className="text-sm font-medium">워크플로우 진행 상황</span>
                       </div>
-                      <p className="text-lg font-medium mb-2">{t('maintenance.planning.title')}</p>
-                      <p className="text-sm text-muted-foreground mb-6">
-                        {t('maintenance.planning.description')}
-                      </p>
+                      <WorkflowProgress
+                        projectPath={project?.path}
+                        variant="compact"
+                        showKanban={true}
+                        showStats={true}
+                      />
+                    </div>
 
-                      {/* 계획 완료 안내 */}
-                      <div className="pt-6 border-t border-border">
-                        <p className="text-xs text-muted-foreground mb-3">
-                          {t('maintenance.planning.complete')}
+                    {/* 기존 안내 화면 */}
+                    <div className="flex-1 flex flex-col items-center justify-center p-8">
+                      <div className="text-center max-w-sm">
+                        <div className="w-16 h-16 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center mx-auto mb-4">
+                          <Search className="w-8 h-8 text-violet-600 dark:text-violet-400" />
+                        </div>
+                        <p className="text-lg font-medium mb-2">{t('maintenance.planning.title')}</p>
+                        <p className="text-sm text-muted-foreground mb-6">
+                          {t('maintenance.planning.description')}
                         </p>
-                        <Button
-                          onClick={() => setActiveTab('development')}
-                          variant="outline"
-                          className="gap-2"
-                          disabled={isSessionLoading}
-                        >
-                          <ArrowRight className="w-4 h-4" />
-                          {t('maintenance.planning.nextButton')}
-                        </Button>
+
+                        {/* 계획 완료 안내 */}
+                        <div className="pt-6 border-t border-border">
+                          <p className="text-xs text-muted-foreground mb-3">
+                            {t('maintenance.planning.complete')}
+                          </p>
+                          <Button
+                            onClick={() => setActiveTab('development')}
+                            variant="outline"
+                            className="gap-2"
+                            disabled={isSessionLoading}
+                          >
+                            <ArrowRight className="w-4 h-4" />
+                            {t('maintenance.planning.nextButton')}
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>

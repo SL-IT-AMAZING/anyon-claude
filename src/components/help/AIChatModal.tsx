@@ -1,10 +1,19 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Minimize2, Send, Bot, User, AlertCircle } from '@/lib/icons';
+import { X, Minimize2, Send, Bot, User, AlertCircle, RefreshCw } from '@/lib/icons';
 import { SUPPORT_CONFIG } from '@/constants/support';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import { useChatHistory, type Message } from '@/hooks/useChatHistory';
 import { streamSupportMessage } from '@/lib/api/support-chat';
+
+// 토큰 제한 에러 감지 함수
+function isTokenLimitError(errorMessage: string): boolean {
+  const msg = errorMessage.toLowerCase();
+  return (msg.includes('exceeded') && (msg.includes('token') || msg.includes('output'))) ||
+         msg.includes('max_tokens') ||
+         msg.includes('token limit');
+}
 
 interface AIChatModalProps {
   isOpen: boolean;
@@ -16,6 +25,7 @@ export function AIChatModal({ isOpen, onClose }: AIChatModalProps) {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tokenLimitError, setTokenLimitError] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -64,12 +74,15 @@ export function AIChatModal({ isOpen, onClose }: AIChatModalProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  const handleSend = async () => {
-    const content = inputValue.trim();
+  const handleSend = async (overrideContent?: string) => {
+    const content = (overrideContent ?? inputValue).trim();
     if (!content || isLoading) return;
 
-    setInputValue('');
+    if (!overrideContent) {
+      setInputValue('');
+    }
     setError(null);
+    setTokenLimitError(false);
     setIsLoading(true);
 
     // 사용자 메시지 추가
@@ -96,12 +109,24 @@ export function AIChatModal({ isOpen, onClose }: AIChatModalProps) {
       updateMessage(assistantMessage.id, { isStreaming: false });
     } catch (err) {
       console.error('[AIChatModal] Error:', err);
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      const isTokenError = isTokenLimitError(errorMessage);
+
       updateMessage(assistantMessage.id, {
-        content: '죄송해요, 오류가 발생했어요. 다시 시도해주세요.',
+        content: isTokenError
+          ? '응답이 너무 길어 중단되었습니다.'
+          : '죄송해요, 오류가 발생했어요. 다시 시도해주세요.',
         isStreaming: false,
         isError: true,
       });
-      setError('메시지 전송에 실패했습니다.');
+
+      if (isTokenError) {
+        setTokenLimitError(true);
+        setError('출력 토큰 제한을 초과했습니다.');
+      } else {
+        setTokenLimitError(false);
+        setError('메시지 전송에 실패했습니다.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -112,6 +137,11 @@ export function AIChatModal({ isOpen, onClose }: AIChatModalProps) {
       e.preventDefault();
       handleSend();
     }
+  };
+
+  // "이어서 하기" 버튼 클릭 핸들러
+  const handleContinue = () => {
+    handleSend('이어서 해줘');
   };
 
   if (!isOpen) return null;
@@ -189,16 +219,35 @@ export function AIChatModal({ isOpen, onClose }: AIChatModalProps) {
 
         {/* 에러 메시지 */}
         {error && (
-          <div className="flex items-center gap-2 border-t border-destructive/20 bg-destructive/10 px-4 py-2 text-sm text-destructive">
-            <AlertCircle size={14} />
-            <span>{error}</span>
-            <button
-              onClick={() => setError(null)}
-              className="ml-auto text-xs underline"
-            >
-              닫기
-            </button>
-          </div>
+          tokenLimitError ? (
+            <div className="flex items-center justify-between gap-2 border-t border-amber-500/20 bg-amber-500/10 px-4 py-2 text-sm text-amber-600 dark:text-amber-400">
+              <div className="flex items-center gap-2">
+                <AlertCircle size={14} />
+                <span>{error}</span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleContinue}
+                disabled={isLoading}
+                className="h-7 border-amber-500/30 hover:bg-amber-500/10"
+              >
+                <RefreshCw className={`h-3 w-3 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
+                이어서 하기
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 border-t border-destructive/20 bg-destructive/10 px-4 py-2 text-sm text-destructive">
+              <AlertCircle size={14} />
+              <span>{error}</span>
+              <button
+                onClick={() => setError(null)}
+                className="ml-auto text-xs underline"
+              >
+                닫기
+              </button>
+            </div>
+          )
         )}
 
         {/* 입력 영역 */}
@@ -215,7 +264,7 @@ export function AIChatModal({ isOpen, onClose }: AIChatModalProps) {
               disabled={isLoading}
             />
             <button
-              onClick={handleSend}
+              onClick={() => handleSend()}
               disabled={!inputValue.trim() || isLoading}
               className={cn(
                 'flex h-10 w-10 items-center justify-center rounded-lg transition-colors',

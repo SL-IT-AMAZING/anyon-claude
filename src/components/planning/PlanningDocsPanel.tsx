@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { CheckCircle2, ArrowRight, PlayCircle, ChevronLeft, ChevronRight, FileText , Loader2 } from '@/lib/icons';
+import { CheckCircle2, ArrowRight, PlayCircle, ChevronLeft, ChevronRight, FileText , Loader2, AlertCircle, RefreshCw } from '@/lib/icons';
 import prdIcon from '@/assets/prd-icon.png';
 import uiuxIcon from '@/assets/uiux-icon.png';
 import trdIcon from '@/assets/trd-icon.png';
@@ -13,12 +13,17 @@ import { usePlanningDocs } from '@/hooks/usePlanningDocs';
 import { WORKFLOW_SEQUENCE, type WorkflowStep, getWorkflowPrompt } from '@/constants/planning';
 import { PlanningDocViewer } from './PlanningDocViewer';
 import { UXPreviewPanel } from './UXPreviewPanel';
+import type { SessionError } from '@/components/ClaudeCodeSession';
 
 interface PlanningDocsPanelProps {
   projectPath: string | undefined;
   onStartWorkflow: (workflowPrompt: string, displayText?: string) => void;
   isSessionLoading?: boolean;
   onPlanningComplete?: () => void;
+  /** Session error (e.g., token limit exceeded) */
+  sessionError?: SessionError | null;
+  /** Callback to resume workflow after error */
+  onResumeWorkflow?: (workflowPrompt: string, displayText?: string) => void;
 }
 
 /**
@@ -30,6 +35,8 @@ export const PlanningDocsPanel: React.FC<PlanningDocsPanelProps> = ({
   onStartWorkflow,
   isSessionLoading = false,
   onPlanningComplete,
+  sessionError,
+  onResumeWorkflow,
 }) => {
   const { documents, isLoading, progress } = usePlanningDocs(projectPath);
   const [activeDocId, setActiveDocId] = useState<string>('prd');
@@ -145,6 +152,25 @@ export const PlanningDocsPanel: React.FC<PlanningDocsPanelProps> = ({
       }
     }
   }, [activeDocId, isTabEnabled]);
+
+  // Handle resume workflow after token limit error
+  const handleResumeCurrentWorkflow = useCallback(() => {
+    if (!activeStep || !onResumeWorkflow) return;
+
+    const workflowPrompt = getWorkflowPrompt(activeStep);
+    if (!workflowPrompt) return;
+
+    // Create a continuation prompt
+    const continuePrompt = `이전 작업이 토큰 한도로 인해 중단되었습니다. 중단된 지점부터 ${activeStep.title} 문서 작성을 이어서 진행해주세요.
+
+지침:
+1. 기존에 작성된 내용을 확인하고 이어서 작성
+2. 문서가 완성되지 않았다면 남은 부분 완성
+3. 이미 완성되었다면 검토 후 저장`;
+
+    setActiveWorkflows(prev => new Set(prev).add(activeStep.id));
+    onResumeWorkflow(continuePrompt, `${activeStep.title} 이어서 작성`);
+  }, [activeStep, onResumeWorkflow]);
 
   if (!projectPath) {
     return (
@@ -366,8 +392,33 @@ export const PlanningDocsPanel: React.FC<PlanningDocsPanelProps> = ({
         )}
       </div>
 
+      {/* 토큰 한도 에러 발생 시 이어서 작성하기 배너 */}
+      {sessionError?.isTokenLimitError && sessionError.canResume && !isSessionLoading && (
+        <div className="flex-shrink-0 border-t p-4 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/50">
+          <div className="flex items-start gap-3 mb-3">
+            <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-500 flex-shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
+                작성이 중단되었습니다
+              </p>
+              <p className="text-xs text-amber-700/80 dark:text-amber-400/80 mt-0.5">
+                응답 토큰 한도에 도달했습니다. 아래 버튼을 클릭하여 이어서 작성할 수 있습니다.
+              </p>
+            </div>
+          </div>
+          <Button
+            onClick={handleResumeCurrentWorkflow}
+            size="lg"
+            className="w-full gap-2 bg-amber-600 hover:bg-amber-700 text-white"
+          >
+            <RefreshCw className="h-4 w-4" />
+            {activeStep?.title} 이어서 작성하기
+          </Button>
+        </div>
+      )}
+
       {/* 하단 CTA 영역 */}
-      {activeDoc?.exists && progress?.nextStep?.id && (
+      {activeDoc?.exists && progress?.nextStep?.id && !sessionError?.isTokenLimitError && (
         <div className="flex-shrink-0 border-t p-4 bg-gradient-to-r from-primary/5 to-primary/10">
           <Button
             className="w-full gap-2"

@@ -35,6 +35,7 @@ import { StreamingText } from "./StreamingText";
 import { FloatingPromptInput, type FloatingPromptInputRef, type ExecutionMode } from "./FloatingPromptInput";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { SlashCommandsManager } from "./SlashCommandsManager";
+import { TokenLimitErrorBanner } from "./shared/TokenLimitErrorBanner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { TooltipProvider, TooltipSimple } from "@/components/ui/tooltip-modern";
 import { SplitPane } from "@/components/ui/split-pane";
@@ -58,6 +59,15 @@ import {
   updateSessionFirstMessage,
   type QueuedPrompt,
 } from "./claude-session/promptHandlers";
+
+/**
+ * Error information for session errors
+ */
+export interface SessionError {
+  message: string;
+  isTokenLimitError: boolean;
+  canResume: boolean;
+}
 
 interface ClaudeCodeSessionProps {
   /**
@@ -113,6 +123,10 @@ interface ClaudeCodeSessionProps {
    * Callback when user stops workflow execution (e.g., pressing stop button)
    */
   onStopWorkflow?: () => void;
+  /**
+   * Callback when an error occurs (for token limit handling)
+   */
+  onError?: (error: SessionError | null) => void;
 }
 
 /**
@@ -145,6 +159,7 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
   defaultExecutionMode,
   onExecutionModeChange,
   onStopWorkflow,
+  onError,
 }, ref) => {
   const [projectPath, setProjectPath] = useState(initialProjectPath || session?.project_path || "");
 
@@ -158,6 +173,7 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
   const [messages, setMessages] = useState<ClaudeStreamMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sessionError, setSessionError] = useState<SessionError | null>(null);
   
   // Streaming text state for real-time typing effect
   const [streamingText, setStreamingText] = useState<string>('');
@@ -658,7 +674,24 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
     const errorUnlisten = await listen(`claude-error:${sessionId}`, (event: any) => {
       logger.error("Claude error:", event.payload);
       if (isMountedRef.current) {
-        setError(event.payload);
+        const errorMessage = event.payload as string;
+        setError(errorMessage);
+
+        // Check if this is a token limit error and notify parent
+        const isTokenLimitError = errorMessage.includes('exceeded') &&
+          (errorMessage.includes('token') || errorMessage.includes('output'));
+
+        // Set session error for UI display
+        const sessionErr: SessionError = {
+          message: errorMessage,
+          isTokenLimitError,
+          canResume: isTokenLimitError,
+        };
+        setSessionError(sessionErr);
+
+        if (onError) {
+          onError(sessionErr);
+        }
       }
     });
 
@@ -680,6 +713,13 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
   };
 
   // Project path selection handled by parent tab controls
+
+  // Handle "이어서 하기" button click for token limit errors
+  const handleContinue = () => {
+    setError(null);
+    setSessionError(null);
+    handleSendPrompt("이어서 해줘", selectedModel);
+  };
 
   const handleSendPrompt = async (
     prompt: string,
@@ -782,6 +822,7 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
           messages,
           onSessionCreated,
           pendingDisplayTextRef,  // 워크플로우 displayText 매핑 전달
+          onError,  // 토큰 한도 초과 에러 핸들링
         });
       }
 
@@ -1178,17 +1219,25 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
 
       {/* Error indicator */}
       {error && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.15 }}
-          className="max-w-4xl mx-auto py-4 px-4"
-        >
-          <div className="flex items-start gap-3 text-destructive">
-            <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
-            <div className="text-sm">{error}</div>
-          </div>
-        </motion.div>
+        sessionError?.isTokenLimitError ? (
+          <TokenLimitErrorBanner
+            error={sessionError}
+            onContinue={handleContinue}
+            isLoading={isLoading}
+          />
+        ) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.15 }}
+            className="max-w-4xl mx-auto py-4 px-4"
+          >
+            <div className="flex items-start gap-3 text-destructive">
+              <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+              <div className="text-sm">{error}</div>
+            </div>
+          </motion.div>
+        )
       )}
     </div>
   );

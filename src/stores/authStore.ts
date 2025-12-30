@@ -262,6 +262,12 @@ export const useAuthStore = create<AuthState>()(
       checkAuth: async () => {
         const { accessToken } = get();
         if (!accessToken) return false;
+
+        // 개발 토큰인 경우 서버 검증 건너뛰기
+        if (accessToken === 'dev-token') {
+          return true;
+        }
+
         const tokenAtCall = accessToken;
 
         try {

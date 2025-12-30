@@ -1,4 +1,4 @@
-import React, { forwardRef, useImperativeHandle, useState, useRef, useEffect, useCallback } from 'react';
+import { forwardRef, useImperativeHandle, useState, useRef, useEffect, useCallback } from 'react';
 import { PlayCircle, Square, AlertCircle, CheckCircle2, Code, Trash2, Loader2, RefreshCw, ChevronRight, File, Clock, Circle } from '@/lib/icons';
 import { PanelHeader, StatusBadge } from '@/components/ui/panel-header';
 import { Button } from '@/components/ui/button';
@@ -311,6 +311,7 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
   );
 
   const appendLogEntry = useDevWorkflowStore((state) => state.appendLogEntry);
+  const updateLogEntryStatus = useDevWorkflowStore((state) => state.updateLogEntryStatus);
   const clearLogs = useDevWorkflowStore((state) => state.clearLogs);
   const setCurrentRunningStep = useDevWorkflowStore((state) => state.setCurrentRunningStep);
   const toggleExpandedLog = useDevWorkflowStore((state) => state.toggleExpandedLog);
@@ -376,52 +377,51 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
     }
   ) => {
     const step = DEV_WORKFLOW_SEQUENCE.find(s => s.id === stepId);
-    if (step) {
+    if (!step) return;
+
+    // running 상태일 때만 새 로그 추가
+    if (status === 'running') {
       const timestamp = Date.now();
-
-      // 완료 상태일 때 duration 계산
-      let duration: number | undefined;
-      if (status === 'completed') {
-        const runningLog = executionLog.find(
-          log => log.stepId === stepId && log.status === 'running' && !log.duration
-        );
-        if (runningLog && runningLog.startTime) {
-          duration = timestamp - runningLog.startTime;
-        }
-      }
-
-      // 실행 중일 때는 파일에서 추가 데이터 로드
-      let files: string[] | undefined;
-      let blocked: BlockedTicket[] | undefined;
-
-      if (status === 'completed' && projectPath) {
-        try {
-          const progressFilePath = `${projectPath}/${ANYON_DOCS.DEV_PLAN}/${ANYON_DOCS.DEV_FILES.EXECUTION_PROGRESS}`;
-          const content = await api.readFileContent(progressFilePath);
-          if (content) {
-            files = extractGeneratedFiles(content);
-            blocked = extractBlockedTickets(content);
-          }
-        } catch (error) {
-          // 파일 읽기 실패는 무시
-        }
-      }
-
       appendLogEntry(projectKey, {
         stepId,
         stepTitle: step.title,
         status,
         timestamp,
         waveInfo,
-        duration,
-        startTime: status === 'running' ? timestamp : undefined,
+        startTime: timestamp,
         ticketsCompleted: additionalData?.ticketsCompleted,
         ticketsTotal: additionalData?.ticketsTotal,
         ticketsBlocked: additionalData?.ticketsBlocked,
-        generatedFiles: files || additionalData?.generatedFiles,
-        blockedTickets: blocked || additionalData?.blockedTickets,
+        generatedFiles: additionalData?.generatedFiles,
+        blockedTickets: additionalData?.blockedTickets,
       });
+      return;
     }
+
+    // completed/error 상태일 때는 기존 running 로그를 업데이트
+    let files: string[] | undefined;
+    let blocked: BlockedTicket[] | undefined;
+
+    if (status === 'completed' && projectPath) {
+      try {
+        const progressFilePath = `${projectPath}/${ANYON_DOCS.DEV_PLAN}/${ANYON_DOCS.DEV_FILES.EXECUTION_PROGRESS}`;
+        const content = await api.readFileContent(progressFilePath);
+        if (content) {
+          files = extractGeneratedFiles(content);
+          blocked = extractBlockedTickets(content);
+        }
+      } catch (error) {
+        // 파일 읽기 실패는 무시
+      }
+    }
+
+    updateLogEntryStatus(projectKey, stepId, status, {
+      ticketsCompleted: additionalData?.ticketsCompleted,
+      ticketsTotal: additionalData?.ticketsTotal,
+      ticketsBlocked: additionalData?.ticketsBlocked,
+      generatedFiles: files || additionalData?.generatedFiles,
+      blockedTickets: blocked || additionalData?.blockedTickets,
+    });
   };
 
   useEffect(() => {
@@ -469,7 +469,28 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
 
           // 5. 다음 단계 결정 및 자동 실행
           const nextStep = getNextStep(currentRunningStep);
-          
+
+          // Orchestrator → Executor 전환 시 티켓 존재 확인
+          if (currentRunningStep === 'pm-orchestrator' && nextStep?.id === 'pm-executor') {
+            const progressPath = `${projectPath}/${ANYON_DOCS.DEV_PLAN}/${ANYON_DOCS.DEV_FILES.EXECUTION_PROGRESS}`;
+            try {
+              const progressContent = await api.readFileContent(progressPath);
+              const totalTicketsMatch = progressContent.match(/total_tickets:\s*(\d+)/i);
+              const totalTickets = totalTicketsMatch ? parseInt(totalTicketsMatch[1], 10) : 0;
+
+              if (totalTickets === 0) {
+                console.warn('[DevDocsPanel] No tickets found. Skipping Executor.');
+                setCurrentRunningStep(projectKey, null);
+                return;
+              }
+            } catch (error) {
+              // execution-progress.md 파일이 없으면 Executor 실행 안함
+              console.warn('[DevDocsPanel] execution-progress.md not found. Skipping Executor.');
+              setCurrentRunningStep(projectKey, null);
+              return;
+            }
+          }
+
           // Executor → Reviewer 전환 시 workflow_state 검증
           if (currentRunningStep === 'pm-executor' && nextStep?.id === 'pm-reviewer') {
             // execution-progress.md에서 workflow_state 확인
@@ -577,18 +598,6 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
   }
 
   const isRunningWorkflow = currentRunningStep !== null && isSessionLoading;
-
-  const getStepStatus = (stepId: string): 'idle' | 'running' | 'completed' => {
-    // pm-orchestrator is completed if marker file exists
-    if (stepId === 'pm-orchestrator' && isOrchestratorComplete) {
-      return 'completed';
-    }
-
-    if (currentRunningStep === stepId && isSessionLoading) return 'running';
-    const completedLogs = executionLog.filter(log => log.stepId === stepId && log.status === 'completed');
-    if (completedLogs.length > 0) return 'completed';
-    return 'idle';
-  };
 
   // 진행률 계산
   const progressPercent = progressData.totalTickets > 0
@@ -716,33 +725,54 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
             className={cn(
               'flex items-center gap-2 px-6 py-3 rounded-lg transition-all font-medium',
               'border hover:shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed',
-              isOrchestratorComplete
+              isDevComplete || isOrchestratorComplete
                 ? 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700 text-green-700 dark:text-green-300'
                 : 'bg-primary text-primary-foreground border-primary hover:bg-primary/90'
             )}
           >
-            {currentRunningStep && !isOrchestratorComplete ? (
+            {currentRunningStep && !isDevComplete ? (
               <Loader2 className="h-4 w-4 animate-spin" />
+            ) : isDevComplete ? (
+              <CheckCircle2 className="h-4 w-4" />
             ) : isOrchestratorComplete ? (
               <CheckCircle2 className="h-4 w-4" />
             ) : (
               <PlayCircle className="h-4 w-4" />
             )}
             <span>
-              {isOrchestratorComplete ? '개발 완료' : isRunningWorkflow ? '개발 중...' : '개발 시작하기'}
+              {isDevComplete ? '개발 완료' : isOrchestratorComplete ? '기획 완료' : isRunningWorkflow ? '개발 중...' : '개발 시작하기'}
             </span>
           </button>
 
           {/* 이어서 개발하기 버튼 */}
           <button
-            onClick={() => {
-              // 현재 상태에 따라 적절한 단계부터 재개
-              const resumeStep = isOrchestratorComplete
-                ? DEV_WORKFLOW_SEQUENCE[1]  // pm-executor
-                : DEV_WORKFLOW_SEQUENCE[0]; // pm-orchestrator
-              handleStart(resumeStep.id, getDevWorkflowPrompt(resumeStep), resumeStep.displayText);
+            onClick={async () => {
+              if (!projectPath) return;
+
+              // 1. 개발 완료 상태 체크
+              const devCompleteFile = `${projectPath}/${ANYON_DOCS.DEV_PLAN}/${ANYON_DOCS.DEV_FILES.COMPLETE_MARKER}`;
+              const isDevCompleteNow = await api.checkFileExists(devCompleteFile);
+              if (isDevCompleteNow) {
+                setIsDevComplete(projectKey, true);
+                return;
+              }
+
+              // 2. Orchestrator 완료 상태 체크
+              const orchestratorCompleteFile = `${projectPath}/${ANYON_DOCS.DEV_PLAN}/ORCHESTRATOR_COMPLETE.md`;
+              const isOrchComplete = await api.checkFileExists(orchestratorCompleteFile);
+
+              if (isOrchComplete) {
+                // Orchestrator 완료 → pm-executor로 바로 시작
+                setIsOrchestratorComplete(projectKey, true);
+                const executor = DEV_WORKFLOW_SEQUENCE[1]; // pm-executor
+                handleStart(executor.id, getDevWorkflowPrompt(executor), executor.displayText);
+              } else {
+                // Orchestrator 미완료 → pm-orchestrator 시작
+                const orchestrator = DEV_WORKFLOW_SEQUENCE[0];
+                handleStart(orchestrator.id, getDevWorkflowPrompt(orchestrator), orchestrator.displayText);
+              }
             }}
-            disabled={!onStartWorkflow || isRunningWorkflow || isDevComplete || !isOrchestratorComplete}
+            disabled={!onStartWorkflow || isRunningWorkflow || isDevComplete}
             className={cn(
               'flex items-center gap-2 px-6 py-3 rounded-lg transition-all font-medium',
               'border hover:shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed',
@@ -1031,7 +1061,7 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
           {executionLog.length > 0 && !isDevComplete && (
             <div className="mt-4 p-3 border border-dashed border-border rounded-lg bg-muted/20">
               <p className="text-xs text-center text-muted-foreground">
-                💡 중간에 멈추면 이어서 해달라고 말하거나 같은 버튼을 한번 더 눌러주세요
+                💡 페이지를 벗어나면 작업이 중단될 수 있어요.
               </p>
             </div>
           )}

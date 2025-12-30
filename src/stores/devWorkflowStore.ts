@@ -33,6 +33,12 @@ interface DevWorkflowState {
   isOrchestratorComplete: Record<string, boolean>;
 
   appendLogEntry: (projectPath: string, entry: ExecutionLogEntry) => void;
+  updateLogEntryStatus: (
+    projectPath: string,
+    stepId: string,
+    newStatus: ExecutionLogStatus,
+    additionalData?: Partial<Pick<ExecutionLogEntry, 'duration' | 'ticketsCompleted' | 'ticketsTotal' | 'ticketsBlocked' | 'generatedFiles' | 'blockedTickets'>>
+  ) => void;
   clearLogs: (projectPath: string) => void;
   setCurrentRunningStep: (projectPath: string, stepId: string | null) => void;
   toggleExpandedLog: (projectPath: string, timestamp: number) => void;
@@ -59,6 +65,44 @@ const devWorkflowStore: StateCreator<
         [projectPath]: [...(state.executionLogs[projectPath] ?? []), entry],
       },
     })),
+
+  updateLogEntryStatus: (projectPath, stepId, newStatus, additionalData) =>
+    set((state) => {
+      const logs = state.executionLogs[projectPath] ?? [];
+      // 해당 stepId의 가장 최근 'running' 로그를 찾아서 상태 업데이트
+      // (뒤에서부터 검색하여 가장 최근 항목 찾기)
+      let lastRunningIndex = -1;
+      for (let i = logs.length - 1; i >= 0; i--) {
+        if (logs[i].stepId === stepId && logs[i].status === 'running') {
+          lastRunningIndex = i;
+          break;
+        }
+      }
+
+      if (lastRunningIndex === -1) {
+        // running 로그가 없으면 아무것도 하지 않음
+        return state;
+      }
+
+      const updatedLogs = [...logs];
+      const targetLog = updatedLogs[lastRunningIndex];
+      const now = Date.now();
+
+      updatedLogs[lastRunningIndex] = {
+        ...targetLog,
+        status: newStatus,
+        timestamp: now,
+        duration: targetLog.startTime ? now - targetLog.startTime : undefined,
+        ...additionalData,
+      };
+
+      return {
+        executionLogs: {
+          ...state.executionLogs,
+          [projectPath]: updatedLogs,
+        },
+      };
+    }),
 
   clearLogs: (projectPath) =>
     set((state) => ({

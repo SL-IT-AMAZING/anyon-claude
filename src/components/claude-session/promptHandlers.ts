@@ -517,6 +517,15 @@ export function createCompletionHandler(options: CompletionHandlerOptions) {
 // 7. EVENT LISTENERS SETUP
 // ============================================================================
 
+/**
+ * Error information for session errors
+ */
+export interface SessionError {
+  message: string;
+  isTokenLimitError: boolean;
+  canResume: boolean;
+}
+
 export interface EventListenersSetupOptions {
   claudeSessionId: string | null;
   effectiveSession: Session | null;
@@ -533,6 +542,7 @@ export interface EventListenersSetupOptions {
   messages: ClaudeStreamMessage[];
   onSessionCreated?: (sessionId: string) => void;
   pendingDisplayTextRef?: React.MutableRefObject<{ prompt: string; displayText: string } | null>;
+  onError?: (error: SessionError | null) => void;
 }
 
 export async function setupEventListeners(
@@ -553,7 +563,20 @@ export async function setupEventListeners(
 
     const specificErrorUnlisten = await tauriListen(`claude-error:${sid}`, (evt: any) => {
       console.error('Claude error (scoped):', evt.payload);
-      options.setError(evt.payload);
+      const errorMessage = evt.payload as string;
+      options.setError(errorMessage);
+
+      // Check if this is a token limit error and notify parent
+      const isTokenLimitError = errorMessage.includes('exceeded') &&
+        (errorMessage.includes('token') || errorMessage.includes('output'));
+
+      if (options.onError) {
+        options.onError({
+          message: errorMessage,
+          isTokenLimitError,
+          canResume: isTokenLimitError,
+        });
+      }
     });
 
     const specificCompleteUnlisten = await tauriListen(`claude-complete:${sid}`, (evt: any) => {
@@ -609,7 +632,20 @@ export async function setupEventListeners(
 
   const genericErrorUnlisten = await tauriListen('claude-error', (evt: any) => {
     console.error('Claude error:', evt.payload);
-    options.setError(evt.payload);
+    const errorMessage = evt.payload as string;
+    options.setError(errorMessage);
+
+    // Check if this is a token limit error and notify parent
+    const isTokenLimitError = errorMessage.includes('exceeded') &&
+      (errorMessage.includes('token') || errorMessage.includes('output'));
+
+    if (options.onError) {
+      options.onError({
+        message: errorMessage,
+        isTokenLimitError,
+        canResume: isTokenLimitError,
+      });
+    }
   });
 
   const genericCompleteUnlisten = await tauriListen('claude-complete', (evt: any) => {

@@ -28,7 +28,7 @@ import { usePlanningDocs } from '@/hooks/usePlanningDocs';
 import { useWorkflowPreview } from '@/hooks/useWorkflowPreview';
 import type { Project, Session } from '@/lib/api';
 import { api } from '@/lib/api';
-import type { ClaudeCodeSessionRef } from '@/components/ClaudeCodeSession';
+import type { ClaudeCodeSessionRef, SessionError } from '@/components/ClaudeCodeSession';
 import { SessionPersistenceService } from '@/services/sessionPersistence';
 import { cn } from '@/lib/utils';
 import { usePreviewStore } from '@/stores/previewStore';
@@ -120,6 +120,9 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
   const [showPreviewWelcomeModal, setShowPreviewWelcomeModal] = useState(false);
   const [hasShownPreviewWelcome, setHasShownPreviewWelcome] = useState(false);
 
+  // Session error state for token limit handling
+  const [sessionError, setSessionError] = useState<SessionError | null>(null);
+
   // Sidebar state - collapsed by default
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [filePanelOpen, setFilePanelOpen] = useState(false);
@@ -173,11 +176,11 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
   }, [activeTab, hasNewPreview, markPreviewSeen]);
 
   useEffect(() => {
-    if (projectId && projects.length > 0) {
+    if (projectId && !loading) {
       const found = getProjectById(projectId);
       setProject(found);
     }
-  }, [projectId, projects, getProjectById]);
+  }, [projectId, loading, getProjectById]);
 
   // Load last session
   useEffect(() => {
@@ -363,13 +366,26 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
     devDocsPanelRef.current?.stop();
   }, []);
 
+  // Handle session error (token limit, etc.)
+  const handleSessionError = useCallback((error: SessionError | null) => {
+    setSessionError(error);
+  }, []);
+
+  // Handle resume workflow after token limit error
+  const handleResumeWorkflow = useCallback((workflowPrompt: string, displayText?: string) => {
+    // Clear the error first
+    setSessionError(null);
+    // Send a continue prompt to resume the workflow
+    handleStartNewWorkflow(workflowPrompt, displayText);
+  }, [handleStartNewWorkflow]);
+
   const projectName = project?.path.split('/').pop() || 'Project';
 
   // Show loading if:
   // 1. projects are being fetched (loading)
   // 2. OR projects are loaded but project state hasn't been set yet (race condition fix)
   //    This prevents ClaudeCodeSession from receiving undefined projectPath on first render
-  const isProjectLoading = loading || (projectId && projects.length > 0 && !project);
+  const isProjectLoading = loading || (projectId && !loading && !project);
 
   if (isProjectLoading) {
     return (
@@ -544,6 +560,7 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
               tabType="mvp"
               onSessionCreated={handleSessionCreated}
               onStopWorkflow={handleStopWorkflow}
+              onError={handleSessionError}
             />
           </Suspense>
         </div>
@@ -640,6 +657,8 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
                     onStartWorkflow={handleStartNewWorkflow}
                     isSessionLoading={isSessionLoading}
                     onPlanningComplete={handlePlanningComplete}
+                    sessionError={sessionError}
+                    onResumeWorkflow={handleResumeWorkflow}
                   />
                 )}
                 {activeTab === 'development' && (

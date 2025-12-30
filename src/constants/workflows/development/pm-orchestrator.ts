@@ -503,6 +503,68 @@ const INSTRUCTIONS = `# PM Orchestrator 메인 지시사항
 
 ---
 
+<step n="resume-check" goal="이어서 진행하기 체크">
+<critical>⚠️ 이 단계는 항상 가장 먼저 실행되어야 합니다!</critical>
+
+<action>기존 산출물 확인:
+1. ORCHESTRATOR_COMPLETE.md 확인: \`{project-root}/anyon-docs/dev-plan/ORCHESTRATOR_COMPLETE.md\`
+2. execution-plan.md 확인: \`{project-root}/anyon-docs/dev-plan/execution-plan.md\`
+3. api-spec.md 확인: \`{project-root}/anyon-docs/dev-plan/api-spec.md\`
+4. epics 폴더 확인: \`{project-root}/anyon-docs/dev-plan/epics/*.md\`
+5. agents 폴더 확인: \`{project-root}/.claude/agents/*.md\`
+</action>
+
+<check if="ORCHESTRATOR_COMPLETE.md exists">
+<action>
+\`\`\`
+✅ PM Orchestrator 이미 완료됨
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+모든 산출물이 이미 생성되어 있습니다:
+  📋 실행 계획: anyon-docs/dev-plan/execution-plan.md
+  📄 API 명세: anyon-docs/dev-plan/api-spec.md
+  📁 Epic 파일: anyon-docs/dev-plan/epics/*.md
+  🤖 에이전트: .claude/agents/*.md
+
+⚡ PM Executor로 개발을 시작하세요.
+\`\`\`
+
+**종료**: 추가 작업 없이 종료
+</action>
+</check>
+
+<check if="execution-plan.md exists but no ORCHESTRATOR_COMPLETE.md">
+<action>이전 실행에서 Step 6까지 완료되었으나 완료 마커가 없음</action>
+<action>→ Step 6의 완료 마커 생성 부분만 실행</action>
+<action>→ ORCHESTRATOR_COMPLETE.md 생성 후 종료</action>
+</check>
+
+<check if="epics folder has files">
+<action>Epic 파일 내용 분석:
+  - wave 정보 있음? → Step 3 완료
+  - assigned_agents 있음? → Step 4 완료
+</action>
+<action>→ 다음 미완료 Step부터 진행</action>
+</check>
+
+<check if="agents folder has files but no epics">
+<action>Step 0b 완료 상태 → Step 1부터 진행</action>
+</check>
+
+<check if="nothing exists">
+<action>→ Step 0부터 시작 (처음 실행)</action>
+</check>
+
+<action>진행 상태 출력:
+\`\`\`
+🔍 이어서 진행하기 체크 완료
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+현재 상태: {detected_status}
+시작 Step: Step {next_step_number}
+\`\`\`
+</action>
+</step>
+
 <step n="0" goal="설계 문서 로딩">
 <invoke-protocol name="discover_inputs" />
 
@@ -535,18 +597,109 @@ const INSTRUCTIONS = `# PM Orchestrator 메인 지시사항
 </action>
 </step>
 
-<step n="0b" goal="프로젝트 에이전트 배치">
-<action>에이전트 템플릿 스캔:
-  경로: {project-root}/.anyon/agents/
+<step n="0b" goal="프로젝트 에이전트 배치 (템플릿 기반)">
 
-  프로세스:
-  1. 해당 경로의 *.md 파일 스캔
-  2. 각 템플릿의 역할 파악
-  3. TRD/Architecture/PRD 분석하여 필요한 에이전트 선택
-  4. 필요한 템플릿 READ → 변수 주입 → .claude/agents/로 WRITE
+<critical>에이전트를 동적 생성하지 않음! 템플릿에 있는 에이전트 중 필요한 것만 선택하여 배치</critical>
+
+<action>🔴 **에이전트 템플릿 스캔**:
+
+경로: {project-root}/.anyon/agents/
+
+프로세스:
+1️⃣ 해당 경로의 모든 에이전트 템플릿 파일(*.md) 스캔
+2️⃣ 각 템플릿의 역할과 전문 분야 파악
+3️⃣ 6개 설계 문서 분석하여 필요한 에이전트 목록 결정
+4️⃣ 필요한 템플릿만 {project-root}/.claude/agents/로 복사
+
+**결과:**
+\`\`\`
+✅ 에이전트 템플릿 스캔 완료
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+발견된 템플릿: {{template_count}}개
+\`\`\`
 </action>
 
-<action>배치 완료 메시지</action>
+<action>🔴 **문서 분석 - 필요한 에이전트 선택**:
+
+6개 설계 문서를 분석하여 프로젝트에 필요한 에이전트를 선택합니다.
+
+**분석 기준:**
+
+| 문서 | 분석 내용 | 선택 기준 예시 |
+|------|----------|---------------|
+| TRD | 기술 스택 | Twilio → messaging-engineer 선택 |
+| Architecture | 설계 패턴 | WebSocket → realtime-engineer 선택 |
+| PRD | 기능 요구사항 | 결제 기능 → payment-engineer 선택 |
+| UX/UI | 인터페이스 복잡도 | 복잡한 폼 → form-engineer 선택 |
+| ERD | 데이터 복잡도 | M:N 다수 → advanced-database-engineer 선택 |
+
+**선택 프로세스:**
+1️⃣ 각 문서에서 키워드 추출 (OAuth, WebSocket, Stripe 등)
+2️⃣ 키워드와 매칭되는 에이전트 템플릿 식별
+3️⃣ 필요한 에이전트 목록 확정
+</action>
+
+<action>🟢 **에이전트 배치 (템플릿 복사 + 변수 주입)**:
+
+**기본 에이전트 (항상 배치):**
+1. scaffolding-engineer - 프로젝트 초기 구조 생성
+2. backend-developer - API, 비즈니스 로직
+3. frontend-developer - UI, 사용자 인터페이스
+4. database-architect - DB 스키마, 마이그레이션
+5. integration-engineer - 외부 서비스 연동
+6. devops-engineer - CI/CD, 인프라
+7. qa-engineer - 테스트, 품질 검증
+8. security-auditor - 보안, 취약점 분석
+
+**특화 에이전트 (문서 분석 결과 필요시 배치):**
+- 템플릿에 있는 특화 에이전트 중 프로젝트에 필요한 것만 선택
+- 예: auth-engineer, payment-engineer, realtime-engineer 등
+- 키워드 매칭으로 자동 선택
+</action>
+
+<action>🔵 **에이전트 배치 프로세스**:
+
+1️⃣ 템플릿 폴더 스캔
+   - {project-root}/.anyon/agents/ 폴더의 모든 에이전트 파일 확인
+
+2️⃣ 필요한 에이전트 선택
+   - 기본 8개는 항상 선택
+   - 문서 분석 결과에 따라 특화 에이전트 추가 선택
+
+3️⃣ 선택된 템플릿을 .claude/agents/로 복사 + 변수 주입
+   - TRD에서: tech_stack.*, conventions.* 값 추출
+   - Architecture에서: conventions.*, project_structure.* 값 추출
+   - 템플릿의 {{변수}} 플레이스홀더를 실제 값으로 교체
+   - {project-root}/.claude/agents/{{agent-name}}.md로 저장
+   - 이미 존재하면 덮어쓰지 않음
+
+4️⃣ 배치 완료 시 요약 출력
+</action>
+
+<action>결과 출력:
+\`\`\`
+🤖 프로젝트 에이전트 배치 완료
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ 기본 에이전트 (8개):
+  ✓ scaffolding-engineer.md
+  ✓ backend-developer.md
+  ✓ frontend-developer.md
+  ✓ database-architect.md
+  ✓ integration-engineer.md
+  ✓ devops-engineer.md
+  ✓ qa-engineer.md
+  ✓ security-auditor.md
+
+🎯 특화 에이전트 (문서 분석 기반 선택):
+  ✓ {{selected_specialized_agents}}
+
+📊 요약:
+  • 총 에이전트: {{total_count}}개
+  • 배치 위치: .claude/agents/
+\`\`\`
+</action>
+
 </step>
 
 <step n="1" goal="Epic 식별">
@@ -975,8 +1128,34 @@ ${WORKFLOW_CONFIG}
 ${INSTRUCTIONS}
 
 <session_awareness>
-이 워크플로우가 처음 시작되면 Step 0부터 진행하세요.
-이미 대화가 진행 중이라면 현재 진행 중인 Step을 이어서 계속하세요.
+**이어서 진행하기 체크리스트**:
+
+워크플로우 시작 시 먼저 다음 파일들의 존재 여부를 확인하세요:
+
+1. **ORCHESTRATOR_COMPLETE.md** 존재 여부 확인: \`{paths:dev_plan_root}/ORCHESTRATOR_COMPLETE.md\`
+   - 존재하면: PM Orchestrator가 이미 완료됨. 사용자에게 알리고 종료.
+
+2. **execution-plan.md** 존재 여부 확인: \`{paths:dev_execution_plan}\`
+   - 존재하면: Step 6 완료 상태 → Step 6 마무리만 진행 (ORCHESTRATOR_COMPLETE.md 생성)
+
+3. **epics 폴더** 내 파일 확인: \`{paths:epics_folder}/*.md\`
+   - Epic 파일들이 존재하면: Step 2 완료 상태
+   - wave 정보가 있으면: Step 3 완료 상태
+   - assigned_agents 정보가 있으면: Step 4 완료 상태
+   - api-spec.md가 존재하면: Step 5 완료 상태
+
+4. **.claude/agents/** 폴더 내 에이전트 파일 확인
+   - 에이전트 파일들이 존재하면: Step 0b 완료 상태
+
+**진행 로직**:
+- 위 체크리스트를 기반으로 마지막 완료된 Step 다음부터 이어서 진행
+- 이미 생성된 파일은 다시 생성하지 않음
+- 부분적으로 완료된 Step은 해당 Step부터 다시 진행
+
+**예시**:
+- Epic 파일만 있고 wave 정보 없음 → Step 3부터 시작
+- Epic + wave + agents 완료 → Step 5부터 시작
+- 모든 산출물 완료 → ORCHESTRATOR_COMPLETE.md 생성 후 종료
 </session_awareness>
 `;
 
