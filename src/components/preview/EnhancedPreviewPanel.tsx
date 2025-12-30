@@ -79,6 +79,8 @@ interface EnhancedPreviewPanelProps {
   projectPath?: string;
   /** Project ID for fixed port allocation */
   projectId?: string;
+  /** Initial source mode - 'port' for dev server, 'file' for static HTML */
+  initialSourceMode?: 'port' | 'file';
   /** Callback when element is selected in selector mode */
   onElementSelected?: (element: SelectedElement | null) => void;
   /** Callback when element action is triggered */
@@ -95,6 +97,7 @@ export const EnhancedPreviewPanel: React.FC<EnhancedPreviewPanelProps> = ({
   htmlFilePath,
   projectPath,
   projectId,
+  initialSourceMode,
   onElementSelected,
   onElementAction: _onElementAction,
   onAIFix,
@@ -127,7 +130,9 @@ export const EnhancedPreviewPanel: React.FC<EnhancedPreviewPanelProps> = ({
   const { startDevServer, stopDevServer, connectToExistingServer } = useDevServer(projectPath, projectId);
 
   // 로컬 상태
-  const [sourceMode, setSourceMode] = useState<'port' | 'file'>(htmlFilePath ? 'file' : 'port');
+  const [sourceMode, setSourceMode] = useState<'port' | 'file'>(
+    initialSourceMode ?? (htmlFilePath ? 'file' : 'port')
+  );
   const [ports, setPorts] = useState<PortInfo[]>([]);
   const [selectedPort, setSelectedPort] = useState<number | null>(null);
   const [urlPath] = useState('/');

@@ -115,3 +115,117 @@ pub async fn check_port_alive(
         elapsed_ms: elapsed,
     })
 }
+
+/// Kill processes running on a specific port
+///
+/// Uses platform-specific commands to find and kill processes.
+/// - Windows: netstat + taskkill
+/// - macOS/Linux: lsof + kill
+#[tauri::command]
+pub async fn kill_port_process(port: u16) -> Result<bool, String> {
+    log::info!("kill_port_process: Attempting to kill process on port {}", port);
+
+    #[cfg(target_os = "windows")]
+    {
+        use std::process::Command;
+
+        // Windows: Use netstat to find PID, then taskkill
+        let netstat_output = Command::new("netstat")
+            .args(["-ano"])
+            .output()
+            .map_err(|e| format!("Failed to run netstat: {}", e))?;
+
+        let output_str = String::from_utf8_lossy(&netstat_output.stdout);
+        let port_str = format!(":{}", port);
+
+        let mut killed_any = false;
+        for line in output_str.lines() {
+            if line.contains(&port_str) && line.contains("LISTENING") {
+                // Extract PID (last column)
+                if let Some(pid) = line.split_whitespace().last() {
+                    if let Ok(pid_num) = pid.parse::<u32>() {
+                        log::info!("kill_port_process: Found PID {} on port {}", pid_num, port);
+
+                        let kill_result = Command::new("taskkill")
+                            .args(["/F", "/PID", &pid_num.to_string()])
+                            .output();
+
+                        match kill_result {
+                            Ok(output) => {
+                                if output.status.success() {
+                                    log::info!("kill_port_process: Successfully killed PID {}", pid_num);
+                                    killed_any = true;
+                                } else {
+                                    log::warn!(
+                                        "kill_port_process: Failed to kill PID {}: {}",
+                                        pid_num,
+                                        String::from_utf8_lossy(&output.stderr)
+                                    );
+                                }
+                            }
+                            Err(e) => {
+                                log::error!("kill_port_process: Failed to run taskkill: {}", e);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if killed_any {
+            // Wait a bit for port to be released
+            tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+        }
+
+        Ok(killed_any)
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        use std::process::Command;
+
+        // macOS/Linux: Use lsof to find PID, then kill
+        let lsof_output = Command::new("lsof")
+            .args(["-i", &format!(":{}", port), "-t"])
+            .output()
+            .map_err(|e| format!("Failed to run lsof: {}", e))?;
+
+        let pids = String::from_utf8_lossy(&lsof_output.stdout);
+        let mut killed_any = false;
+
+        for pid_str in pids.lines() {
+            if let Ok(pid) = pid_str.trim().parse::<i32>() {
+                log::info!("kill_port_process: Found PID {} on port {}", pid, port);
+
+                let kill_result = Command::new("kill")
+                    .args(["-9", &pid.to_string()])
+                    .output();
+
+                match kill_result {
+                    Ok(output) => {
+                        if output.status.success() {
+                            log::info!("kill_port_process: Successfully killed PID {}", pid);
+                            killed_any = true;
+                        } else {
+                            log::warn!(
+                                "kill_port_process: Failed to kill PID {}: {}",
+                                pid,
+                                String::from_utf8_lossy(&output.stderr)
+                            );
+                        }
+                    }
+                    Err(e) => {
+                        log::error!("kill_port_process: Failed to run kill: {}", e);
+                    }
+                }
+            }
+        }
+
+        if killed_any {
+            // Wait a bit for port to be released
+            tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+        }
+
+        Ok(killed_any)
+    }
+}

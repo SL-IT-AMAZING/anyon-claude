@@ -40,7 +40,7 @@ use commands::mcp::{
     mcp_serve, mcp_test_connection,
 };
 
-use commands::preview::{check_port_alive, scan_ports};
+use commands::preview::{check_port_alive, kill_port_process, scan_ports};
 use commands::storage::{
     storage_delete_row, storage_execute_sql, storage_insert_row, storage_list_tables,
     storage_read_table, storage_reset_database, storage_update_row,
@@ -356,6 +356,7 @@ macro_rules! create_handlers {
             // Preview (Port Scanning)
             scan_ports,
             check_port_alive,
+            kill_port_process,
             // Dev Server with HTML injection proxy
             commands::dev_server::start_dev_server,
             commands::dev_server::stop_dev_server,

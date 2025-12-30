@@ -1,12 +1,97 @@
 use std::collections::HashMap;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
+
+use tauri::AppHandle;
+use tauri::Manager;
 
 use super::helpers::{
     decode_project_path, extract_first_user_message, get_claude_dir, get_project_path_from_sessions,
 };
 use super::shared::{Project, Session};
+
+/// Recursively copy a directory
+fn copy_dir_recursive(src: &Path, dst: &Path) -> std::io::Result<()> {
+    if !dst.exists() {
+        fs::create_dir_all(dst)?;
+    }
+
+    for entry in fs::read_dir(src)? {
+        let entry = entry?;
+        let ty = entry.file_type()?;
+        let src_path = entry.path();
+        let dst_path = dst.join(entry.file_name());
+
+        if ty.is_dir() {
+            copy_dir_recursive(&src_path, &dst_path)?;
+        } else {
+            fs::copy(&src_path, &dst_path)?;
+        }
+    }
+
+    Ok(())
+}
+
+/// Copy .anyon templates and .claude/agents to user project
+fn copy_anyon_templates_to_project(project_path: &str, app_handle: &AppHandle) -> Result<(), String> {
+    let project_dir = PathBuf::from(project_path);
+
+    // Skip if .anyon already exists (don't overwrite user's customizations)
+    let anyon_dest = project_dir.join(".anyon");
+    if anyon_dest.exists() {
+        log::info!("[copy_anyon_templates] .anyon already exists, skipping copy");
+        return Ok(());
+    }
+
+    // Get the template source directory
+    #[cfg(debug_assertions)]
+    let template_source = {
+        // Development mode: use local .anyon directory
+        let current_exe = std::env::current_exe()
+            .map_err(|e| format!("Failed to get current exe path: {}", e))?;
+
+        // Navigate up from target/debug/anyon-claude to find project root
+        let mut project_root = current_exe.parent()
+            .and_then(|p| p.parent()) // target/debug -> target
+            .and_then(|p| p.parent()) // target -> project root (src-tauri)
+            .and_then(|p| p.parent()) // src-tauri -> anyon-claude root
+            .ok_or("Failed to find project root")?;
+
+        project_root.join(".anyon")
+    };
+
+    #[cfg(not(debug_assertions))]
+    let template_source = {
+        // Production mode: use bundled resources
+        app_handle.path().resource_dir()
+            .map_err(|e| format!("Failed to get resource dir: {}", e))?
+            .join(".anyon")
+    };
+
+    log::info!("[copy_anyon_templates] Template source: {:?}", template_source);
+
+    if !template_source.exists() {
+        log::warn!("[copy_anyon_templates] Template source not found: {:?}", template_source);
+        return Ok(()); // Don't fail project creation if templates are missing
+    }
+
+    // Copy .anyon directory
+    log::info!("[copy_anyon_templates] Copying .anyon to {:?}", anyon_dest);
+    copy_dir_recursive(&template_source, &anyon_dest)
+        .map_err(|e| format!("Failed to copy .anyon directory: {}", e))?;
+
+    // Create .claude/agents directory
+    let claude_agents_dir = project_dir.join(".claude").join("agents");
+    if !claude_agents_dir.exists() {
+        log::info!("[copy_anyon_templates] Creating .claude/agents directory");
+        fs::create_dir_all(&claude_agents_dir)
+            .map_err(|e| format!("Failed to create .claude/agents directory: {}", e))?;
+    }
+
+    log::info!("[copy_anyon_templates] Successfully copied templates to {}", project_path);
+    Ok(())
+}
 
 /// Normalizes a path by resolving symlinks and removing Windows extended path prefix
 fn normalize_path(path: &str) -> String {
@@ -209,7 +294,7 @@ pub async fn list_projects() -> Result<Vec<Project>, String> {
 
 /// Creates a new project for the given directory path
 #[tauri::command]
-pub async fn create_project(path: String) -> Result<Project, String> {
+pub async fn create_project(path: String, app_handle: AppHandle) -> Result<Project, String> {
     log::info!("Creating project for path: {}", path);
 
     // Normalize the path to resolve symlinks and OneDrive redirections
@@ -272,6 +357,12 @@ pub async fn create_project(path: String) -> Result<Project, String> {
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
         .as_secs();
+
+    // Copy .anyon templates to user project (async, don't block project creation)
+    if let Err(e) = copy_anyon_templates_to_project(&normalized_path, &app_handle) {
+        log::warn!("Failed to copy anyon templates: {}", e);
+        // Don't fail project creation, templates are optional
+    }
 
     // Return the created project with normalized path
     Ok(Project {

@@ -3,6 +3,9 @@
 //!
 //! This module handles automatic workflow progression:
 //! pm-orchestrator → pm-executor ↔ pm-reviewer (cycles until complete)
+//!
+//! SubWave 정보는 TypeScript 워크플로우에서 execution-progress.md를 통해 관리
+//! Rust는 워크플로우 간 라우팅만 담당 (pm-executor ↔ pm-reviewer 사이클)
 
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
@@ -166,7 +169,7 @@ pub fn get_next_workflow(last_prompt: &str, is_complete: bool) -> Option<&'stati
         if is_complete {
             return None; // All done!
         }
-        return Some(PM_EXECUTOR_PROMPT); // Next wave
+        return Some(PM_EXECUTOR_PROMPT); // Next SubWave (SubWave 정보는 TS에서 관리)
     }
 
     None

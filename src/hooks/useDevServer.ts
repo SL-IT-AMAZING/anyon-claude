@@ -251,6 +251,52 @@ export function useDevServer(
     }
   }, [projectPath, resetConnection, addAppOutput]);
 
+  // 특정 포트 프로세스 킬 후 서버 재시작
+  const killPortAndRestart = useCallback(async (port: number = 3000) => {
+    if (!projectPath || !isTauri) return;
+
+    try {
+      setIsLoading(true);
+      setConnectionState('starting');
+
+      // 1. 해당 포트에서 실행 중인 프로세스 킬
+      addAppOutput({
+        type: 'info',
+        message: `[anyon] Killing processes on port ${port}...`,
+        timestamp: Date.now(),
+        projectPath,
+      });
+
+      const killed = await invoke<boolean>('kill_port_process', { port });
+      if (killed) {
+        addAppOutput({
+          type: 'info',
+          message: `[anyon] Successfully killed process on port ${port}`,
+          timestamp: Date.now(),
+          projectPath,
+        });
+      }
+
+      // 2. 잠시 대기 (포트 해제 시간)
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // 3. Dev server 시작
+      await startDevServer();
+    } catch (err) {
+      console.error('Failed to kill port and restart:', err);
+      setConnectionState('error');
+      setConnectionError(err instanceof Error ? err.message : String(err));
+      addAppOutput({
+        type: 'stderr',
+        message: `[anyon] Failed to kill port ${port}: ${err}`,
+        timestamp: Date.now(),
+        projectPath,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [projectPath, startDevServer, setIsLoading, addAppOutput, setConnectionState, setConnectionError]);
+
   // Dev server 정보 가져오기
   const getDevServerInfo = useCallback(async (): Promise<DevServerInfo | null> => {
     if (!projectPath || !isTauri) return null;
@@ -386,6 +432,7 @@ export function useDevServer(
     stopDevServer,
     getDevServerInfo,
     connectToExistingServer,
+    killPortAndRestart,
   };
 }
 

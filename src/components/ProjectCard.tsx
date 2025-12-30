@@ -100,11 +100,6 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   // Get template info for badge
   const template = templateId ? getTemplateById(templateId) : null;
 
-  const handleDelete = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onDelete?.(project);
-  };
-
   const handleClick = () => {
     if (isSelectMode && onToggleSelect) {
       onToggleSelect();
@@ -157,10 +152,13 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
                 <DropdownMenuItem
                   className="text-destructive focus:text-destructive"
-                  onClick={handleDelete}
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    onDelete?.(project);
+                  }}
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
                   Delete

@@ -1,6 +1,249 @@
 import { WORKFLOW_ENGINE } from '../engine';
 
 // ===== 서브에이전트 프롬프트 (인라인) =====
+
+// ticket-splitter.ts 프롬프트 (NEW)
+const TICKET_SPLITTER_PROMPT = `# Ticket Splitter - 티켓 분할
+
+## 🎯 역할
+
+당신은 **Ticket Splitter**입니다. 큰 티켓을 병렬 실행 가능한 작은 단위로 분할하는 전문 에이전트입니다.
+
+**입력**:
+- Epic 파일 경로
+- 분할할 티켓 ID 목록
+
+**출력**:
+- 분할된 티켓들 (TICKET-XXX-1, TICKET-XXX-2, ...)
+- 각 분할 티켓의 depends_on 관계
+- Epic 파일 업데이트
+
+## 📥 입력 데이터
+
+\`\`\`yaml
+epic_file: "anyon-docs/dev-plan/epics/EPIC-001-auth.md"
+tickets_to_split:
+  - ticket_id: TICKET-001
+    title: "인증 시스템 구현"
+    outputs:
+      - "prisma/schema.prisma"
+      - "backend/src/routes/auth.ts"
+      - "backend/src/services/authService.ts"
+      - "mobile/src/screens/LoginScreen.tsx"
+\`\`\`
+
+## 🔄 분할 기준
+
+### 1. 파일 독립성 (Primary)
+서로 다른 파일/폴더를 수정하면 분할:
+\`\`\`
+TICKET-001 (outputs: prisma/, backend/, mobile/)
+  → TICKET-001-1: prisma/ (DB 스키마)
+  → TICKET-001-2: backend/ (API)
+  → TICKET-001-3: mobile/ (UI)
+\`\`\`
+
+### 2. 기능 단위 (Secondary)
+같은 폴더라도 독립 기능이면 분할:
+\`\`\`
+TICKET-001 (backend/src/routes/auth.ts, backend/src/routes/users.ts)
+  → TICKET-001-1: auth.ts (인증 API)
+  → TICKET-001-2: users.ts (사용자 API)
+\`\`\`
+
+### 3. 레이어 순서 (Dependency)
+DB → API → UI 순서로 의존성 설정:
+\`\`\`yaml
+TICKET-001-1: # DB
+  depends_on: []
+TICKET-001-2: # API
+  depends_on: [TICKET-001-1]
+TICKET-001-3: # UI
+  depends_on: [TICKET-001-2]
+\`\`\`
+
+### 4. 분할 안 하는 경우
+- outputs가 1개 파일만 있는 경우
+- 파일들이 강하게 결합된 경우 (같은 함수 호출 등)
+- 티켓 크기가 이미 작은 경우
+
+## 📝 출력 형식
+
+각 분할 티켓에 다음 정보 추가:
+
+\`\`\`yaml
+## TICKET-001-1: 인증 DB 스키마
+
+parent_ticket: TICKET-001
+split_index: 1
+depends_on: []
+outputs:
+  - "prisma/schema.prisma"
+
+# 기존 티켓 내용에서 해당 부분만 추출
+...
+\`\`\`
+
+## 🔧 Epic 파일 업데이트
+
+1. 원본 티켓 섹션 유지 (참조용)
+2. 분할된 티켓들을 새 섹션으로 추가
+3. 원본 티켓에 \`split_into: [TICKET-001-1, TICKET-001-2, ...]\` 추가
+
+## ⚠️ 중요 원칙
+
+1. **최소 분할**: 꼭 필요한 경우에만 분할 (과도한 분할 금지)
+2. **의존성 명확화**: depends_on 필드로 순서 보장
+3. **병렬 가능성 극대화**: 독립적인 것들은 같은 SubWave에서 병렬 실행
+4. **원본 보존**: 원본 티켓 정보 유지 (추적 가능)
+`;
+
+// subwave-composer.ts 프롬프트 (NEW)
+const SUBWAVE_COMPOSER_PROMPT = `# SubWave Composer - SubWave 구성
+
+## 🎯 역할
+
+당신은 **SubWave Composer**입니다. Wave 내 분할된 티켓들의 의존성을 분석하여 SubWave를 구성하는 전문 에이전트입니다.
+
+**입력**:
+- Wave 번호
+- Wave 내 모든 티켓 목록 (분할된 티켓 포함)
+- 각 티켓의 depends_on 관계
+
+**출력**:
+- SubWave 구성 (Wave1-Sub1, Wave1-Sub2, ...)
+- 각 SubWave의 티켓 목록
+- Epic 파일들 업데이트
+
+## 📥 입력 데이터
+
+\`\`\`yaml
+wave_number: 1
+wave_tickets:
+  # 분할된 티켓들
+  - ticket_id: TICKET-001-1
+    parent_ticket: TICKET-001
+    depends_on: []
+    outputs: ["prisma/schema.prisma"]
+
+  - ticket_id: TICKET-001-2
+    parent_ticket: TICKET-001
+    depends_on: [TICKET-001-1]
+    outputs: ["backend/src/routes/auth.ts"]
+
+  - ticket_id: TICKET-001-3
+    parent_ticket: TICKET-001
+    depends_on: [TICKET-001-2]
+    outputs: ["mobile/src/screens/LoginScreen.tsx"]
+
+  # 분할 안 된 티켓
+  - ticket_id: TICKET-002
+    depends_on: []
+    outputs: ["backend/src/routes/health.ts"]
+
+  - ticket_id: TICKET-003-1
+    parent_ticket: TICKET-003
+    depends_on: []
+    outputs: ["prisma/migrations/"]
+
+  - ticket_id: TICKET-003-2
+    parent_ticket: TICKET-003
+    depends_on: [TICKET-003-1]
+    outputs: ["backend/src/services/productService.ts"]
+\`\`\`
+
+## 🔄 SubWave 구성 알고리즘
+
+### Step 1: 의존성 그래프 구축
+\`\`\`
+TICKET-001-1 → TICKET-001-2 → TICKET-001-3
+TICKET-002 (독립)
+TICKET-003-1 → TICKET-003-2
+\`\`\`
+
+### Step 2: 레벨 할당
+\`\`\`
+Level 0 (depends_on 없음):
+  - TICKET-001-1
+  - TICKET-002
+  - TICKET-003-1
+
+Level 1 (Level 0에만 의존):
+  - TICKET-001-2
+  - TICKET-003-2
+
+Level 2 (Level 0-1에 의존):
+  - TICKET-001-3
+\`\`\`
+
+### Step 3: SubWave 매핑
+\`\`\`yaml
+Wave1-Sub1:
+  tickets: [TICKET-001-1, TICKET-002, TICKET-003-1]
+  parallel: true  # 모두 독립적, 병렬 실행 가능
+
+Wave1-Sub2:
+  tickets: [TICKET-001-2, TICKET-003-2]
+  parallel: true  # 서로 독립적
+
+Wave1-Sub3:
+  tickets: [TICKET-001-3]
+  parallel: false  # 단일 티켓
+\`\`\`
+
+## 📝 네이밍 규칙
+
+\`\`\`
+Wave{N}-Sub{M}
+  - N: Wave 번호 (1, 2, 3, ...)
+  - M: SubWave 순서 (1, 2, 3, ...)
+
+예시:
+  - Wave1-Sub1, Wave1-Sub2, Wave1-Sub3
+  - Wave2-Sub1, Wave2-Sub2
+\`\`\`
+
+## 🔧 출력: Epic 파일 업데이트
+
+각 티켓 섹션에 subwave 정보 추가:
+
+\`\`\`yaml
+## TICKET-001-1: 인증 DB 스키마
+
+wave: 1
+subwave: "Wave1-Sub1"
+subwave_index: 1
+...
+\`\`\`
+
+## 📤 출력: execution-plan.md 업데이트
+
+\`\`\`markdown
+## 6️⃣ Wave별 실행 계획
+
+### Wave 1 (3개 SubWave, 6개 티켓)
+
+#### Wave1-Sub1 (3개 티켓, 병렬 가능)
+- TICKET-001-1: 인증 DB 스키마 [Database Architect]
+- TICKET-002: Health Check API [Backend Developer]
+- TICKET-003-1: 상품 DB 스키마 [Database Architect]
+
+#### Wave1-Sub2 (2개 티켓, 병렬 가능)
+- TICKET-001-2: 인증 API [Backend Developer]
+- TICKET-003-2: 상품 서비스 [Backend Developer]
+
+#### Wave1-Sub3 (1개 티켓)
+- TICKET-001-3: 로그인 화면 [Frontend Developer]
+\`\`\`
+
+## ⚠️ 중요 원칙
+
+1. **병렬 최대화**: 같은 SubWave 내 티켓들은 병렬 실행 가능해야 함
+2. **의존성 보장**: depends_on 관계 철저히 준수
+3. **outputs 충돌 확인**: 같은 파일 수정하는 티켓은 다른 SubWave로
+4. **SubWave 크기 균형**: 가능하면 SubWave 간 티켓 수 균형 유지
+`;
+
 // ticket-generator.ts 프롬프트
 const TICKET_GENERATOR_PROMPT = `# Ticket Generator - Epic별 티켓 생성
 
@@ -820,6 +1063,58 @@ const INSTRUCTIONS = `# PM Orchestrator 메인 지시사항
 </action>
 </step>
 
+<step n="2.5" goal="티켓 분할 (서브에이전트 병렬 실행)">
+
+<critical>🔪 핵심: 큰 티켓을 병렬 실행 가능한 작은 단위로 분할!</critical>
+
+<action>분할 대상 티켓 식별:
+  - outputs가 2개 이상 다른 폴더를 포함하는 티켓
+  - DB + API + UI를 모두 포함하는 티켓
+  - 예: outputs: ["prisma/", "backend/", "mobile/"] → 분할 대상
+</action>
+
+<action>각 Epic에 대해 ticket-splitter 서브에이전트 병렬 호출:
+
+\`\`\`xml
+<invoke name="Task">
+  <parameter name="subagent_type">general-purpose</parameter>
+  <parameter name="description">EPIC-001 티켓 분할</parameter>
+  <parameter name="prompt">
+    \${TICKET_SPLITTER_PROMPT}
+
+    ## 입력 데이터
+
+    \`\`\`yaml
+    epic_file: "anyon-docs/dev-plan/epics/EPIC-001-auth.md"
+    tickets_to_split:
+      - ticket_id: TICKET-001
+        title: "인증 시스템 구현"
+        outputs:
+          - "prisma/schema.prisma"
+          - "backend/src/routes/auth.ts"
+          - "mobile/src/screens/LoginScreen.tsx"
+      # 분할 대상 티켓만 포함
+    \`\`\`
+  </parameter>
+</invoke>
+
+<!-- 다른 Epic도 병렬로... -->
+\`\`\`
+</action>
+
+<action>완료 메시지:
+\`\`\`
+🔪 티켓 분할 완료
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+분할된 티켓:
+  • TICKET-001 → TICKET-001-1, TICKET-001-2, TICKET-001-3
+  • TICKET-005 → TICKET-005-1, TICKET-005-2
+
+총 분할: {N}개 → {M}개 (병렬 실행 가능성 증가)
+\`\`\`
+</action>
+</step>
+
 <step n="3" goal="Wave 구성">
 <action>모든 Epic 파일 READ</action>
 
@@ -859,6 +1154,66 @@ Wave 3 (4개 티켓): 상품
   ...
 
 총 {M}개 Wave, {N}개 티켓
+\`\`\`
+</action>
+</step>
+
+<step n="3.5" goal="SubWave 구성 (서브에이전트 병렬 실행)">
+
+<critical>🌊 핵심: Wave 내 분할된 티켓들을 SubWave로 그룹화!</critical>
+
+<action>각 Wave에 대해 subwave-composer 서브에이전트 병렬 호출:
+
+\`\`\`xml
+<invoke name="Task">
+  <parameter name="subagent_type">general-purpose</parameter>
+  <parameter name="description">Wave 1 SubWave 구성</parameter>
+  <parameter name="prompt">
+    \${SUBWAVE_COMPOSER_PROMPT}
+
+    ## 입력 데이터
+
+    \`\`\`yaml
+    wave_number: 1
+    wave_tickets:
+      # Wave 1에 속한 모든 티켓 (분할 포함)
+      - ticket_id: TICKET-001-1
+        parent_ticket: TICKET-001
+        depends_on: []
+        outputs: ["prisma/schema.prisma"]
+
+      - ticket_id: TICKET-001-2
+        parent_ticket: TICKET-001
+        depends_on: [TICKET-001-1]
+        outputs: ["backend/src/routes/auth.ts"]
+
+      - ticket_id: TICKET-002
+        depends_on: []
+        outputs: ["backend/src/routes/health.ts"]
+    \`\`\`
+  </parameter>
+</invoke>
+
+<!-- 다른 Wave도 병렬로... -->
+\`\`\`
+</action>
+
+<action>완료 메시지:
+\`\`\`
+🌊 SubWave 구성 완료
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Wave 1 (3개 SubWave):
+  • Wave1-Sub1: TICKET-001-1, TICKET-002 (병렬)
+  • Wave1-Sub2: TICKET-001-2 (순차)
+  • Wave1-Sub3: TICKET-001-3 (순차)
+
+Wave 2 (2개 SubWave):
+  • Wave2-Sub1: TICKET-003-1, TICKET-004 (병렬)
+  • Wave2-Sub2: TICKET-003-2 (순차)
+
+총 {N}개 SubWave
+⚡ SubWave 단위로 실행/리뷰 진행
 \`\`\`
 </action>
 </step>
@@ -1014,14 +1369,19 @@ Wave 3 (4개 티켓): 상품
 
 ## 6️⃣ Wave별 실행 계획
 
-### Wave 1 (3개 티켓)
-- TICKET-001: Scaffolding [Scaffolding Engineer]
-- TICKET-002: DB Schema [Database Architect]
-- TICKET-003: CI/CD [DevOps Engineer]
+### Wave 1 (3개 SubWave, 6개 티켓)
 
-**병렬 그룹**:
-- Group A: TICKET-001, TICKET-003 (독립 실행)
-- TICKET-002 (단독)
+#### Wave1-Sub1 (3개 티켓, 병렬 가능)
+- TICKET-001-1: 인증 DB 스키마 [Database Architect]
+- TICKET-002: Health Check API [Backend Developer]
+- TICKET-003-1: 상품 DB 스키마 [Database Architect]
+
+#### Wave1-Sub2 (2개 티켓, 병렬 가능)
+- TICKET-001-2: 인증 API [Backend Developer]
+- TICKET-003-2: 상품 서비스 [Backend Developer]
+
+#### Wave1-Sub3 (1개 티켓)
+- TICKET-001-3: 로그인 화면 [Frontend Developer]
 
 ### Wave 2 (5개 티켓)
 ...

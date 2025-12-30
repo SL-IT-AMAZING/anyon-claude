@@ -26,6 +26,7 @@ import { SUPPORT_CONFIG } from '@/constants/support';
 import { Settings } from '@/components/Settings';
 import { usePlanningDocs } from '@/hooks/usePlanningDocs';
 import { useWorkflowPreview } from '@/hooks/useWorkflowPreview';
+import { useDevServer } from '@/hooks/useDevServer';
 import type { Project, Session } from '@/lib/api';
 import { api } from '@/lib/api';
 import type { ClaudeCodeSessionRef, SessionError } from '@/components/ClaudeCodeSession';
@@ -119,6 +120,7 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
   const [showPlanningCompleteModal, setShowPlanningCompleteModal] = useState(false);
   const [showPreviewWelcomeModal, setShowPreviewWelcomeModal] = useState(false);
   const [hasShownPreviewWelcome, setHasShownPreviewWelcome] = useState(false);
+  const [previewSourceMode, setPreviewSourceMode] = useState<'port' | 'file'>('file');
 
   // Session error state for token limit handling
   const [sessionError, setSessionError] = useState<SessionError | null>(null);
@@ -167,6 +169,9 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
     onPreviewFileDetected: handlePreviewFileDetected,
     pollingInterval: 1000,
   });
+
+  // Dev server control for preview
+  const { killPortAndRestart } = useDevServer(project?.path, project?.id);
 
   // 프리뷰 탭으로 전환하면 새 프리뷰 표시 제거
   useEffect(() => {
@@ -346,14 +351,25 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
     window.open(SUPPORT_CONFIG.KAKAO_CHANNEL_URL, '_blank');
   }, []);
 
-  // Handle preview tab click - show welcome modal on first visit
+  // Handle preview tab click - different behavior based on current tab
+  // - From planning tab: file preview mode
+  // - From development tab: port (server) mode with port 3000 kill and restart
   const handlePreviewTabClick = useCallback(() => {
     if (!hasShownPreviewWelcome) {
       setShowPreviewWelcomeModal(true);
       setHasShownPreviewWelcome(true);
     }
+
+    // 탭에 따라 소스 모드 설정
+    if (activeTab === 'planning') {
+      setPreviewSourceMode('file');
+    } else if (activeTab === 'development') {
+      setPreviewSourceMode('port');
+      killPortAndRestart(3000);
+    }
+
     setActiveTab('preview');
-  }, [hasShownPreviewWelcome]);
+  }, [hasShownPreviewWelcome, activeTab, killPortAndRestart]);
 
   // View preview action from modal
   const handleViewPreview = useCallback(() => {
@@ -675,6 +691,7 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
                     projectPath={project?.path}
                     projectId={project?.id}
                     htmlFilePath={workflowPreviewPath || undefined}
+                    initialSourceMode={previewSourceMode}
                   />
                 )}
               </div>

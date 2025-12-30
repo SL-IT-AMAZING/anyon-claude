@@ -313,9 +313,9 @@ npm test {{test_file}}
 - **병렬 수정**: 독립적 이슈는 동시 수정 가능
 `;
 
-const WORKFLOW_CONFIG = `# PM Reviewer - Wave 단위 리뷰 & 즉석 수정 워크플로우
+const WORKFLOW_CONFIG = `# PM Reviewer - SubWave 단위 리뷰 & 즉석 수정 워크플로우
 name: "pm-reviewer"
-description: "PM Executor가 완료한 Wave를 리뷰하고, 문제 발견 시 즉시 자동 수정 (서브에이전트 병렬 실행)"
+description: "PM Executor가 완료한 SubWave를 리뷰하고, 문제 발견 시 즉시 자동 수정 (서브에이전트 병렬 실행)"
 author: "Anyon"
 
 # Critical variables from config
@@ -358,13 +358,14 @@ const INSTRUCTIONS = `# PM Reviewer 지시사항 (서브에이전트 병렬 실�
 
 <critical>⭐ 언어: 한국어만 사용</critical>
 <critical>🤖 자동 실행: 승인 없이 모든 단계 진행</critical>
-<critical>🔍 리뷰 범위: Wave 단위 (pm-executor 완료 후)</critical>
+<critical>🔍 리뷰 범위: SubWave 단위 (pm-executor 완료 후)</critical>
 <critical>🛠️ 즉시 수정: 이슈 발견 시 자동 수정 (리포트만 만들지 않음)</critical>
-<critical>⚡ 서브에이전트 활용: 4개 리뷰어 + 수정자 모두 병렬 위임</critical>
+<critical>⚡ 서브에이전트 활용: 5개 리뷰어 + 수정자 모두 병렬 위임</critical>
+<critical>🌊 Wave 끝 스킵: SubWave마다 리뷰하므로 Wave 끝 별도 리뷰 없음</critical>
 
 ---
 
-<step n="1" goal="Wave 리뷰 대상 파악">
+<step n="1" goal="SubWave 리뷰 대상 파악">
 
 <action>execution-progress.md 로드 및 파싱:
 
@@ -372,26 +373,30 @@ const INSTRUCTIONS = `# PM Reviewer 지시사항 (서브에이전트 병렬 실�
 \`\`\`yaml
 # pm-executor가 생성한 YAML 형식 파싱
 current_status:
-  current_wave: E01-Wave1
+  current_wave: "Wave1"
+  current_subwave: "Wave1-Sub2"  # 리뷰 대상
   current_epic: E01
+  total_subwaves_in_wave: 3
+  completed_subwaves_in_wave: 1
   workflow_state: "awaiting_review"
-  last_completed_wave: E01-Wave1
   overall_progress: "45%"
   last_update: "2025-01-15 10:30"
 
-wave_progress:
-  E01-Wave1:
-    status: "✅ Completed"
-    completed_count: 3개
-    blocked_count: 1개
+subwave_progress:
+  Wave1-Sub1:
+    status: "✅ Reviewed"
+    tickets: ["TICKET-001-1", "TICKET-002-1"]
+  Wave1-Sub2:
+    status: "⏳ Awaiting Review"
+    tickets: ["TICKET-001-2", "TICKET-002-2"]
 
 completed_tickets:
-  - ticket_id: TICKET-001
+  - ticket_id: TICKET-001-2
     title: "..."
     status: "✅ Completed"
 
 blocked_tickets:
-  - ticket_id: TICKET-005
+  - ticket_id: TICKET-005-1
     title: "..."
     failure_reason: "..."
     suggested_fix: "..."
@@ -399,16 +404,17 @@ blocked_tickets:
 
 **추출할 정보:**
 1. current_wave = current_status.current_wave
-2. current_epic = current_status.current_epic
-3. workflow_state = current_status.workflow_state
-4. completed_tickets = completed_tickets 배열
-5. blocked_tickets = blocked_tickets 배열
+2. current_subwave = current_status.current_subwave (리뷰 대상!)
+3. current_epic = current_status.current_epic
+4. workflow_state = current_status.workflow_state
+5. completed_tickets = completed_tickets 배열
+6. blocked_tickets = blocked_tickets 배열
 </action>
 
-<check if="no completed wave OR workflow_state != 'awaiting_review'">
+<check if="no current_subwave OR workflow_state != 'awaiting_review'">
   <action>에러 메시지:
   \`\`\`
-  ❌ 리뷰할 Wave가 없습니다.
+  ❌ 리뷰할 SubWave가 없습니다.
 
   현재 상태:
   - workflow_state: {{workflow_state}}
@@ -416,24 +422,24 @@ blocked_tickets:
 
   해결 방법:
   1. /pm-executor를 먼저 실행하세요
-  2. pm-executor가 Wave를 완료하면 자동으로 workflow_state가 "awaiting_review"로 설정됩니다
+  2. pm-executor가 SubWave를 완료하면 자동으로 workflow_state가 "awaiting_review"로 설정됩니다
   \`\`\`
   </action>
   <action>워크플로우 종료</action>
 </check>
 
-<action>Wave commit 찾기:
+<action>SubWave commit 찾기:
 \`\`\`bash
-# execution-progress.md에서 current_wave 추출 (예: E01-Wave1)
-git log --oneline --grep="wave({{current_wave}})" -1
-# 출력: abc1234 wave(E01-Wave1): E01-Wave1 완료
+# execution-progress.md에서 current_subwave 추출 (예: Wave1-Sub2)
+git log --oneline --grep="subwave({{current_subwave}})" -1
+# 출력: abc1234 subwave(Wave1-Sub2): Wave1-Sub2 완료
 \`\`\`
 </action>
 
 <action>변경 파일 추출 및 분류:
 \`\`\`bash
-# Wave commit의 변경 파일 목록
-git show --name-only {{wave_commit_hash}}
+# SubWave commit의 변경 파일 목록
+git show --name-only {{subwave_commit_hash}}
 
 # 분류:
 # - backend_files: backend/**, api/**, src/services/**
@@ -446,13 +452,15 @@ git show --name-only {{wave_commit_hash}}
 <action>리뷰 시작 알림:
 \`\`\`
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   🔍 PM Reviewer - {{current_wave}} 리뷰 시작
+   🔍 PM Reviewer - {{current_subwave}} 리뷰 시작
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 📋 리뷰 대상: {{changed_file_count}}개 파일
    Backend: {{backend_count}}개
    Frontend: {{frontend_count}}개
    Tests: {{test_count}}개
+
+🌊 Wave 진행: {{current_wave}} ({{completed_subwaves}}/{{total_subwaves}} SubWaves)
 
 🔍 리뷰 영역: 코드품질, 아키텍처, 보안, 테스트, UX연결성
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -605,7 +613,7 @@ all_issues:
 <check if="no issues found">
   <action>결과 출력:
   \`\`\`
-  ✅ {{current_wave}} 리뷰 완료!
+  ✅ {{current_subwave}} 리뷰 완료!
 
   🎉 모든 영역 통과:
     ✓ 코드 품질
@@ -697,10 +705,32 @@ all_issues:
 
 <step n="6" goal="결과 출력 및 Progress 업데이트">
 
+<action>다음 SubWave 결정:
+
+execution-plan.md에서 SubWave 목록 파싱:
+- Wave1-Sub1, Wave1-Sub2, Wave1-Sub3
+- Wave2-Sub1, Wave2-Sub2, ...
+
+현재 SubWave: {{current_subwave}}
+
+\`\`\`yaml
+if ({{current_wave}}의 다음 SubWave 존재):
+  next_subwave = "Wave1-Sub3"  # 같은 Wave의 다음 SubWave
+else:
+  # 현재 Wave의 마지막 SubWave였음
+  if (다음 Wave 존재):
+    next_subwave = "Wave2-Sub1"  # 다음 Wave의 첫 SubWave
+    next_wave = "Wave2"
+  else:
+    # 모든 Wave/SubWave 완료
+    is_complete = true
+\`\`\`
+</action>
+
 <action>최종 결과 출력:
 \`\`\`
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    ✅ {{current_wave}} 리뷰 완료!
+    ✅ {{current_subwave}} 리뷰 완료!
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 {{#if fixed_issues}}
@@ -721,13 +751,14 @@ all_issues:
 ✅ 문제없음: {{clean_areas}}
 {{/if}}
 
-🎯 다음 단계:
-   {{#if has_next_wave}}
-   1️⃣ Wave 리뷰 완료됨
-   2️⃣ 다음 Wave를 실행하려면: /pm-executor
+🌊 Wave 진행: {{current_wave}} ({{completed_subwaves}}/{{total_subwaves}} SubWaves 리뷰됨)
+
+🔄 자동 진행:
+   {{#if has_next_subwave}}
+   → pm-executor가 자동으로 {{next_subwave}} 실행
    {{/if}}
-   {{#if is_last_wave}}
-   🎉 **모든 Epic 완료** - 프로젝트 구현 완료!
+   {{#if is_complete}}
+   🎉 **모든 Wave/SubWave 완료** - 프로젝트 구현 완료!
    {{/if}}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 \`\`\`
@@ -738,17 +769,20 @@ all_issues:
 1️⃣ **현재 상태 섹션**
 \`\`\`yaml
 current_status:
-  last_completed_wave: {{current_wave}}
+  current_wave: {{current_wave}}
+  current_subwave: {{next_subwave}}  # 다음 실행할 SubWave
+  completed_subwaves_in_wave: {{completed_subwaves + 1}}
   workflow_state: "reviewed"  # "awaiting_review" → "reviewed"
   overall_progress: "{{new_percentage}}%"
   last_update: "{{timestamp}}"
 \`\`\`
 
-2️⃣ **Wave 진행 섹션**
+2️⃣ **SubWave 진행 섹션**
 \`\`\`yaml
-wave_progress:
-  {{current_wave}}:
+subwave_progress:
+  {{current_subwave}}:
     status: "✅ Reviewed"
+    tickets: ["TICKET-001-2", "TICKET-002-2"]
     fixed_issues: {{fixed_count}}개
     manual_issues: {{manual_count}}개
     review_date: "{{timestamp}}"
@@ -758,14 +792,14 @@ wave_progress:
 3️⃣ **다음 세션 컨텍스트**
 \`\`\`yaml
 next_session:
-  next_wave: {{next_wave}}
-  next_epic: {{next_epic}}
+  next_subwave: {{next_subwave}}  # Wave1-Sub3 또는 Wave2-Sub1
+  next_wave: {{next_wave}}  # SubWave가 Wave 경계 넘는 경우
   prerequisites_met: yes
-  first_ticket: {{first_ticket_id}}
+  first_ticket: {{first_ticket_of_next_subwave}}
 \`\`\`
 </action>
 
-<check if="is_last_wave">
+<check if="is_complete">
   <action>DEVELOPMENT_COMPLETE.md 생성:
 
   경로: {completion_report}
@@ -825,7 +859,7 @@ next_session:
 <action>리뷰 완료 커밋:
 \`\`\`bash
 git add .
-git commit -m "review({{current_wave}}): {{current_wave}} 리뷰 완료
+git commit -m "review({{current_subwave}}): {{current_subwave}} 리뷰 완료
 
 📋 리뷰 결과:
   • 발견 이슈: {{total_issues}}개
@@ -838,7 +872,8 @@ git commit -m "review({{current_wave}}): {{current_wave}} 리뷰 완료
   ✓ 보안: {{security_status}}
   ✓ 테스트: {{test_status}}
 
-🎯 다음: {{next_wave}} 준비 완료
+🌊 Wave 진행: {{current_wave}} ({{completed_subwaves}}/{{total_subwaves}} SubWaves)
+🎯 다음: {{next_subwave}} 준비 완료
 
 🤖 Generated by PM Reviewer (Code Review Complete)
 
@@ -871,7 +906,7 @@ ${INSTRUCTIONS}
 export const PM_REVIEWER_METADATA = {
   id: 'pm-reviewer',
   title: 'PM Reviewer',
-  description: 'Wave 완료 후 코드 리뷰 및 이슈 자동 수정 (서브에이전트 병렬 실행)',
+  description: 'SubWave 완료 후 코드 리뷰 및 이슈 자동 수정 (서브에이전트 병렬 실행)',
   outputPath: '{paths:dev_execution_progress}',
   filename: 'execution-progress.md',
 };
