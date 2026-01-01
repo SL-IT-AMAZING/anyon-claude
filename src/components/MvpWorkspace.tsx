@@ -585,6 +585,7 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
               onSessionCreated={handleSessionCreated}
               onStopWorkflow={handleStopWorkflow}
               onError={handleSessionError}
+              autoRecovery={true}
             />
           </Suspense>
         </div>

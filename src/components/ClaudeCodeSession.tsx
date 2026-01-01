@@ -127,6 +127,11 @@ interface ClaudeCodeSessionProps {
    * Callback when an error occurs (for token limit handling)
    */
   onError?: (error: SessionError | null) => void;
+  /**
+   * Enable automatic recovery for token limit errors
+   * When true, automatically sends "이어서 해줘" after token limit error
+   */
+  autoRecovery?: boolean;
 }
 
 /**
@@ -160,6 +165,7 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
   onExecutionModeChange,
   onStopWorkflow,
   onError,
+  autoRecovery = false,
 }, ref) => {
   const [projectPath, setProjectPath] = useState(initialProjectPath || session?.project_path || "");
 
@@ -720,6 +726,29 @@ export const ClaudeCodeSession = forwardRef<ClaudeCodeSessionRef, ClaudeCodeSess
     setSessionError(null);
     handleSendPrompt("이어서 해줘", selectedModel);
   };
+
+  // Auto-recovery for token limit errors
+  // When autoRecovery is enabled, automatically continue after token limit
+  const autoRecoveryAttemptedRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!autoRecovery) return;
+    if (!sessionError?.isTokenLimitError) return;
+    if (isLoading) return;
+
+    // Prevent duplicate recovery attempts for same error
+    if (autoRecoveryAttemptedRef.current === sessionError.message) return;
+
+    console.log('[AutoRecovery] 토큰 한도 감지 - 3초 후 자동 이어서하기');
+    autoRecoveryAttemptedRef.current = sessionError.message;
+
+    const timer = setTimeout(() => {
+      console.log('[AutoRecovery] 자동 이어서하기 실행');
+      handleContinue();
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [autoRecovery, sessionError, isLoading]);
 
   const handleSendPrompt = async (
     prompt: string,

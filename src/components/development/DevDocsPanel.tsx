@@ -336,6 +336,15 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
   const [progressData, setProgressData] = useState<ProgressData>(DEFAULT_PROGRESS);
   const [currentWaveTickets, setCurrentWaveTickets] = useState<TicketProgress[]>([]);
 
+  // ============================================================================
+  // 무중단 자동화 상태 (Auto-Recovery System)
+  // ============================================================================
+  const WATCHDOG_TIMEOUT = 10 * 60 * 1000; // 10분 타임아웃
+  const MAX_RETRIES = 3;
+  const retryCountRef = useRef<number>(0);
+  const lastActivityRef = useRef<number>(Date.now());
+  const watchdogIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
   const executionLog = useDevWorkflowStore(
     (state) => state.executionLogs[projectKey] ?? emptyLogsRef.current
   );
@@ -393,6 +402,91 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
       console.debug('[DevDocsPanel] Progress file not found or error:', error);
     }
   }, [projectPath]);
+
+  // ============================================================================
+  // 무중단 자동화: 강제 재시작 및 강제 다음 단계 함수
+  // ============================================================================
+
+  /**
+   * 현재 단계를 강제로 재시작
+   */
+  const forceRestartCurrentStep = useCallback(() => {
+    if (!currentRunningStep || isStoppedRef.current) return;
+
+    const step = workflowSequence.find(s => s.id === currentRunningStep);
+    if (!step) return;
+
+    console.warn('[AutoRecovery] 강제 재시작:', step.title);
+    retryCountRef.current++;
+    lastActivityRef.current = Date.now();
+
+    // 이미 3회 재시도했으면 다음 단계로 강제 진행
+    if (retryCountRef.current > MAX_RETRIES) {
+      console.error('[AutoRecovery] 3회 실패 - 강제 다음 단계');
+      forceNextStep();
+      return;
+    }
+
+    // 현재 단계 재시작
+    onStartWorkflow?.(getDevWorkflowPrompt(step), step.displayText);
+  }, [currentRunningStep, workflowSequence, onStartWorkflow]);
+
+  /**
+   * 다음 단계로 강제 진행 (검증 무시)
+   */
+  const forceNextStep = useCallback(() => {
+    if (!currentRunningStep || isStoppedRef.current) return;
+
+    console.warn('[AutoRecovery] 검증 무시 - 강제 다음 단계 진행');
+    retryCountRef.current = 0;
+    lastActivityRef.current = Date.now();
+
+    // 현재 단계 완료 처리
+    addLogEntry(currentRunningStep, 'completed', progressData.currentWave || undefined);
+
+    const nextStep = getNextStep(currentRunningStep, workflowSequence);
+
+    if (nextStep) {
+      setCurrentRunningStep(projectKey, nextStep.id);
+      addLogEntry(nextStep.id, 'running', progressData.currentWave || undefined);
+      onStartWorkflow?.(getDevWorkflowPrompt(nextStep), nextStep.displayText);
+    } else {
+      // 다음 단계가 없으면 완료
+      setCurrentRunningStep(projectKey, null);
+    }
+  }, [currentRunningStep, workflowSequence, projectKey, progressData.currentWave, onStartWorkflow]);
+
+  // ============================================================================
+  // Watchdog Timer: 10분 무응답 감지
+  // ============================================================================
+  useEffect(() => {
+    // 워크플로우 실행 중이 아니거나 중지 상태면 Watchdog 비활성화
+    if (!currentRunningStep || isStoppedRef.current) {
+      if (watchdogIntervalRef.current) {
+        clearInterval(watchdogIntervalRef.current);
+        watchdogIntervalRef.current = null;
+      }
+      return;
+    }
+
+    // 30초마다 Watchdog 체크
+    watchdogIntervalRef.current = setInterval(() => {
+      if (isStoppedRef.current) return;
+
+      const elapsed = Date.now() - lastActivityRef.current;
+      if (elapsed > WATCHDOG_TIMEOUT) {
+        console.warn(`[Watchdog] ${WATCHDOG_TIMEOUT / 60000}분 무응답 - 강제 재시작`);
+        forceRestartCurrentStep();
+      }
+    }, 30000);
+
+    return () => {
+      if (watchdogIntervalRef.current) {
+        clearInterval(watchdogIntervalRef.current);
+        watchdogIntervalRef.current = null;
+      }
+    };
+  }, [currentRunningStep, forceRestartCurrentStep]);
 
   // 컴포넌트 마운트 시 및 주기적으로 progress 로드
   useEffect(() => {
@@ -477,6 +571,10 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
     }
 
     if (isNowDone && currentRunningStep) {
+      // ✅ 세션 완료 시 활동 시간 업데이트 및 재시도 카운트 리셋
+      lastActivityRef.current = Date.now();
+      retryCountRef.current = 0;
+
       const checkAndContinue = async () => {
         // 🛑 중지 상태 체크
         if (isStoppedRef.current || !projectPath) return;
@@ -512,7 +610,11 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
           // 5. 다음 단계 결정 및 자동 실행
           const nextStep = getNextStep(currentRunningStep, workflowSequence);
 
-          // Orchestrator → Executor 전환 시 티켓 존재 확인
+          // ============================================================================
+          // 무중단 자동화: 검증 실패해도 경고만 출력하고 강제 진행
+          // ============================================================================
+
+          // Orchestrator → Executor 전환 시 티켓 존재 확인 (경고만, 강제 진행)
           if (currentRunningStep === 'pm-orchestrator' && nextStep?.id === 'pm-executor') {
             const progressPath = `${projectPath}/${ANYON_DOCS.DEV_PLAN}/${ANYON_DOCS.DEV_FILES.EXECUTION_PROGRESS}`;
             try {
@@ -521,30 +623,31 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
               const totalTickets = totalTicketsMatch ? parseInt(totalTicketsMatch[1], 10) : 0;
 
               if (totalTickets === 0) {
-                console.warn('[DevDocsPanel] No tickets found. Skipping Executor.');
-                setCurrentRunningStep(projectKey, null);
-                return;
+                console.warn('[AutoRecovery] 티켓 없음 - 경고만 출력, 강제 Executor 진행');
+                // 기존: return → 변경: 계속 진행
               }
             } catch (error) {
-              // execution-progress.md 파일이 없으면 Executor 실행 안함
-              console.warn('[DevDocsPanel] execution-progress.md not found. Skipping Executor.');
-              setCurrentRunningStep(projectKey, null);
-              return;
+              // execution-progress.md 파일이 없어도 강제 진행
+              console.warn('[AutoRecovery] execution-progress.md 없음 - 강제 Executor 진행');
+              // 기존: return → 변경: 계속 진행
             }
           }
 
-          // Executor → Reviewer 전환 시 workflow_state 검증
+          // Executor → Reviewer 전환 시 workflow_state 검증 (경고만, 강제 진행)
           if (currentRunningStep === 'pm-executor' && nextStep?.id === 'pm-reviewer') {
-            // execution-progress.md에서 workflow_state 확인
-            const progressPath = `${projectPath}/${ANYON_DOCS.DEV_PLAN}/execution-progress.md`;
-            const progressContent = await api.readFileContent(progressPath);
-            const stateMatch = progressContent.match(/workflow_state:\s*["']?(\w+)["']?/i);
-            const workflowState = stateMatch ? stateMatch[1] : null;
+            try {
+              const progressPath = `${projectPath}/${ANYON_DOCS.DEV_PLAN}/execution-progress.md`;
+              const progressContent = await api.readFileContent(progressPath);
+              const stateMatch = progressContent.match(/workflow_state:\s*["']?(\w+)["']?/i);
+              const workflowState = stateMatch ? stateMatch[1] : null;
 
-            if (workflowState !== 'awaiting_review') {
-              console.warn('[DevDocsPanel] Executor finished but workflow_state is not "awaiting_review". Skipping auto-transition to Reviewer.');
-              setCurrentRunningStep(projectKey, null);
-              return;
+              if (workflowState !== 'awaiting_review') {
+                console.warn(`[AutoRecovery] workflow_state=${workflowState} (expected awaiting_review) - 강제 Reviewer 진행`);
+                // 기존: return → 변경: 계속 진행
+              }
+            } catch (error) {
+              console.warn('[AutoRecovery] workflow_state 확인 실패 - 강제 Reviewer 진행');
+              // 기존: return → 변경: 계속 진행
             }
           }
 
@@ -552,6 +655,7 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
             setTimeout(() => {
               // 🛑 중지 상태 마지막 확인 (setTimeout 대기 중 중지 눌렀을 수 있음)
               if (!isStoppedRef.current) {
+                lastActivityRef.current = Date.now(); // 다음 단계 시작 시 활동 시간 업데이트
                 setCurrentRunningStep(projectKey, nextStep.id);
                 addLogEntry(nextStep.id, 'running', progressData.currentWave || undefined);
                 onStartWorkflow?.(getDevWorkflowPrompt(nextStep), nextStep.displayText);
@@ -562,17 +666,41 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
             setCurrentRunningStep(projectKey, null);
           }
         } catch (error) {
-          console.error('[DevDocsPanel] Error checking workflow completion:', error);
-          setCurrentRunningStep(projectKey, null);
+          // ============================================================================
+          // 무중단 자동화: 에러 발생 시 자동 재시도
+          // ============================================================================
+          console.error('[AutoRecovery] checkAndContinue 에러:', error);
+
+          if (retryCountRef.current < MAX_RETRIES) {
+            retryCountRef.current++;
+            const delay = 5000 * retryCountRef.current; // 5초, 10초, 15초 백오프
+            console.warn(`[AutoRecovery] ${retryCountRef.current}/${MAX_RETRIES} 재시도 - ${delay/1000}초 후`);
+
+            setTimeout(() => {
+              if (!isStoppedRef.current && currentRunningStep) {
+                const step = workflowSequence.find(s => s.id === currentRunningStep);
+                if (step) {
+                  lastActivityRef.current = Date.now();
+                  onStartWorkflow?.(getDevWorkflowPrompt(step), step.displayText);
+                }
+              }
+            }, delay);
+          } else {
+            // 3회 실패: 다음 단계로 강제 진행
+            console.error('[AutoRecovery] 3회 실패 - 강제 다음 단계 진행');
+            forceNextStep();
+          }
         }
       };
 
       checkAndContinue();
     }
-  }, [isSessionLoading, currentRunningStep, onStartWorkflow, projectPath, loadProgressData, progressData.currentWave]);
+  }, [isSessionLoading, currentRunningStep, onStartWorkflow, projectPath, loadProgressData, progressData.currentWave, forceNextStep, workflowSequence]);
 
   const handleStart = (stepId: string, workflowPrompt: string, displayText?: string) => {
     isStoppedRef.current = false;
+    retryCountRef.current = 0; // 재시도 카운트 리셋
+    lastActivityRef.current = Date.now(); // 활동 시간 업데이트
     forceUpdate(n => n + 1);
     setIsDevComplete(projectKey, false);
     setCurrentRunningStep(projectKey, stepId);
