@@ -40,6 +40,7 @@ export const WorkspaceSelector: React.FC<WorkspaceSelectorProps> = ({ projectId 
   const [project, setProject] = useState<Project | undefined>(undefined);
   const [showTrackSelector, setShowTrackSelector] = useState(false);
   const setProjectTrack = useTrackStore((state) => state.setProjectTrack);
+  const getProjectTrack = useTrackStore((state) => state.getProjectTrack);
 
   useEffect(() => {
     console.log('[WorkspaceSelector] useEffect triggered', {
@@ -84,7 +85,17 @@ export const WorkspaceSelector: React.FC<WorkspaceSelectorProps> = ({ projectId 
   };
 
   const handleSelectMvp = () => {
-    // MVP 선택 시 트랙 선택 화면으로
+    // 이미 트랙이 선택되어 있으면 바로 MVP로 이동
+    if (project?.path) {
+      const existingTrack = getProjectTrack(project.path);
+      // 기본값 'mvp'가 아닌 실제 선택된 트랙이 있으면 바로 이동
+      const hasTrack = useTrackStore.getState().projectTracks[project.path];
+      if (hasTrack) {
+        goToMvp(projectId);
+        return;
+      }
+    }
+    // 트랙 미선택 시 트랙 선택 화면으로
     setShowTrackSelector(true);
   };
 

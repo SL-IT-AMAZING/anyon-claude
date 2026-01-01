@@ -33,6 +33,8 @@ export interface WorkflowStep {
   nextId: string | null;
   /** BMAD 트랙용 단계 구분 */
   phase?: BmadPhase;
+  /** 선택적 단계 여부 - true면 건너뛰기 가능 */
+  optional?: boolean;
 }
 
 export const WORKFLOW_SEQUENCE: WorkflowStep[] = [

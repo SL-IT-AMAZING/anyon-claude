@@ -122,11 +122,24 @@ export const PlanningDocsPanel: React.FC<PlanningDocsPanelProps> = ({
   const activeStep = workflowSequence.find(s => s.id === activeDocId);
   const activeStepIndex = workflowSequence.findIndex(s => s.id === activeDocId);
 
-  // Check if a tab is enabled (previous doc must exist)
+  // Check if a tab is enabled (previous non-optional doc must exist, or optional step can be skipped)
   const isTabEnabled = useCallback((index: number): boolean => {
     if (index === 0) return true;
-    const prevStep = workflowSequence[index - 1];
-    return documents.some(d => d.id === prevStep.id && d.exists);
+
+    // 이전 단계들을 역순으로 확인
+    for (let i = index - 1; i >= 0; i--) {
+      const step = workflowSequence[i];
+      const doc = documents.find(d => d.id === step.id);
+
+      // 문서가 존재하면 이 탭은 활성화
+      if (doc?.exists) return true;
+
+      // optional 단계가 아니고 문서도 없으면 비활성화
+      if (!step.optional) return false;
+    }
+
+    // 모든 이전 단계가 optional이고 건너뛴 경우
+    return true;
   }, [documents, workflowSequence]);
 
   // Handle tab click with lock check
@@ -160,6 +173,12 @@ export const PlanningDocsPanel: React.FC<PlanningDocsPanelProps> = ({
     onStartWorkflow(workflowPrompt, step.displayText);
     setActiveDocId(step.id);
   }, [onStartWorkflow]);
+
+  // Skip optional step and go to next
+  const handleSkipStep = useCallback(() => {
+    if (!activeStep?.optional || !activeStep.nextId) return;
+    setActiveDocId(activeStep.nextId);
+  }, [activeStep]);
 
   // Navigate to next/prev document
   const handleNavigate = useCallback((direction: 'prev' | 'next') => {
@@ -468,6 +487,18 @@ export const PlanningDocsPanel: React.FC<PlanningDocsPanelProps> = ({
                         </>
                       )}
                     </Button>
+                    {/* 선택적 단계일 경우 건너뛰기 버튼 */}
+                    {activeStep.optional && activeStep.nextId && (
+                      <Button
+                        onClick={handleSkipStep}
+                        variant="outline"
+                        size="sm"
+                        className="mt-3 gap-1 text-muted-foreground hover:text-foreground"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                        건너뛰고 다음 단계로
+                      </Button>
+                    )}
                   </>
                 ) : (
                   <>

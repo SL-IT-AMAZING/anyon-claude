@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { open } from '@tauri-apps/plugin-shell';
 
 interface PlanningDocViewerProps {
   content: string;
@@ -12,6 +13,14 @@ interface PlanningDocViewerProps {
  * Supports both Markdown and HTML content
  */
 export const PlanningDocViewer: React.FC<PlanningDocViewerProps> = ({ content, filename }) => {
+  // Handle link clicks - open in system browser
+  const handleLinkClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>, href: string | undefined) => {
+    e.preventDefault();
+    if (href) {
+      open(href);
+    }
+  }, []);
+
   // Detect if content is HTML
   const isHtml = useMemo(() => {
     if (filename?.endsWith('.html')) return true;
@@ -51,7 +60,20 @@ export const PlanningDocViewer: React.FC<PlanningDocViewerProps> = ({ content, f
         prose-a:text-primary prose-a:no-underline hover:prose-a:underline
         prose-blockquote:border-l-4 prose-blockquote:border-primary/50 prose-blockquote:pl-4 prose-blockquote:italic
       ">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          components={{
+            a: ({ href, children }) => (
+              <a
+                href={href}
+                onClick={(e) => handleLinkClick(e, href)}
+                className="text-primary cursor-pointer hover:underline"
+              >
+                {children}
+              </a>
+            ),
+          }}
+        >
           {content}
         </ReactMarkdown>
       </div>

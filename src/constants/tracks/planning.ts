@@ -58,12 +58,13 @@ export const BMAD_PLANNING_WORKFLOWS: WorkflowStep[] = [
     id: 'research',
     title: 'Research',
     filename: 'research.md',
-    filenamePattern: '*-research-*.md', // BMAD 동적 파일명: {type}-{topic}-research-{date}.md
+    filenamePattern: '*research*.md', // BMAD 동적 파일명: research-{topic}-{date}.md 또는 {type}-research-{date}.md
     workflow: '/bmad:bmm:workflows:research',
     displayText: '리서치 수행',
     icon: 'search' as WorkflowIconType,
     nextId: 'prd',
     phase: 'analysis',
+    optional: true, // 선택적 단계 - 프로젝트 특성에 따라 건너뛸 수 있음
   },
   // Phase 2: Plan (계획)
   {
@@ -85,6 +86,7 @@ export const BMAD_PLANNING_WORKFLOWS: WorkflowStep[] = [
     icon: 'palette' as WorkflowIconType,
     nextId: 'architecture',
     phase: 'plan',
+    optional: true, // 조건부 필수 - UI 없는 프로젝트에서 건너뛸 수 있음
   },
   // Phase 3: Solutioning (설계)
   {

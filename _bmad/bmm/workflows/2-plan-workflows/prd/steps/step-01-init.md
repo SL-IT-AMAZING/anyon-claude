@@ -103,8 +103,6 @@ Also - when searching - documents can be a single markdown file, or a folder wit
 Try to discover the following:
 - Product Brief (`*brief*.md`)
 - Research Documents (`/*research*.md`)
-- Project Documentation (generally multiple documents might be found for this in the `{product_knowledge}` or `docs` folder.)
-- Project Context (`**/project-context.md`)
 
 <critical>Confirm what you have found with the user, along with asking if the user wants to provide anything else. Only after this confirmation will you proceed to follow the loading rules</critical>
 
@@ -138,14 +136,8 @@ Try to discover the following:
 
 - Product briefs: {{briefCount}} files {if briefCount > 0}✓ loaded{else}(none found){/if}
 - Research: {{researchCount}} files {if researchCount > 0}✓ loaded{else}(none found){/if}
-- Brainstorming: {{brainstormingCount}} files {if brainstormingCount > 0}✓ loaded{else}(none found){/if}
-- Project docs: {{projectDocsCount}} files {if projectDocsCount > 0}✓ loaded (brownfield project){else}(none found - greenfield project){/if}
 
 **Files loaded:** {list of specific file names or "No additional documents found"}
-
-{if projectDocsCount > 0}
-📋 **Note:** This is a **brownfield project**. Your existing project documentation has been loaded. In the next step, I'll ask specifically about what new features or changes you want to add to your existing system.
-{/if}
 
 Do you have any other documents you'd like me to include, or shall we continue to the next step?"
 

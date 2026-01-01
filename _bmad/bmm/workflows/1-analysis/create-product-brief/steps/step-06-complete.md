@@ -58,7 +58,22 @@ Complete the product brief workflow, update status files, and provide guidance o
 
 ## Sequence of Instructions (Do not deviate, skip, or optimize)
 
-### 1. Announce Workflow Completion
+### 1. Update Document Frontmatter
+
+**CRITICAL: Before announcing completion, update the document frontmatter:**
+
+Update the product brief document's frontmatter to mark step 6 as completed:
+
+```yaml
+---
+stepsCompleted: [1, 2, 3, 4, 5, 6]  # Add 6 to the array
+...
+---
+```
+
+This is MANDATORY for the workflow tracking system to recognize the document as complete.
+
+### 2. Announce Workflow Completion
 
 **Completion Announcement:**
 "🎉 **Product Brief Complete, {{user_name}}!**
@@ -78,7 +93,7 @@ I've successfully collaborated with you to create a comprehensive Product Brief 
 
 This brief serves as the foundation for all subsequent product development activities and strategic decisions."
 
-### 2. Workflow Status Update
+### 3. Workflow Status Update
 
 **Status File Management:**
 Update the main workflow status file:
@@ -88,7 +103,7 @@ Update the main workflow status file:
 - Add completion timestamp and metadata
 - Save file, preserving all comments and structure
 
-### 3. Document Quality Check
+### 4. Document Quality Check
 
 **Completeness Validation:**
 Perform final validation of the product brief:
@@ -106,7 +121,7 @@ Perform final validation of the product brief:
 - Are success criteria traceable to user needs and business goals?
 - Does MVP scope align with the problem and solution?
 
-### 4. Suggest Next Steps
+### 5. Suggest Next Steps
 
 **Recommended Next Workflow:**
 Provide guidance on logical next workflows:
@@ -129,7 +144,7 @@ Provide guidance on logical next workflows:
 - Use brief to validate concept before committing to detailed work
 - Brief can guide early technical feasibility discussions
 
-### 5. Present MENU OPTIONS
+### 6. Present MENU OPTIONS
 
 **Completion Confirmation:**
 "**Your Product Brief for {{project_name}} is now complete and ready for the next phase!**
