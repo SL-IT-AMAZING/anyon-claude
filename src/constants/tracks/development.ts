@@ -11,6 +11,11 @@ import {
   OWNUUN_EXECUTOR_PROMPT,
   OWNUUN_REVIEWER_PROMPT,
 } from '@/constants/workflows/ownuun';
+import {
+  OWNUUN2_ORCHESTRATOR_PROMPT,
+  OWNUUN2_EXECUTOR_PROMPT,
+  OWNUUN2_REVIEWER_PROMPT,
+} from '@/constants/workflows/ownuun2';
 
 // ============================================================================
 // MVP Track: 기존 pm-* 워크플로우 그대로 사용
@@ -66,14 +71,34 @@ export const OWNUUN_DEV_CONFIG: TrackDevelopmentConfig = {
 
 // ============================================================================
 // BMAD Track: bmad:bmm:workflows 스킬 사용
+// Implementation Phase: Sprint Planning → Story Development → Review → Retrospective
 // ============================================================================
 export const BMAD_DEV_WORKFLOWS: DevWorkflowStep[] = [
+  // Planning
   {
     id: 'sprint-planning',
     title: 'Sprint Planning',
     workflow: '/bmad:bmm:workflows:sprint-planning',
     displayText: 'Sprint 계획 생성',
     icon: 'layout-list' as DevWorkflowIconType,
+    category: 'planning',
+  },
+  {
+    id: 'sprint-status',
+    title: 'Sprint Status',
+    workflow: '/bmad:bmm:workflows:sprint-status',
+    displayText: 'Sprint 상태 확인',
+    icon: 'activity' as DevWorkflowIconType,
+    category: 'planning',
+  },
+  // Execution
+  {
+    id: 'create-story',
+    title: 'Create Story',
+    workflow: '/bmad:bmm:workflows:create-story',
+    displayText: '다음 Story 생성',
+    icon: 'git-branch' as DevWorkflowIconType,
+    category: 'execution',
   },
   {
     id: 'dev-story',
@@ -81,13 +106,33 @@ export const BMAD_DEV_WORKFLOWS: DevWorkflowStep[] = [
     workflow: '/bmad:bmm:workflows:dev-story',
     displayText: 'Story 개발',
     icon: 'rocket' as DevWorkflowIconType,
+    category: 'execution',
   },
+  // Review
   {
     id: 'code-review',
     title: 'Code Review',
     workflow: '/bmad:bmm:workflows:code-review',
-    displayText: '코드 리뷰',
+    displayText: '코드 리뷰 (ADVERSARIAL)',
     icon: 'check-circle' as DevWorkflowIconType,
+    category: 'review',
+  },
+  // Management
+  {
+    id: 'correct-course',
+    title: 'Correct Course',
+    workflow: '/bmad:bmm:workflows:correct-course',
+    displayText: '코스 수정',
+    icon: 'refresh-cw' as DevWorkflowIconType,
+    category: 'management',
+  },
+  {
+    id: 'retrospective',
+    title: 'Retrospective',
+    workflow: '/bmad:bmm:workflows:retrospective',
+    displayText: 'Epic 회고',
+    icon: 'message-square' as DevWorkflowIconType,
+    category: 'management',
   },
 ];
 
@@ -100,11 +145,50 @@ export const BMAD_DEV_CONFIG: TrackDevelopmentConfig = {
 };
 
 // ============================================================================
+// ownuun2 Track: 티켓별 플랜→실행 + 서브에이전트 병렬 실행
+// ============================================================================
+export const OWNUUN2_DEV_WORKFLOWS: DevWorkflowStep[] = [
+  {
+    id: 'ownuun2-orchestrator',
+    title: 'Ownuun2 Orchestrator',
+    workflow: '',
+    prompt: OWNUUN2_ORCHESTRATOR_PROMPT,
+    displayText: 'Ownuun2 Orchestrator - 의존성 기반 병렬 그룹 구성',
+    icon: 'layout-list' as DevWorkflowIconType,
+  },
+  {
+    id: 'ownuun2-executor',
+    title: 'Ownuun2 Executor',
+    workflow: '',
+    prompt: OWNUUN2_EXECUTOR_PROMPT,
+    displayText: 'Ownuun2 Executor - 티켓별 플랜→실행',
+    icon: 'rocket' as DevWorkflowIconType,
+  },
+  {
+    id: 'ownuun2-reviewer',
+    title: 'Ownuun2 Reviewer',
+    workflow: '',
+    prompt: OWNUUN2_REVIEWER_PROMPT,
+    displayText: 'Ownuun2 Reviewer - 엄격한 UX/UI 검증',
+    icon: 'check-circle' as DevWorkflowIconType,
+  },
+];
+
+export const OWNUUN2_DEV_CONFIG: TrackDevelopmentConfig = {
+  trackId: 'ownuun2',
+  workflows: OWNUUN2_DEV_WORKFLOWS,
+  executionStrategy: 'ticket', // 티켓별 실행 (subwave가 아닌 ticket 단위)
+  autoTestOnSubWaveComplete: true,
+  strictUxValidation: true,
+};
+
+// ============================================================================
 // Registry: 트랙별 설정 조회
 // ============================================================================
 export const TRACK_DEV_CONFIGS: Record<TrackId, TrackDevelopmentConfig> = {
   mvp: MVP_DEV_CONFIG,
   ownuun: OWNUUN_DEV_CONFIG,
+  ownuun2: OWNUUN2_DEV_CONFIG,
   bmad: BMAD_DEV_CONFIG,
 };
 

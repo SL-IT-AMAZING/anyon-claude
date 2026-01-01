@@ -9,6 +9,7 @@ import { TRACKS, type TrackId } from '@/types/track';
 const TRACK_ICONS: Record<TrackId, string> = {
   mvp: '🚀',
   ownuun: '🎯',
+  ownuun2: '⚡',
   bmad: '📋',
 };
 

@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { CheckCircle2, ArrowRight, PlayCircle, ChevronLeft, ChevronRight, FileText , Loader2, AlertCircle, RefreshCw } from '@/lib/icons';
+import { CheckCircle2, ArrowRight, PlayCircle, ChevronLeft, ChevronRight, FileText , Loader2, AlertCircle, RefreshCw, BookOpen, Search } from '@/lib/icons';
 import prdIcon from '@/assets/prd-icon.png';
 import uiuxIcon from '@/assets/uiux-icon.png';
 import trdIcon from '@/assets/trd-icon.png';
@@ -10,11 +10,18 @@ import { PanelHeader, StatusBadge } from '@/components/ui/panel-header';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { usePlanningDocs } from '@/hooks/usePlanningDocs';
-import { WORKFLOW_SEQUENCE, type WorkflowStep, getWorkflowPrompt } from '@/constants/planning';
+import { WORKFLOW_SEQUENCE, type WorkflowStep, getWorkflowPrompt, type BmadPhase } from '@/constants/planning';
 import { PlanningDocViewer } from './PlanningDocViewer';
 import type { TrackId } from '@/types/track';
 import { UXPreviewPanel } from './UXPreviewPanel';
 import type { SessionError } from '@/components/ClaudeCodeSession';
+
+/** BMAD 4단계 구조 정의 */
+const BMAD_PHASES: { id: BmadPhase; label: string; color: string }[] = [
+  { id: 'analysis', label: 'Analysis', color: 'text-blue-500' },
+  { id: 'plan', label: 'Plan', color: 'text-purple-500' },
+  { id: 'solutioning', label: 'Solutioning', color: 'text-amber-500' },
+];
 
 interface PlanningDocsPanelProps {
   projectPath: string | undefined;
@@ -43,10 +50,11 @@ export const PlanningDocsPanel: React.FC<PlanningDocsPanelProps> = ({
   sessionError,
   onResumeWorkflow,
   workflows = WORKFLOW_SEQUENCE,
-  trackId: _trackId = 'mvp', // 향후 UI 커스터마이징에 사용
+  trackId = 'mvp',
 }) => {
   // Use provided workflows or default to MVP workflow
   const workflowSequence = workflows;
+  const isBmadTrack = trackId === 'bmad';
   const { documents, isLoading, progress } = usePlanningDocs(projectPath, workflowSequence);
   const [activeDocId, setActiveDocId] = useState<string>('prd');
   const [activeWorkflows, setActiveWorkflows] = useState<Set<string>>(new Set());
@@ -244,23 +252,70 @@ export const PlanningDocsPanel: React.FC<PlanningDocsPanelProps> = ({
 
       {/* 프로그레스 바 영역 */}
       <div className="flex-shrink-0 border-b px-4 py-3 bg-background">
+        {/* BMAD 트랙: 4단계 그룹 헤더 */}
+        {isBmadTrack && (
+          <div className="flex items-center justify-center gap-1 mb-3 pb-2 border-b border-border/50">
+            {BMAD_PHASES.map((phase, idx) => {
+              const phaseSteps = workflowSequence.filter(s => s.phase === phase.id);
+              const phaseCompleted = phaseSteps.every(s =>
+                documents.find(d => d.id === s.id)?.exists
+              );
+              const phaseInProgress = phaseSteps.some(s =>
+                documents.find(d => d.id === s.id)?.exists
+              ) && !phaseCompleted;
+
+              return (
+                <div key={phase.id} className="flex items-center">
+                  <div className={cn(
+                    "flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-all",
+                    phaseCompleted && "bg-green-100 dark:bg-green-950/50 text-green-700 dark:text-green-400",
+                    phaseInProgress && `bg-opacity-10 ${phase.color.replace('text-', 'bg-')} ${phase.color}`,
+                    !phaseCompleted && !phaseInProgress && "text-muted-foreground"
+                  )}>
+                    {phaseCompleted && <CheckCircle2 className="w-3 h-3" />}
+                    <span>{phase.label}</span>
+                  </div>
+                  {idx < BMAD_PHASES.length - 1 && (
+                    <ChevronRight className="w-3 h-3 text-muted-foreground/50 mx-0.5" />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* 단계 인디케이터 + 레이블 통합 */}
-        <div className="flex justify-between">
+        <div className={cn(
+          "flex",
+          isBmadTrack ? "flex-wrap gap-2 justify-center" : "justify-between"
+        )}>
           {workflowSequence.map((step, index) => {
             const doc = documents.find(d => d.id === step.id);
             const isCompleted = doc?.exists;
             const isActive = activeDocId === step.id;
             const isEnabled = isTabEnabled(index);
 
-            // 짧은 약어 매핑
+            // 짧은 약어 매핑 (MVP + BMAD)
             const shortLabel: Record<string, string> = {
+              // MVP
               'prd': 'PRD',
               'ux-design': 'UX',
               'design-guide': 'UI',
               'trd': 'TRD',
               'architecture': 'Arch',
               'erd': 'ERD',
+              // BMAD
+              'product-brief': 'Brief',
+              'research': 'Research',
+              'epics-stories': 'Stories',
+              'readiness-check': 'Ready',
+            };
+
+            // BMAD 트랙: 단계별 색상 적용
+            const getPhaseColor = () => {
+              if (!isBmadTrack || !step.phase) return '';
+              const phase = BMAD_PHASES.find(p => p.id === step.phase);
+              return phase?.color || '';
             };
 
             return (
@@ -271,7 +326,8 @@ export const PlanningDocsPanel: React.FC<PlanningDocsPanelProps> = ({
                 className={cn(
                   "flex flex-col items-center gap-1.5 group",
                   isEnabled && "cursor-pointer",
-                  !isEnabled && "cursor-not-allowed"
+                  !isEnabled && "cursor-not-allowed",
+                  isBmadTrack && "min-w-[50px]"
                 )}
                 title={step.title}
               >
@@ -292,7 +348,8 @@ export const PlanningDocsPanel: React.FC<PlanningDocsPanelProps> = ({
                     "text-[10px] transition-colors",
                     isActive && "text-foreground font-medium",
                     !isActive && isEnabled && "text-muted-foreground group-hover:text-foreground",
-                    !isEnabled && "text-muted-foreground/50"
+                    !isEnabled && "text-muted-foreground/50",
+                    isBmadTrack && isActive && getPhaseColor()
                   )}
                 >
                   {shortLabel[step.id] || step.title}
@@ -333,25 +390,35 @@ export const PlanningDocsPanel: React.FC<PlanningDocsPanelProps> = ({
           <div className="flex-1 flex items-center justify-center p-8">
             <div className="text-center max-w-md">
               <div className="w-64 h-64 rounded-xl flex items-center justify-center mb-4 mx-auto">
-                <img
-                  src={
-                    activeDocId === 'ux-design' ? uiuxIcon :
-                    activeDocId === 'design-guide' ? designIcon :
-                    activeDocId === 'trd' ? trdIcon :
-                    activeDocId === 'architecture' ? architectureIcon :
-                    activeDocId === 'erd' ? erdIcon :
-                    prdIcon
-                  }
-                  alt={
-                    activeDocId === 'ux-design' ? 'UX Design' :
-                    activeDocId === 'design-guide' ? 'Design Guide' :
-                    activeDocId === 'trd' ? 'TRD' :
-                    activeDocId === 'architecture' ? 'Architecture' :
-                    activeDocId === 'erd' ? 'ERD' :
-                    'PRD'
-                  }
-                  className="w-64 h-64 object-contain logo-invert"
-                />
+                {/* BMAD 전용 아이콘 */}
+                {isBmadTrack && (activeDocId === 'product-brief' || activeDocId === 'research' || activeDocId === 'epics-stories' || activeDocId === 'readiness-check') ? (
+                  <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
+                    {activeDocId === 'product-brief' && <BookOpen className="w-16 h-16 text-blue-500" />}
+                    {activeDocId === 'research' && <Search className="w-16 h-16 text-blue-500" />}
+                    {activeDocId === 'epics-stories' && <FileText className="w-16 h-16 text-amber-500" />}
+                    {activeDocId === 'readiness-check' && <CheckCircle2 className="w-16 h-16 text-amber-500" />}
+                  </div>
+                ) : (
+                  <img
+                    src={
+                      activeDocId === 'ux-design' ? uiuxIcon :
+                      activeDocId === 'design-guide' ? designIcon :
+                      activeDocId === 'trd' ? trdIcon :
+                      activeDocId === 'architecture' ? architectureIcon :
+                      activeDocId === 'erd' ? erdIcon :
+                      prdIcon
+                    }
+                    alt={
+                      activeDocId === 'ux-design' ? 'UX Design' :
+                      activeDocId === 'design-guide' ? 'Design Guide' :
+                      activeDocId === 'trd' ? 'TRD' :
+                      activeDocId === 'architecture' ? 'Architecture' :
+                      activeDocId === 'erd' ? 'ERD' :
+                      'PRD'
+                    }
+                    className="w-64 h-64 object-contain logo-invert"
+                  />
+                )}
               </div>
 
               {activeStep && (

@@ -9,7 +9,10 @@ import {
   PM_REVIEWER_PROMPT,
 } from './workflows/development';
 
-export type DevWorkflowIconType = 'layout-list' | 'rocket' | 'check-circle';
+export type DevWorkflowIconType = 'layout-list' | 'rocket' | 'check-circle' | 'activity' | 'git-branch' | 'refresh-cw' | 'message-square';
+
+/** BMAD 개발 워크플로우 카테고리 */
+export type BmadDevCategory = 'planning' | 'execution' | 'review' | 'management';
 
 export interface DevWorkflowStep {
   id: string;
@@ -20,6 +23,8 @@ export interface DevWorkflowStep {
   prompt?: string;
   displayText: string;
   icon: DevWorkflowIconType;
+  /** BMAD 트랙용 카테고리 */
+  category?: BmadDevCategory;
 }
 
 /**

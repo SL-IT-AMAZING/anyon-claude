@@ -39,17 +39,31 @@ export const OWNUUN_PLANNING_CONFIG: TrackPlanningConfig = {
 
 // ============================================================================
 // BMAD Track: bmad:bmm:workflows 스킬 사용
+// 4단계: Analysis → Plan → Solutioning → Implementation
 // ============================================================================
 export const BMAD_PLANNING_WORKFLOWS: WorkflowStep[] = [
+  // Phase 1: Analysis (분석)
   {
     id: 'product-brief',
     title: 'Product Brief',
     filename: 'product-brief.md',
     workflow: '/bmad:bmm:workflows:create-product-brief',
     displayText: 'Product Brief 작성',
-    icon: 'file-text' as WorkflowIconType,
-    nextId: 'prd',
+    icon: 'book-open' as WorkflowIconType,
+    nextId: 'research',
+    phase: 'analysis',
   },
+  {
+    id: 'research',
+    title: 'Research',
+    filename: 'research.md',
+    workflow: '/bmad:bmm:workflows:research',
+    displayText: '리서치 수행',
+    icon: 'search' as WorkflowIconType,
+    nextId: 'prd',
+    phase: 'analysis',
+  },
+  // Phase 2: Plan (계획)
   {
     id: 'prd',
     title: 'PRD',
@@ -58,6 +72,7 @@ export const BMAD_PLANNING_WORKFLOWS: WorkflowStep[] = [
     displayText: 'PRD 작성 (BMAD)',
     icon: 'file-text' as WorkflowIconType,
     nextId: 'ux-design',
+    phase: 'plan',
   },
   {
     id: 'ux-design',
@@ -67,7 +82,9 @@ export const BMAD_PLANNING_WORKFLOWS: WorkflowStep[] = [
     displayText: 'UX 디자인 작성',
     icon: 'palette' as WorkflowIconType,
     nextId: 'architecture',
+    phase: 'plan',
   },
+  // Phase 3: Solutioning (설계)
   {
     id: 'architecture',
     title: 'Architecture',
@@ -76,6 +93,7 @@ export const BMAD_PLANNING_WORKFLOWS: WorkflowStep[] = [
     displayText: '아키텍처 설계',
     icon: 'boxes' as WorkflowIconType,
     nextId: 'epics-stories',
+    phase: 'solutioning',
   },
   {
     id: 'epics-stories',
@@ -83,8 +101,19 @@ export const BMAD_PLANNING_WORKFLOWS: WorkflowStep[] = [
     filename: 'epics-and-stories.md',
     workflow: '/bmad:bmm:workflows:create-epics-and-stories',
     displayText: 'Epics & Stories 생성',
-    icon: 'file-text' as WorkflowIconType,
+    icon: 'list-checks' as WorkflowIconType,
+    nextId: 'readiness-check',
+    phase: 'solutioning',
+  },
+  {
+    id: 'readiness-check',
+    title: 'Readiness Check',
+    filename: 'readiness-check.md',
+    workflow: '/bmad:bmm:workflows:check-implementation-readiness',
+    displayText: '구현 준비 상태 확인',
+    icon: 'check-circle' as WorkflowIconType,
     nextId: null,
+    phase: 'solutioning',
   },
 ];
 
@@ -95,11 +124,21 @@ export const BMAD_PLANNING_CONFIG: TrackPlanningConfig = {
 };
 
 // ============================================================================
+// ownuun2 Track: ownuun과 동일 (티켓별 플랜→실행 전략은 개발 단계에서 적용)
+// ============================================================================
+export const OWNUUN2_PLANNING_CONFIG: TrackPlanningConfig = {
+  trackId: 'ownuun2',
+  workflows: MVP_PLANNING_SEQUENCE, // 기획 워크플로우는 ownuun과 동일
+  postWorkflowHooks: OWNUUN_POST_HOOKS,
+};
+
+// ============================================================================
 // Registry: 트랙별 설정 조회
 // ============================================================================
 export const TRACK_PLANNING_CONFIGS: Record<TrackId, TrackPlanningConfig> = {
   mvp: MVP_PLANNING_CONFIG,
   ownuun: OWNUUN_PLANNING_CONFIG,
+  ownuun2: OWNUUN2_PLANNING_CONFIG,
   bmad: BMAD_PLANNING_CONFIG,
 };
 

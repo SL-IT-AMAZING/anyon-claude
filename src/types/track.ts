@@ -6,7 +6,7 @@
 import type { WorkflowStep } from '@/constants/planning';
 import type { DevWorkflowStep } from '@/constants/development';
 
-export type TrackId = 'mvp' | 'ownuun' | 'bmad';
+export type TrackId = 'mvp' | 'ownuun' | 'ownuun2' | 'bmad';
 
 export interface Track {
   id: TrackId;
@@ -53,6 +53,13 @@ export const TRACKS: Track[] = [
     name: 'ownuun',
     description: '엄격한 UX/UI 검증 + 서브에이전트 극대화',
     icon: '🎯',
+    available: true,
+  },
+  {
+    id: 'ownuun2',
+    name: 'ownuun2',
+    description: '티켓별 플랜→실행 + 서브에이전트 병렬 실행',
+    icon: '⚡',
     available: true,
   },
   {

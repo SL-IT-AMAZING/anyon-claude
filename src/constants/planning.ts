@@ -13,7 +13,10 @@ import {
 } from './workflows/planning';
 import { ANYON_DOCS } from './paths';
 
-export type WorkflowIconType = 'file-text' | 'palette' | 'paintbrush' | 'settings' | 'boxes' | 'database';
+export type WorkflowIconType = 'file-text' | 'palette' | 'paintbrush' | 'settings' | 'boxes' | 'database' | 'search' | 'list-checks' | 'check-circle' | 'book-open';
+
+/** BMAD 4단계 구조 */
+export type BmadPhase = 'analysis' | 'plan' | 'solutioning' | 'implementation';
 
 export interface WorkflowStep {
   id: string;
@@ -26,6 +29,8 @@ export interface WorkflowStep {
   displayText: string;
   icon: WorkflowIconType;
   nextId: string | null;
+  /** BMAD 트랙용 단계 구분 */
+  phase?: BmadPhase;
 }
 
 export const WORKFLOW_SEQUENCE: WorkflowStep[] = [

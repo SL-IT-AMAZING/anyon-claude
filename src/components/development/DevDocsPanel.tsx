@@ -269,28 +269,48 @@ const extractBlockedTickets = (content: string): BlockedTicket[] => {
  * 완전 자동화: Orchestrator → Executor → Reviewer → Executor → ... (완료까지)
  */
 const getNextStep = (currentStepId: string, sequence: DevWorkflowStep[]): DevWorkflowStep | null => {
-  // Orchestrator → Executor (자동)
+  // MVP/ownuun: Orchestrator → Executor (자동)
   if (currentStepId === 'pm-orchestrator' || currentStepId === 'ownuun-orchestrator') {
     return sequence[1]; // executor
   }
-  // Executor → Reviewer (자동)
+  // MVP/ownuun: Executor → Reviewer (자동)
   if (currentStepId === 'pm-executor' || currentStepId === 'ownuun-executor') {
     return sequence[2]; // reviewer
   }
-  // Reviewer → Executor (자동, cycle back)
+  // MVP/ownuun: Reviewer → Executor (자동, cycle back)
   if (currentStepId === 'pm-reviewer' || currentStepId === 'ownuun-reviewer') {
     return sequence[1]; // executor
   }
-  // BMAD: sprint-planning → dev-story → code-review → dev-story
+
+  // BMAD: sprint-planning → sprint-status
   if (currentStepId === 'sprint-planning') {
-    return sequence[1]; // dev-story
+    return sequence.find(s => s.id === 'sprint-status') || sequence.find(s => s.id === 'create-story') || null;
   }
+  // BMAD: sprint-status → create-story
+  if (currentStepId === 'sprint-status') {
+    return sequence.find(s => s.id === 'create-story') || null;
+  }
+  // BMAD: create-story → dev-story
+  if (currentStepId === 'create-story') {
+    return sequence.find(s => s.id === 'dev-story') || null;
+  }
+  // BMAD: dev-story → code-review
   if (currentStepId === 'dev-story') {
-    return sequence[2]; // code-review
+    return sequence.find(s => s.id === 'code-review') || null;
   }
+  // BMAD: code-review → create-story (cycle back for next story)
   if (currentStepId === 'code-review') {
-    return sequence[1]; // dev-story (cycle back)
+    return sequence.find(s => s.id === 'create-story') || null;
   }
+  // BMAD: correct-course → sprint-status
+  if (currentStepId === 'correct-course') {
+    return sequence.find(s => s.id === 'sprint-status') || null;
+  }
+  // BMAD: retrospective → (완료)
+  if (currentStepId === 'retrospective') {
+    return null;
+  }
+
   return null;
 };
 
@@ -300,10 +320,13 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
   onStartWorkflow,
   isSessionLoading = false,
   workflows = DEV_WORKFLOW_SEQUENCE,
-  trackId: _trackId = 'mvp', // 향후 UI 커스터마이징에 사용
+  trackId = 'mvp',
 }, ref) => {
   // Use provided workflows or default to MVP workflow
   const workflowSequence = workflows;
+  // Reserved for future BMAD-specific UI customization
+  // const isBmadTrack = trackId === 'bmad';
+  void trackId; // Suppress unused warning - reserved for future UI customization
   const projectKey = projectPath ?? '__unknown__';
   const prevLoadingRef = useRef(isSessionLoading);
   const isStoppedRef = useRef(false);
