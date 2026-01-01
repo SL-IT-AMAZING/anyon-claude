@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { CheckCircle2, ArrowRight, PlayCircle, ChevronLeft, ChevronRight, FileText , Loader2, AlertCircle, RefreshCw, BookOpen, Search } from '@/lib/icons';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { CheckCircle2, ArrowRight, PlayCircle, ChevronLeft, ChevronRight, FileText , Loader2, AlertCircle, RefreshCw, BookOpen, Search, Play } from '@/lib/icons';
 import prdIcon from '@/assets/prd-icon.png';
 import uiuxIcon from '@/assets/uiux-icon.png';
 import trdIcon from '@/assets/trd-icon.png';
@@ -55,8 +55,15 @@ export const PlanningDocsPanel: React.FC<PlanningDocsPanelProps> = ({
   // Use provided workflows or default to MVP workflow
   const workflowSequence = workflows;
   const isBmadTrack = trackId === 'bmad';
-  const { documents, isLoading, progress } = usePlanningDocs(projectPath, workflowSequence);
-  const [activeDocId, setActiveDocId] = useState<string>('prd');
+  const { documents, isLoading, progress } = usePlanningDocs(projectPath, workflowSequence, trackId);
+
+  // BMAD 트랙은 product-brief부터 시작, 그 외는 첫 번째 워크플로우
+  const initialDocId = useMemo(() => {
+    if (isBmadTrack) return 'product-brief';
+    return workflowSequence[0]?.id || 'prd';
+  }, [isBmadTrack, workflowSequence]);
+
+  const [activeDocId, setActiveDocId] = useState<string>(initialDocId);
   const [activeWorkflows, setActiveWorkflows] = useState<Set<string>>(new Set());
   const hasTriggeredComplete = useRef(false);
 
@@ -269,7 +276,9 @@ export const PlanningDocsPanel: React.FC<PlanningDocsPanelProps> = ({
                   <div className={cn(
                     "flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-all",
                     phaseCompleted && "bg-green-100 dark:bg-green-950/50 text-green-700 dark:text-green-400",
-                    phaseInProgress && `bg-opacity-10 ${phase.color.replace('text-', 'bg-')} ${phase.color}`,
+                    phaseInProgress && phase.id === 'analysis' && "bg-blue-500/10 text-blue-500",
+                    phaseInProgress && phase.id === 'plan' && "bg-purple-500/10 text-purple-500",
+                    phaseInProgress && phase.id === 'solutioning' && "bg-amber-500/10 text-amber-500",
                     !phaseCompleted && !phaseInProgress && "text-muted-foreground"
                   )}>
                     {phaseCompleted && <CheckCircle2 className="w-3 h-3" />}
@@ -291,7 +300,8 @@ export const PlanningDocsPanel: React.FC<PlanningDocsPanelProps> = ({
         )}>
           {workflowSequence.map((step, index) => {
             const doc = documents.find(d => d.id === step.id);
-            const isCompleted = doc?.exists;
+            const isCompleted = doc?.workflowState === 'completed';
+            const isInProgress = doc?.workflowState === 'in_progress';
             const isActive = activeDocId === step.id;
             const isEnabled = isTabEnabled(index);
 
@@ -332,16 +342,23 @@ export const PlanningDocsPanel: React.FC<PlanningDocsPanelProps> = ({
                 title={step.title}
               >
                 {/* 인디케이터 점 */}
-                <div
-                  className={cn(
-                    "w-3 h-3 rounded-full border-2 transition-all",
-                    isCompleted && "bg-primary border-primary",
-                    !isCompleted && isEnabled && "bg-background border-muted-foreground/40",
-                    !isCompleted && !isEnabled && "bg-muted border-muted-foreground/20",
-                    isActive && "ring-2 ring-primary ring-offset-2 ring-offset-background",
-                    isEnabled && "group-hover:scale-110"
+                <div className="relative">
+                  <div
+                    className={cn(
+                      "w-3 h-3 rounded-full border-2 transition-all",
+                      isCompleted && "bg-primary border-primary",
+                      isInProgress && "bg-yellow-500 border-yellow-500",
+                      !isCompleted && !isInProgress && isEnabled && "bg-background border-muted-foreground/40",
+                      !isCompleted && !isInProgress && !isEnabled && "bg-muted border-muted-foreground/20",
+                      isActive && "ring-2 ring-primary ring-offset-2 ring-offset-background",
+                      isEnabled && "group-hover:scale-110"
+                    )}
+                  />
+                  {/* in_progress 상태: 펄스 애니메이션 */}
+                  {isInProgress && (
+                    <div className="absolute inset-0 w-3 h-3 rounded-full bg-yellow-500 animate-ping opacity-50" />
                   )}
-                />
+                </div>
                 {/* 레이블 */}
                 <span
                   className={cn(
@@ -468,6 +485,41 @@ export const PlanningDocsPanel: React.FC<PlanningDocsPanelProps> = ({
         )}
       </div>
 
+      {/* BMAD: in_progress 상태에서 이어서 작성하기 배너 */}
+      {isBmadTrack && activeDoc?.workflowState === 'in_progress' && !sessionError?.isTokenLimitError && !isSessionLoading && (
+        <div className="flex-shrink-0 border-t p-4 bg-yellow-50 dark:bg-yellow-950/30 border-yellow-200 dark:border-yellow-900/50">
+          <div className="flex items-start gap-3 mb-3">
+            <Play className="h-5 w-5 text-yellow-600 dark:text-yellow-500 flex-shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-yellow-800 dark:text-yellow-300">
+                {activeStep?.title} 작성이 진행 중입니다
+              </p>
+              <p className="text-xs text-yellow-700/80 dark:text-yellow-400/80 mt-0.5">
+                질문이 있다면 답변을 해주시고, 질문이 나오지 않는다면 아래 버튼을 눌러주세요.
+              </p>
+            </div>
+          </div>
+          <Button
+            onClick={() => activeStep && handleStartWorkflow(activeStep)}
+            size="lg"
+            className="w-full gap-2 bg-yellow-600 hover:bg-yellow-700 text-white"
+            disabled={isSessionLoading || (activeStep ? activeWorkflows.has(activeStep.id) : false)}
+          >
+            {activeWorkflows.has(activeStep?.id || '') ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                질문 이어서 받는중...
+              </>
+            ) : (
+              <>
+                <Play className="h-4 w-4" />
+                질문 이어서 받기
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+
       {/* 토큰 한도 에러 발생 시 이어서 작성하기 배너 */}
       {sessionError?.isTokenLimitError && sessionError.canResume && !isSessionLoading && (
         <div className="flex-shrink-0 border-t p-4 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/50">
@@ -493,8 +545,8 @@ export const PlanningDocsPanel: React.FC<PlanningDocsPanelProps> = ({
         </div>
       )}
 
-      {/* 하단 CTA 영역 */}
-      {activeDoc?.exists && progress?.nextStep?.id && !sessionError?.isTokenLimitError && (
+      {/* 하단 CTA 영역: 현재 문서가 완료되었을 때만 다음 문서 버튼 표시 */}
+      {activeDoc?.workflowState === 'completed' && progress?.nextStep?.id && !sessionError?.isTokenLimitError && (
         <div className="flex-shrink-0 border-t p-4 bg-gradient-to-r from-primary/5 to-primary/10">
           <Button
             className="w-full gap-2"

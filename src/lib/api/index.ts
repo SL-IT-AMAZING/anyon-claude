@@ -15,6 +15,7 @@ import { storageApi } from './storage';
 import { usageApi } from './usage';
 import { claudeApi, claudeAuthApi as _claudeAuthApi, planningApi as _planningApi } from './claude';
 import { gitApi } from './git';
+import { bmadApi } from './bmad';
 
 // Re-export ANYON API types
 export type { AnyonApiUsage } from './claude';
@@ -31,6 +32,7 @@ export { gitApi } from './git';
 export type { GitDiffSummary } from './git';
 export { environmentApi } from './environment';
 export type { DependencyStatus, EnvironmentStatus } from './environment';
+export { bmadApi } from './bmad';
 
 // Compose the main api object for backward compatibility
 // This maintains the same interface as the original api.ts
@@ -58,6 +60,9 @@ export const api = {
 
   // Git operations
   ...gitApi,
+
+  // BMAD
+  ...bmadApi,
 
   // Registered Projects (uses storage internally)
   async getRegisteredProjects(): Promise<string[]> {

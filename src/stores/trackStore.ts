@@ -5,6 +5,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { TrackId } from '@/types/track';
+import { bmadApi } from '@/lib/api';
 
 interface TrackState {
   /**
@@ -15,8 +16,9 @@ interface TrackState {
 
   /**
    * 프로젝트의 트랙 설정
+   * BMAD 트랙 선택 시 _bmad 폴더 자동 복사
    */
-  setProjectTrack: (projectPath: string, trackId: TrackId) => void;
+  setProjectTrack: (projectPath: string, trackId: TrackId) => Promise<void>;
 
   /**
    * 프로젝트의 트랙 조회 (기본값: 'mvp')
@@ -34,13 +36,27 @@ export const useTrackStore = create<TrackState>()(
     (set, get) => ({
       projectTracks: {},
 
-      setProjectTrack: (projectPath, trackId) =>
+      setProjectTrack: async (projectPath, trackId) => {
+        // BMAD 트랙 선택 시 _bmad 폴더 자동 복사
+        if (trackId === 'bmad') {
+          try {
+            const exists = await bmadApi.checkBmadFolder(projectPath);
+            if (!exists) {
+              await bmadApi.copyBmadFolder(projectPath);
+              console.log('[TrackStore] _bmad folder copied to:', projectPath);
+            }
+          } catch (error) {
+            console.error('[TrackStore] Failed to copy _bmad folder:', error);
+          }
+        }
+
         set((state) => ({
           projectTracks: {
             ...state.projectTracks,
             [projectPath]: trackId,
           },
-        })),
+        }));
+      },
 
       getProjectTrack: (projectPath) => {
         const state = get();

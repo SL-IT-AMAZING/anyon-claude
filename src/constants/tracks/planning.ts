@@ -47,6 +47,7 @@ export const BMAD_PLANNING_WORKFLOWS: WorkflowStep[] = [
     id: 'product-brief',
     title: 'Product Brief',
     filename: 'product-brief.md',
+    filenamePattern: 'product-brief-*.md', // BMAD 동적 파일명: product-brief-{project}-{date}.md
     workflow: '/bmad:bmm:workflows:create-product-brief',
     displayText: 'Product Brief 작성',
     icon: 'book-open' as WorkflowIconType,
@@ -57,6 +58,7 @@ export const BMAD_PLANNING_WORKFLOWS: WorkflowStep[] = [
     id: 'research',
     title: 'Research',
     filename: 'research.md',
+    filenamePattern: '*-research-*.md', // BMAD 동적 파일명: {type}-{topic}-research-{date}.md
     workflow: '/bmad:bmm:workflows:research',
     displayText: '리서치 수행',
     icon: 'search' as WorkflowIconType,
@@ -67,7 +69,7 @@ export const BMAD_PLANNING_WORKFLOWS: WorkflowStep[] = [
   {
     id: 'prd',
     title: 'PRD',
-    filename: 'prd.md',
+    filename: 'prd.md', // BMAD도 prd.md 사용
     workflow: '/bmad:bmm:workflows:create-prd',
     displayText: 'PRD 작성 (BMAD)',
     icon: 'file-text' as WorkflowIconType,
@@ -77,7 +79,7 @@ export const BMAD_PLANNING_WORKFLOWS: WorkflowStep[] = [
   {
     id: 'ux-design',
     title: 'UX Design',
-    filename: 'ux-design.md',
+    filename: 'ux-design-specification.md', // BMAD 실제 출력 파일명
     workflow: '/bmad:bmm:workflows:create-ux-design',
     displayText: 'UX 디자인 작성',
     icon: 'palette' as WorkflowIconType,
@@ -88,7 +90,7 @@ export const BMAD_PLANNING_WORKFLOWS: WorkflowStep[] = [
   {
     id: 'architecture',
     title: 'Architecture',
-    filename: 'architecture.md',
+    filename: 'architecture.md', // BMAD도 architecture.md 사용
     workflow: '/bmad:bmm:workflows:create-architecture',
     displayText: '아키텍처 설계',
     icon: 'boxes' as WorkflowIconType,
@@ -98,7 +100,7 @@ export const BMAD_PLANNING_WORKFLOWS: WorkflowStep[] = [
   {
     id: 'epics-stories',
     title: 'Epics & Stories',
-    filename: 'epics-and-stories.md',
+    filename: 'epics.md', // BMAD 실제 출력 파일명
     workflow: '/bmad:bmm:workflows:create-epics-and-stories',
     displayText: 'Epics & Stories 생성',
     icon: 'list-checks' as WorkflowIconType,
@@ -109,6 +111,7 @@ export const BMAD_PLANNING_WORKFLOWS: WorkflowStep[] = [
     id: 'readiness-check',
     title: 'Readiness Check',
     filename: 'readiness-check.md',
+    filenamePattern: 'implementation-readiness-report-*.md', // BMAD 동적 파일명
     workflow: '/bmad:bmm:workflows:check-implementation-readiness',
     displayText: '구현 준비 상태 확인',
     icon: 'check-circle' as WorkflowIconType,

@@ -88,10 +88,10 @@ export const WorkspaceSelector: React.FC<WorkspaceSelectorProps> = ({ projectId 
     setShowTrackSelector(true);
   };
 
-  const handleTrackSelect = (trackId: TrackId) => {
+  const handleTrackSelect = async (trackId: TrackId) => {
     if (projectId && project?.path) {
-      // 트랙 저장
-      setProjectTrack(project.path, trackId);
+      // 트랙 저장 (BMAD 트랙인 경우 _bmad 폴더 자동 복사)
+      await setProjectTrack(project.path, trackId);
       // MVP 워크스페이스로 이동 (trackId는 store에서 조회)
       goToMvp(projectId);
     }

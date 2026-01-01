@@ -391,6 +391,9 @@ macro_rules! create_handlers {
             commands::environment::check_environment_status,
             commands::environment::open_terminal,
             commands::environment::open_url,
+            // BMAD
+            commands::bmad::copy_bmad_folder,
+            commands::bmad::check_bmad_folder,
         ]
     };
 }

@@ -22,6 +22,8 @@ export interface WorkflowStep {
   id: string;
   title: string;
   filename: string;
+  /** 와일드카드 패턴 (예: 'product-brief-*.md') - BMAD 동적 파일명 매칭용 */
+  filenamePattern?: string;
   /** @deprecated 슬래시 커맨드 방식 - prompt 사용 권장 */
   workflow: string;
   /** 내재화된 프롬프트 (있으면 workflow 대신 사용) */

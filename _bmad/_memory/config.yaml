@@ -6,6 +6,10 @@
 
 # Core Configuration Values
 user_name: Cosmos
-communication_language: English
-document_output_language: English
-output_folder: "{project-root}/_bmad-output"
+communication_language: Korean
+document_output_language: Korean
+output_folder: "{project-root}/anyon-docs"
+
+# ANYON 앱과 경로 동기화
+planning_artifacts: "{project-root}/anyon-docs/planning"
+implementation_artifacts: "{project-root}/anyon-docs/dev-plan"

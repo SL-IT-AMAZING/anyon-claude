@@ -1,4 +1,5 @@
 pub mod agents;
+pub mod bmad;
 pub mod claude;
 pub mod claude_auth;
 pub mod dev_server;
