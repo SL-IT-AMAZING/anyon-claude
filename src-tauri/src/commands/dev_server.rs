@@ -13,6 +13,28 @@ use std::time::Duration;
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter};
 
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+
+// ============================================================================
+// Windows Hidden Command Helper
+// ============================================================================
+
+/// Creates a Command that runs hidden on Windows (no terminal window popup)
+#[cfg(target_os = "windows")]
+fn create_hidden_command(program: &str) -> Command {
+    const CREATE_NO_WINDOW: u32 = 0x08000000;
+    let mut cmd = Command::new(program);
+    cmd.creation_flags(CREATE_NO_WINDOW);
+    cmd
+}
+
+/// Creates a Command (non-Windows - no special flags needed)
+#[cfg(not(target_os = "windows"))]
+fn create_hidden_command(program: &str) -> Command {
+    Command::new(program)
+}
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -1211,8 +1233,8 @@ pub async fn start_dev_server(
         args.push(port_string.as_str());
     }
 
-    // Start process
-    let process = Command::new(cmd)
+    // Start process (hidden on Windows to prevent terminal popup)
+    let process = create_hidden_command(cmd)
         .args(&args)
         .current_dir(&project_path)
         .stdout(Stdio::piped())

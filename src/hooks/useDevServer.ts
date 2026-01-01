@@ -410,22 +410,36 @@ export function useDevServer(
     };
   }, [projectPath, addAppOutput, setDevServerPort, setDevServerProxyUrl, setIsLoading, setPreviewError, setConnectionState]);
 
-  // 프로젝트 변경 시 자동으로 dev server 상태 확인
+  // 프로젝트 변경 시 자동으로 dev server 상태 확인 (마운트 시 즉시 실행)
   useEffect(() => {
     if (!projectPath || !isTauri) return;
 
+    // 마운트 시 즉시 백엔드 상태 확인 (딜레이 없이)
     const checkExistingServer = async () => {
-      const info = await getDevServerInfo();
-      if (info && info.proxy_url) {
-        setDevServerRunning(true);
-        setDevServerPort(info.detected_port || null);
-        setDevServerProxyUrl(info.proxy_url);
-        setConnectionState('connected');
+      try {
+        console.log('[DevServer] Checking for existing server on mount:', projectPath);
+        const info = await invoke<DevServerInfo | null>('get_dev_server_info', { projectPath });
+
+        if (info && info.proxy_url) {
+          console.log('[DevServer] Found existing server, restoring state:', info);
+          setDevServerRunning(true);
+          setDevServerPort(info.detected_port || null);
+          setDevServerProxyUrl(info.proxy_url);
+          setConnectionState('connected');
+          setConnectionError(null);
+        } else {
+          console.log('[DevServer] No existing server found for project');
+        }
+      } catch (err) {
+        console.warn('[DevServer] Failed to check existing server:', err);
       }
     };
 
-    checkExistingServer();
-  }, [projectPath, getDevServerInfo, setDevServerRunning, setDevServerPort, setDevServerProxyUrl, setConnectionState]);
+    // 즉시 실행 (RAF로 최초 렌더 후 실행 보장)
+    requestAnimationFrame(() => {
+      checkExistingServer();
+    });
+  }, [projectPath, setDevServerRunning, setDevServerPort, setDevServerProxyUrl, setConnectionState, setConnectionError]);
 
   return {
     startDevServer,

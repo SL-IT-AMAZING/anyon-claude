@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
 import type { StateCreator } from 'zustand';
+import { invoke } from '@tauri-apps/api/core';
 import type {
   PreviewMode,
   AppOutput,
@@ -10,6 +11,23 @@ import type {
   SelectedElement,
   ParsedRoute,
 } from '@/types/preview';
+
+// Tauri 환경 체크
+const isTauri = typeof window !== 'undefined' && (
+  '__TAURI__' in window ||
+  '__TAURI_INTERNALS__' in window ||
+  window.location.protocol === 'tauri:'
+);
+
+// DevServerInfo 타입 (Rust와 일치)
+interface DevServerInfo {
+  project_path: string;
+  pid: number;
+  detected_port?: number;
+  original_url?: string;
+  proxy_port?: number;
+  proxy_url?: string;
+}
 
 // 연결 상태 타입 정의
 export type ConnectionState =
@@ -333,3 +351,33 @@ export const selectProblemReport = (state: PreviewState) => state.problemReport;
 export const selectIsSelectorActive = (state: PreviewState) => state.isSelectorActive;
 export const selectConnectionState = (state: PreviewState) => state.connectionState;
 export const selectConnectionError = (state: PreviewState) => state.connectionError;
+
+/**
+ * 백엔드(Rust)에서 개발 서버 상태를 복구하는 함수
+ * 컴포넌트 마운트 시 호출하여 기존 실행 중인 서버 연결 복구
+ */
+export const initializeFromBackend = async (projectPath: string): Promise<boolean> => {
+  if (!isTauri || !projectPath) return false;
+
+  try {
+    const info = await invoke<DevServerInfo | null>('get_dev_server_info', { projectPath });
+
+    if (info && info.proxy_url) {
+      console.log('[PreviewStore] Restoring dev server state from backend:', info);
+
+      const store = usePreviewStore.getState();
+      store.setDevServerRunning(true);
+      store.setDevServerPort(info.detected_port || null);
+      store.setDevServerProxyUrl(info.proxy_url);
+      store.setConnectionState('connected');
+      store.setConnectionError(null);
+
+      return true;
+    }
+
+    return false;
+  } catch (e) {
+    console.warn('[PreviewStore] Failed to initialize from backend:', e);
+    return false;
+  }
+};

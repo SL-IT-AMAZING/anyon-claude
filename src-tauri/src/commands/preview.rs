@@ -1,6 +1,29 @@
 use serde::{Deserialize, Serialize};
 use std::net::TcpStream;
+use std::process::Command;
 use std::time::Duration;
+
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+
+// ============================================================================
+// Windows Hidden Command Helper
+// ============================================================================
+
+/// Creates a Command that runs hidden on Windows (no terminal window popup)
+#[cfg(target_os = "windows")]
+fn create_hidden_command(program: &str) -> Command {
+    const CREATE_NO_WINDOW: u32 = 0x08000000;
+    let mut cmd = Command::new(program);
+    cmd.creation_flags(CREATE_NO_WINDOW);
+    cmd
+}
+
+/// Creates a Command (non-Windows - no special flags needed)
+#[cfg(not(target_os = "windows"))]
+fn create_hidden_command(program: &str) -> Command {
+    Command::new(program)
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PortInfo {
@@ -127,10 +150,8 @@ pub async fn kill_port_process(port: u16) -> Result<bool, String> {
 
     #[cfg(target_os = "windows")]
     {
-        use std::process::Command;
-
-        // Windows: Use netstat to find PID, then taskkill
-        let netstat_output = Command::new("netstat")
+        // Windows: Use netstat to find PID, then taskkill (hidden to prevent terminal popup)
+        let netstat_output = create_hidden_command("netstat")
             .args(["-ano"])
             .output()
             .map_err(|e| format!("Failed to run netstat: {}", e))?;
@@ -146,7 +167,7 @@ pub async fn kill_port_process(port: u16) -> Result<bool, String> {
                     if let Ok(pid_num) = pid.parse::<u32>() {
                         log::info!("kill_port_process: Found PID {} on port {}", pid_num, port);
 
-                        let kill_result = Command::new("taskkill")
+                        let kill_result = create_hidden_command("taskkill")
                             .args(["/F", "/PID", &pid_num.to_string()])
                             .output();
 
