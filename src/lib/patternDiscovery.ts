@@ -5,7 +5,6 @@
  * AI 환각을 줄이기 위해 기존 코드에서 참조 구현을 찾습니다.
  */
 
-import { invoke } from '@tauri-apps/api/core';
 import { readTextFile, readDir } from '@tauri-apps/plugin-fs';
 import { join } from '@tauri-apps/api/path';
 

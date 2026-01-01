@@ -78,7 +78,7 @@ export function isWithinLimit(text: string, limit = TOKEN_LIMITS.TICKET): boolea
 /**
  * 토큰 수에 따른 상태를 반환합니다.
  */
-export function getTokenStatus(count: number, limit = TOKEN_LIMITS.TICKET): TokenStatus {
+export function getTokenStatus(count: number, limit: number = TOKEN_LIMITS.TICKET): TokenStatus {
   const ratio = count / limit;
   if (ratio < 0.75) return 'green'; // 75% 미만: 최적
   if (ratio <= 1.0) return 'yellow'; // 75-100%: 주의
@@ -88,7 +88,7 @@ export function getTokenStatus(count: number, limit = TOKEN_LIMITS.TICKET): Toke
 /**
  * 텍스트에 대한 상세 토큰 분석을 수행합니다.
  */
-export function analyzeTokens(text: string, limit = TOKEN_LIMITS.TICKET): TokenAnalysis {
+export function analyzeTokens(text: string, limit: number = TOKEN_LIMITS.TICKET): TokenAnalysis {
   const count = countTokens(text);
   const status = getTokenStatus(count, limit);
   const percentage = Math.round((count / limit) * 100);

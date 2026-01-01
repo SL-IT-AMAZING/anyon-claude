@@ -1,0 +1,130 @@
+import React from 'react';
+import { motion } from 'framer-motion';
+import { ArrowLeft } from '@/lib/icons';
+import { Button } from '@/components/ui/button';
+import { SelectionCard } from '@/components/ui/selection-card';
+import { TRACKS, type TrackId } from '@/types/track';
+
+// Track icons (placeholder - can be replaced with actual images)
+const TRACK_ICONS: Record<TrackId, string> = {
+  mvp: '🚀',
+  ownuun: '🎯',
+  bmad: '📋',
+};
+
+interface TrackSelectorProps {
+  onTrackSelect: (trackId: TrackId) => void;
+  onBack: () => void;
+  projectName?: string;
+}
+
+/**
+ * TrackSelector - Choose development track (MVP, ownuun, BMAD)
+ *
+ * Displayed after selecting MVP workspace type
+ */
+export const TrackSelector: React.FC<TrackSelectorProps> = ({
+  onTrackSelect,
+  onBack,
+  projectName = 'Project',
+}) => {
+  const availableTracks = TRACKS.filter((t) => t.available);
+
+  return (
+    <div className="h-full flex flex-col items-center justify-center px-8 pb-16">
+      {/* Back button */}
+      <motion.div
+        initial={{ opacity: 0, x: -8 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.15 }}
+        className="absolute top-6 left-6"
+      >
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onBack}
+          className="gap-2 text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          뒤로
+        </Button>
+      </motion.div>
+
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.15, delay: 0.05 }}
+        className="text-center mb-12"
+      >
+        <h2 className="text-2xl font-medium text-foreground mb-2">
+          개발 트랙 선택
+        </h2>
+        <p className="text-muted-foreground">
+          <span className="font-medium">{projectName}</span> 프로젝트의 개발 방법론을 선택하세요
+        </p>
+      </motion.div>
+
+      {/* Track cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
+        {availableTracks.map((track, index) => (
+          <motion.div
+            key={track.id}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.15, delay: 0.1 + index * 0.05 }}
+          >
+            <SelectionCard
+              iconEmoji={TRACK_ICONS[track.id]}
+              title={track.name}
+              description={track.description}
+              onClick={() => onTrackSelect(track.id)}
+              className={
+                track.id === 'mvp'
+                  ? 'border-primary/30 bg-primary/5'
+                  : undefined
+              }
+            />
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Track descriptions */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.15, delay: 0.3 }}
+        className="mt-12 max-w-3xl"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm text-muted-foreground">
+          <div className="text-center">
+            <h4 className="font-medium text-foreground mb-2">MVP (기본)</h4>
+            <ul className="space-y-1">
+              <li>• 기존 워크플로우</li>
+              <li>• 안정적인 개발</li>
+              <li>• 빠른 MVP 제작</li>
+            </ul>
+          </div>
+          <div className="text-center">
+            <h4 className="font-medium text-foreground mb-2">ownuun</h4>
+            <ul className="space-y-1">
+              <li>• 극단적 티켓 세분화</li>
+              <li>• UI 캡쳐 기반 검증</li>
+              <li>• 서브에이전트 극대화</li>
+            </ul>
+          </div>
+          <div className="text-center">
+            <h4 className="font-medium text-foreground mb-2">BMAD</h4>
+            <ul className="space-y-1">
+              <li>• BMAD 방법론</li>
+              <li>• Sprint 기반 개발</li>
+              <li>• 최신 오픈소스 반영</li>
+            </ul>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+export default TrackSelector;

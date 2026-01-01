@@ -25,3 +25,14 @@ design_methods: "{installed_path}/design-methods.csv"
 default_output_file: "{output_folder}/design-thinking-{{date}}.md"
 
 standalone: true
+
+web_bundle:
+  name: "design-thinking"
+  description: "Guide human-centered design processes using empathy-driven methodologies. This workflow walks through the design thinking phases - Empathize, Define, Ideate, Prototype, and Test - to create solutions deeply rooted in user needs."
+  author: "BMad"
+  instructions: "_bmad/cis/workflows/design-thinking/instructions.md"
+  template: "_bmad/cis/workflows/design-thinking/template.md"
+  web_bundle_files:
+    - "_bmad/cis/workflows/design-thinking/instructions.md"
+    - "_bmad/cis/workflows/design-thinking/template.md"
+    - "_bmad/cis/workflows/design-thinking/design-methods.csv"

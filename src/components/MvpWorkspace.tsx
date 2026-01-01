@@ -33,6 +33,8 @@ import type { ClaudeCodeSessionRef, SessionError } from '@/components/ClaudeCode
 import { SessionPersistenceService } from '@/services/sessionPersistence';
 import { cn } from '@/lib/utils';
 import { usePreviewStore } from '@/stores/previewStore';
+import { useCurrentTrack } from '@/stores/trackStore';
+import { getPlanningWorkflows, getDevWorkflows } from '@/constants/tracks';
 
 // Lazy load components
 const ClaudeCodeSession = lazy(() =>
@@ -112,6 +114,12 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
   const { projects, loading, getProjectById } = useProjects();
   const [project, setProject] = useState<Project | undefined>(undefined);
   const [activeTab, setActiveTab] = useState<MvpTabType>('planning');
+
+  // Track support - 프로젝트별 선택된 트랙 가져오기
+  const trackId = useCurrentTrack(project?.path);
+  // 트랙별 워크플로우 가져오기
+  const planningWorkflows = getPlanningWorkflows(trackId);
+  const devWorkflows = getDevWorkflows(trackId);
   const [isSessionLoading, setIsSessionLoading] = useState(false);
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
   const [sessionKey, _setSessionKey] = useState(0);
@@ -675,6 +683,8 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
                     onPlanningComplete={handlePlanningComplete}
                     sessionError={sessionError}
                     onResumeWorkflow={handleResumeWorkflow}
+                    workflows={planningWorkflows}
+                    trackId={trackId}
                   />
                 )}
                 {activeTab === 'development' && (
@@ -684,6 +694,8 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
                     isPlanningComplete={isPlanningComplete}
                     onStartWorkflow={handleStartNewWorkflow}
                     isSessionLoading={isSessionLoading}
+                    workflows={devWorkflows}
+                    trackId={trackId}
                   />
                 )}
                 {activeTab === 'preview' && (

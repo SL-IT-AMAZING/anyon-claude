@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 import { usePlanningDocs } from '@/hooks/usePlanningDocs';
 import { WORKFLOW_SEQUENCE, type WorkflowStep, getWorkflowPrompt } from '@/constants/planning';
 import { PlanningDocViewer } from './PlanningDocViewer';
+import type { TrackId } from '@/types/track';
 import { UXPreviewPanel } from './UXPreviewPanel';
 import type { SessionError } from '@/components/ClaudeCodeSession';
 
@@ -24,6 +25,10 @@ interface PlanningDocsPanelProps {
   sessionError?: SessionError | null;
   /** Callback to resume workflow after error */
   onResumeWorkflow?: (workflowPrompt: string, displayText?: string) => void;
+  /** Track-specific workflows (optional, defaults to MVP workflow) */
+  workflows?: WorkflowStep[];
+  /** Track ID for UI customization */
+  trackId?: TrackId;
 }
 
 /**
@@ -37,8 +42,12 @@ export const PlanningDocsPanel: React.FC<PlanningDocsPanelProps> = ({
   onPlanningComplete,
   sessionError,
   onResumeWorkflow,
+  workflows = WORKFLOW_SEQUENCE,
+  trackId: _trackId = 'mvp', // 향후 UI 커스터마이징에 사용
 }) => {
-  const { documents, isLoading, progress } = usePlanningDocs(projectPath);
+  // Use provided workflows or default to MVP workflow
+  const workflowSequence = workflows;
+  const { documents, isLoading, progress } = usePlanningDocs(projectPath, workflowSequence);
   const [activeDocId, setActiveDocId] = useState<string>('prd');
   const [activeWorkflows, setActiveWorkflows] = useState<Set<string>>(new Set());
   const hasTriggeredComplete = useRef(false);
@@ -95,19 +104,19 @@ export const PlanningDocsPanel: React.FC<PlanningDocsPanelProps> = ({
   }, [documents]);
 
   const activeDoc = documents.find(d => d.id === activeDocId);
-  const activeStep = WORKFLOW_SEQUENCE.find(s => s.id === activeDocId);
-  const activeStepIndex = WORKFLOW_SEQUENCE.findIndex(s => s.id === activeDocId);
+  const activeStep = workflowSequence.find(s => s.id === activeDocId);
+  const activeStepIndex = workflowSequence.findIndex(s => s.id === activeDocId);
 
   // Check if a tab is enabled (previous doc must exist)
   const isTabEnabled = useCallback((index: number): boolean => {
     if (index === 0) return true;
-    const prevStep = WORKFLOW_SEQUENCE[index - 1];
+    const prevStep = workflowSequence[index - 1];
     return documents.some(d => d.id === prevStep.id && d.exists);
-  }, [documents]);
+  }, [documents, workflowSequence]);
 
   // Handle tab click with lock check
   const handleTabClick = useCallback((stepId: string) => {
-    const stepIndex = WORKFLOW_SEQUENCE.findIndex(s => s.id === stepId);
+    const stepIndex = workflowSequence.findIndex(s => s.id === stepId);
     if (stepIndex === -1) return;
 
     if (!isTabEnabled(stepIndex)) {
@@ -115,7 +124,7 @@ export const PlanningDocsPanel: React.FC<PlanningDocsPanelProps> = ({
     }
 
     setActiveDocId(stepId);
-  }, [isTabEnabled]);
+  }, [isTabEnabled, workflowSequence]);
 
   // Start workflow for a step
   const handleStartWorkflow = useCallback((step: WorkflowStep) => {
@@ -139,19 +148,19 @@ export const PlanningDocsPanel: React.FC<PlanningDocsPanelProps> = ({
 
   // Navigate to next/prev document
   const handleNavigate = useCallback((direction: 'prev' | 'next') => {
-    const currentIndex = WORKFLOW_SEQUENCE.findIndex(s => s.id === activeDocId);
+    const currentIndex = workflowSequence.findIndex(s => s.id === activeDocId);
     if (direction === 'prev' && currentIndex > 0) {
-      const prevStep = WORKFLOW_SEQUENCE[currentIndex - 1];
+      const prevStep = workflowSequence[currentIndex - 1];
       if (isTabEnabled(currentIndex - 1)) {
         setActiveDocId(prevStep.id);
       }
-    } else if (direction === 'next' && currentIndex < WORKFLOW_SEQUENCE.length - 1) {
-      const nextStep = WORKFLOW_SEQUENCE[currentIndex + 1];
+    } else if (direction === 'next' && currentIndex < workflowSequence.length - 1) {
+      const nextStep = workflowSequence[currentIndex + 1];
       if (isTabEnabled(currentIndex + 1)) {
         setActiveDocId(nextStep.id);
       }
     }
-  }, [activeDocId, isTabEnabled]);
+  }, [activeDocId, isTabEnabled, workflowSequence]);
 
   // Handle resume workflow after token limit error
   const handleResumeCurrentWorkflow = useCallback(() => {
@@ -189,7 +198,7 @@ export const PlanningDocsPanel: React.FC<PlanningDocsPanelProps> = ({
   }
 
   const canGoPrev = activeStepIndex > 0 && isTabEnabled(activeStepIndex - 1);
-  const canGoNext = activeStepIndex < WORKFLOW_SEQUENCE.length - 1 && isTabEnabled(activeStepIndex + 1);
+  const canGoNext = activeStepIndex < workflowSequence.length - 1 && isTabEnabled(activeStepIndex + 1);
 
   return (
     <div className="h-full flex flex-col">
@@ -197,7 +206,7 @@ export const PlanningDocsPanel: React.FC<PlanningDocsPanelProps> = ({
       <PanelHeader
         icon={<FileText className="w-4 h-4" />}
         title={activeStep?.title || 'Document'}
-        subtitle={`${activeStepIndex + 1}/${WORKFLOW_SEQUENCE.length}`}
+        subtitle={`${activeStepIndex + 1}/${workflowSequence.length}`}
         badge={
           activeDoc?.exists ? (
             <StatusBadge variant="success">완료</StatusBadge>
@@ -238,7 +247,7 @@ export const PlanningDocsPanel: React.FC<PlanningDocsPanelProps> = ({
 
         {/* 단계 인디케이터 + 레이블 통합 */}
         <div className="flex justify-between">
-          {WORKFLOW_SEQUENCE.map((step, index) => {
+          {workflowSequence.map((step, index) => {
             const doc = documents.find(d => d.id === step.id);
             const isCompleted = doc?.exists;
             const isActive = activeDocId === step.id;

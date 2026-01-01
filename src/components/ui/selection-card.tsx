@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 interface SelectionCardProps {
   icon?: IconComponent;
   iconImage?: string;
+  iconEmoji?: string;
   title: string;
   description: string;
   onClick: () => void;
@@ -21,6 +22,7 @@ interface SelectionCardProps {
 export const SelectionCard: React.FC<SelectionCardProps> = ({
   icon: Icon,
   iconImage,
+  iconEmoji,
   title,
   description,
   onClick,
@@ -49,10 +51,12 @@ export const SelectionCard: React.FC<SelectionCardProps> = ({
           "rounded-xl",
           "flex items-center justify-center",
           "mb-8 transition-colors duration-200",
-          iconImage ? "w-56 h-56" : "w-24 h-24 bg-primary/10 group-hover:bg-primary/20"
+          iconImage ? "w-56 h-56" : iconEmoji ? "w-24 h-24" : "w-24 h-24 bg-primary/10 group-hover:bg-primary/20"
         )}>
           {iconImage ? (
             <img src={iconImage} alt={title} className="w-52 h-52 object-contain logo-invert" />
+          ) : iconEmoji ? (
+            <span className="text-6xl">{iconEmoji}</span>
           ) : Icon ? (
             <Icon className="w-12 h-12 text-primary" />
           ) : null}

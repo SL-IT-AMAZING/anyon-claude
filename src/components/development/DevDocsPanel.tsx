@@ -3,16 +3,21 @@ import { PlayCircle, Square, AlertCircle, CheckCircle2, Code, Trash2, Loader2, R
 import { PanelHeader, StatusBadge } from '@/components/ui/panel-header';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { DEV_WORKFLOW_SEQUENCE, getDevWorkflowPrompt } from '@/constants/development';
+import { DEV_WORKFLOW_SEQUENCE, getDevWorkflowPrompt, type DevWorkflowStep } from '@/constants/development';
 import { ANYON_DOCS } from '@/constants/paths';
 import { api } from '@/lib/api';
 import { useDevWorkflowStore, type BlockedTicket, type ExecutionLogEntry } from '@/stores/devWorkflowStore';
+import type { TrackId } from '@/types/track';
 
 interface DevDocsPanelProps {
   projectPath: string | undefined;
   isPlanningComplete: boolean;
   onStartWorkflow?: (workflowPrompt: string, displayText?: string) => void;
   isSessionLoading?: boolean;
+  /** Track-specific workflows (optional, defaults to MVP workflow) */
+  workflows?: DevWorkflowStep[];
+  /** Track ID for UI customization */
+  trackId?: TrackId;
 }
 
 /**
@@ -263,18 +268,28 @@ const extractBlockedTickets = (content: string): BlockedTicket[] => {
  * Get next workflow step based on current step
  * 완전 자동화: Orchestrator → Executor → Reviewer → Executor → ... (완료까지)
  */
-const getNextStep = (currentStepId: string): typeof DEV_WORKFLOW_SEQUENCE[0] | null => {
+const getNextStep = (currentStepId: string, sequence: DevWorkflowStep[]): DevWorkflowStep | null => {
   // Orchestrator → Executor (자동)
-  if (currentStepId === 'pm-orchestrator') {
-    return DEV_WORKFLOW_SEQUENCE[1]; // pm-executor
+  if (currentStepId === 'pm-orchestrator' || currentStepId === 'ownuun-orchestrator') {
+    return sequence[1]; // executor
   }
   // Executor → Reviewer (자동)
-  if (currentStepId === 'pm-executor') {
-    return DEV_WORKFLOW_SEQUENCE[2]; // pm-reviewer
+  if (currentStepId === 'pm-executor' || currentStepId === 'ownuun-executor') {
+    return sequence[2]; // reviewer
   }
   // Reviewer → Executor (자동, cycle back)
-  if (currentStepId === 'pm-reviewer') {
-    return DEV_WORKFLOW_SEQUENCE[1]; // pm-executor
+  if (currentStepId === 'pm-reviewer' || currentStepId === 'ownuun-reviewer') {
+    return sequence[1]; // executor
+  }
+  // BMAD: sprint-planning → dev-story → code-review → dev-story
+  if (currentStepId === 'sprint-planning') {
+    return sequence[1]; // dev-story
+  }
+  if (currentStepId === 'dev-story') {
+    return sequence[2]; // code-review
+  }
+  if (currentStepId === 'code-review') {
+    return sequence[1]; // dev-story (cycle back)
   }
   return null;
 };
@@ -284,7 +299,11 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
   isPlanningComplete,
   onStartWorkflow,
   isSessionLoading = false,
+  workflows = DEV_WORKFLOW_SEQUENCE,
+  trackId: _trackId = 'mvp', // 향후 UI 커스터마이징에 사용
 }, ref) => {
+  // Use provided workflows or default to MVP workflow
+  const workflowSequence = workflows;
   const projectKey = projectPath ?? '__unknown__';
   const prevLoadingRef = useRef(isSessionLoading);
   const isStoppedRef = useRef(false);
@@ -376,7 +395,7 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
       blockedTickets?: BlockedTicket[];
     }
   ) => {
-    const step = DEV_WORKFLOW_SEQUENCE.find(s => s.id === stepId);
+    const step = workflowSequence.find(s => s.id === stepId);
     if (!step) return;
 
     // running 상태일 때만 새 로그 추가
@@ -468,7 +487,7 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
           if (isStoppedRef.current) return;
 
           // 5. 다음 단계 결정 및 자동 실행
-          const nextStep = getNextStep(currentRunningStep);
+          const nextStep = getNextStep(currentRunningStep, workflowSequence);
 
           // Orchestrator → Executor 전환 시 티켓 존재 확인
           if (currentRunningStep === 'pm-orchestrator' && nextStep?.id === 'pm-executor') {
@@ -718,7 +737,7 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
           {/* 개발 시작하기 버튼 */}
           <button
             onClick={() => {
-              const orchestrator = DEV_WORKFLOW_SEQUENCE[0];
+              const orchestrator = workflowSequence[0];
               handleStart(orchestrator.id, getDevWorkflowPrompt(orchestrator), orchestrator.displayText);
             }}
             disabled={!onStartWorkflow || isRunningWorkflow || isOrchestratorComplete}
@@ -762,13 +781,13 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
               const isOrchComplete = await api.checkFileExists(orchestratorCompleteFile);
 
               if (isOrchComplete) {
-                // Orchestrator 완료 → pm-executor로 바로 시작
+                // Orchestrator 완료 → executor로 바로 시작
                 setIsOrchestratorComplete(projectKey, true);
-                const executor = DEV_WORKFLOW_SEQUENCE[1]; // pm-executor
+                const executor = workflowSequence[1]; // executor
                 handleStart(executor.id, getDevWorkflowPrompt(executor), executor.displayText);
               } else {
-                // Orchestrator 미완료 → pm-orchestrator 시작
-                const orchestrator = DEV_WORKFLOW_SEQUENCE[0];
+                // Orchestrator 미완료 → orchestrator 시작
+                const orchestrator = workflowSequence[0];
                 handleStart(orchestrator.id, getDevWorkflowPrompt(orchestrator), orchestrator.displayText);
               }
             }}
@@ -790,7 +809,7 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
             <div className="flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
               <span className="text-sm text-blue-700 dark:text-blue-300">
-                {DEV_WORKFLOW_SEQUENCE.find(s => s.id === currentRunningStep)?.title || currentRunningStep} 실행 중...
+                {workflowSequence.find(s => s.id === currentRunningStep)?.title || currentRunningStep} 실행 중...
               </span>
             </div>
           </div>

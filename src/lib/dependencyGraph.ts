@@ -198,7 +198,8 @@ function calculateCriticalPath(
   tickets: TicketNode[],
   levels: string[][]
 ): { path: string[]; totalMinutes: number } {
-  const ticketMap = new Map(tickets.map((t) => [t.id, t]));
+  // ticketMap available for future optimization
+  // new Map(tickets.map((t) => [t.id, t]))
   const distances = new Map<string, number>();
   const predecessors = new Map<string, string>();
 
@@ -210,7 +211,7 @@ function calculateCriticalPath(
   // 각 레벨을 순회하며 최장 경로 계산
   for (const level of levels) {
     for (const ticketId of level) {
-      const ticket = ticketMap.get(ticketId)!;
+      // ticketMap.get(ticketId) available for future use
       const currentDist = distances.get(ticketId)!;
 
       // 이 티켓에 의존하는 티켓들 업데이트
@@ -306,8 +307,8 @@ export function getParallelGroups(tickets: TicketNode[]): ExecutionPlan {
   // 3. 토폴로지 정렬
   const levels = topologicalSort(nodes);
 
-  // 4. 출력 충돌 감지
-  const conflicts = detectOutputConflicts(tickets);
+  // 4. 출력 충돌 감지 (향후 충돌 보고에 사용)
+  detectOutputConflicts(tickets);
 
   // 5. 병렬 그룹 생성
   const groups: ParallelGroup[] = [];
@@ -315,7 +316,8 @@ export function getParallelGroups(tickets: TicketNode[]): ExecutionPlan {
 
   for (let level = 0; level < levels.length; level++) {
     const levelTickets = levels[level];
-    const levelTicketNodes = levelTickets.map((id) => nodes.get(id)!.ticket);
+    // levelTicketNodes available for future reporting
+    // levelTickets.map((id) => nodes.get(id)!.ticket)
 
     // 같은 레벨 내에서 충돌 없는 그룹 생성
     const usedTickets = new Set<string>();
@@ -341,11 +343,6 @@ export function getParallelGroups(tickets: TicketNode[]): ExecutionPlan {
       }
 
       if (group.length > 0) {
-        const totalMinutes = group.reduce(
-          (sum, id) => sum + (nodes.get(id)!.ticket.estimatedMinutes || 30),
-          0
-        );
-
         groups.push({
           groupId: `G${groupId++}`,
           tickets: group,

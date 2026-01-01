@@ -29,8 +29,13 @@ interface UsePlanningDocsReturn {
 /**
  * Hook for managing planning documents state
  * Polls the anyon-docs directory for document existence and content
+ * @param projectPath - The project path
+ * @param workflows - Optional custom workflow sequence (defaults to WORKFLOW_SEQUENCE)
  */
-export function usePlanningDocs(projectPath: string | undefined): UsePlanningDocsReturn {
+export function usePlanningDocs(
+  projectPath: string | undefined,
+  workflows: WorkflowStep[] = WORKFLOW_SEQUENCE
+): UsePlanningDocsReturn {
   const [documents, setDocuments] = useState<PlanningDoc[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +58,7 @@ export function usePlanningDocs(projectPath: string | undefined): UsePlanningDoc
 
       // Build document list with existence check
       const docs: PlanningDoc[] = await Promise.all(
-        WORKFLOW_SEQUENCE.map(async (step) => {
+        workflows.map(async (step) => {
           const exists = existingFilesSet.has(step.filename);
           let content: string | undefined;
 
@@ -87,7 +92,7 @@ export function usePlanningDocs(projectPath: string | undefined): UsePlanningDoc
     } finally {
       setIsLoading(false);
     }
-  }, [projectPath]);
+  }, [projectPath, workflows, docsDir]);
 
   // Initial load and polling (every 2 seconds - same as anyon-mvp)
   useEffect(() => {
@@ -100,22 +105,22 @@ export function usePlanningDocs(projectPath: string | undefined): UsePlanningDoc
 
   // Calculate progress
   const progress = useMemo((): PlanningProgress => {
-    const completedSteps = WORKFLOW_SEQUENCE.filter(step =>
+    const completedSteps = workflows.filter(step =>
       documents.some(doc => doc.id === step.id && doc.exists)
     );
 
-    const nextStep = WORKFLOW_SEQUENCE.find(step =>
+    const nextStep = workflows.find(step =>
       !documents.some(doc => doc.id === step.id && doc.exists)
     );
 
     return {
       completed: completedSteps.length,
-      total: WORKFLOW_SEQUENCE.length,
+      total: workflows.length,
       completedSteps,
       nextStep,
-      isAllComplete: completedSteps.length === WORKFLOW_SEQUENCE.length,
+      isAllComplete: completedSteps.length === workflows.length,
     };
-  }, [documents]);
+  }, [documents, workflows]);
 
   return {
     documents,

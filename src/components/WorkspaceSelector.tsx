@@ -4,12 +4,15 @@ import { FolderOpen, Loader2 } from "@/lib/icons";
 import maintainTabIcon from '@/assets/maintain-tab-icon.png';
 import mvpTabIcon from '@/assets/mvp-tab-icon.png';
 import { SelectionCard } from '@/components/ui/selection-card';
+import { TrackSelector } from '@/components/TrackSelector';
 import { AppSidebar } from '@/components/AppSidebar';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { useProjects, useProjectsNavigation } from '@/components/ProjectRoutes';
 import { api } from '@/lib/api';
 import type { Project } from '@/lib/api';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useTrackStore } from '@/stores/trackStore';
+import type { TrackId } from '@/types/track';
 
 // Cross-platform project name extractor (handles / and \\)
 const getProjectName = (path: string): string => {
@@ -35,6 +38,8 @@ export const WorkspaceSelector: React.FC<WorkspaceSelectorProps> = ({ projectId 
   const { projects, loading, getProjectById } = useProjects();
   const { t } = useTranslation();
   const [project, setProject] = useState<Project | undefined>(undefined);
+  const [showTrackSelector, setShowTrackSelector] = useState(false);
+  const setProjectTrack = useTrackStore((state) => state.setProjectTrack);
 
   useEffect(() => {
     console.log('[WorkspaceSelector] useEffect triggered', {
@@ -79,9 +84,21 @@ export const WorkspaceSelector: React.FC<WorkspaceSelectorProps> = ({ projectId 
   };
 
   const handleSelectMvp = () => {
-    if (projectId) {
+    // MVP 선택 시 트랙 선택 화면으로
+    setShowTrackSelector(true);
+  };
+
+  const handleTrackSelect = (trackId: TrackId) => {
+    if (projectId && project?.path) {
+      // 트랙 저장
+      setProjectTrack(project.path, trackId);
+      // MVP 워크스페이스로 이동 (trackId는 store에서 조회)
       goToMvp(projectId);
     }
+  };
+
+  const handleBackFromTrackSelector = () => {
+    setShowTrackSelector(false);
   };
 
   const handleSelectMaintenance = () => {
@@ -106,6 +123,28 @@ export const WorkspaceSelector: React.FC<WorkspaceSelectorProps> = ({ projectId 
         />
         <div className="flex-1 flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  // 트랙 선택 화면 표시
+  if (showTrackSelector) {
+    return (
+      <div className="h-full flex overflow-hidden bg-background">
+        <AppSidebar
+          navDisabled
+          showRightPanelToggle={false}
+          showBackButton
+          onBackClick={handleBackFromTrackSelector}
+          onLogoClick={goToProjectList}
+        />
+        <div className="flex-1 h-full overflow-y-auto relative">
+          <TrackSelector
+            onTrackSelect={handleTrackSelect}
+            onBack={handleBackFromTrackSelector}
+            projectName={projectName}
+          />
         </div>
       </div>
     );

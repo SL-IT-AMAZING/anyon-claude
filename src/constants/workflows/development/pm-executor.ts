@@ -111,16 +111,26 @@ failure_reason: "TypeScript error: ..."
 suggested_fix: "타입 정의 추가 필요"
 \`\`\`
 
+## 🧭 UI 티켓: UX 라우팅 필수
+
+**핵심**: ui-ux.html의 showScreen('target') → navigate('/target') 매핑
+
+**체크리스트**:
+- [ ] 티켓의 네비게이션 명세 테이블 확인
+- [ ] 모든 버튼에 navigate() 또는 Link 구현
+- [ ] 탭바/사이드바 구조 반영
+- [ ] CRUD 흐름 완성 (빈 핸들러 금지)
+
 ## ⚠️ 중요
 
-- **절대 사용자에게 질문하지 말 것** - 자율 결정
+- **자율 결정** - 사용자에게 질문 금지
 - **TDD 필수** - 테스트 없이 구현 금지
 - **3회 실패 → blocked** - FAIL_FORWARD
-- **WebSearch 적극 활용** - difficulty: hard 티켓
+- **UI 티켓 → ui-ux.html 참조 필수**
 `;
 
 // subwave-committer.ts 프롬프트
-const SUBWAVE_COMMITTER_PROMPT = `# SubWave Committer - SubWave 완료 처리
+export const SUBWAVE_COMMITTER_PROMPT = `# SubWave Committer - SubWave 완료 처리
 
 ## 🎯 역할
 
@@ -694,15 +704,68 @@ parallel_execution:
 
 </step>
 
-<step n="5" goal="프로젝트 완료">
+<step n="5" goal="프로젝트 완료 - 개발서버 검증 및 최종 점검">
 
-<action>최종 검증:
+<critical>🖥️ 개발서버를 실행하여 실제 동작을 검증하고 오류를 즉시 수정!</critical>
+
+<action>1단계: 빌드 검증
+  - npm run build 실행
+  - 빌드 오류 발생 시 즉시 수정
+  - 반복: 빌드 성공할 때까지
+</action>
+
+<action>2단계: 개발서버 실행 및 런타임 오류 수정
+\`\`\`bash
+# 개발서버 백그라운드 실행
+npm run dev &
+
+# 5초 대기 후 로그 확인
+sleep 5
+\`\`\`
+
+**콘솔 오류 확인 및 수정:**
+1. 서버 시작 로그에서 오류 확인
+2. 브라우저 콘솔 오류 패턴 예측:
+   - "Cannot read property of undefined" → null 체크 추가
+   - "Module not found" → import 경로 수정
+   - "useNavigate() may be used only..." → Router 래핑 확인
+   - "404 Not Found" → 라우트 설정 확인
+
+**오류 발견 시 즉시 수정:**
+\`\`\`
+오류 발생 → 파일 수정 → 저장 → HMR 자동 반영 → 재확인
+반복: 콘솔 오류가 없을 때까지
+\`\`\`
+</action>
+
+<action>3단계: UX 흐름 검증
+
+Read: {paths:planning_ux}
+
+**검증**: ui-ux.html의 showScreen() → 실제 navigate() 매핑 확인
+**누락 시**: 즉시 수정 (빈 핸들러 → navigate() 추가)
+</action>
+
+<action>4단계: 네비게이션 & CRUD 흐름 검증
+
+- 탭바/사이드바: 모든 탭 이동 작동 확인
+- CRUD: 목록↔상세↔수정 흐름 완성 확인
+- 오류 발견 시 즉시 수정
+</action>
+
+<action>5단계: 최종 검증
   - npm test (전체)
   - npm run build
   - npm run lint
+  - 개발서버 정상 동작 확인
 </action>
 
-<action>최종 리포트:
+<action>6단계: 개발서버 종료 및 최종 리포트
+\`\`\`bash
+# 개발서버 프로세스 종료
+pkill -f "npm run dev" || true
+\`\`\`
+
 \`\`\`
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
      🎉 프로젝트 구현 완료!
@@ -717,6 +780,9 @@ parallel_execution:
 📁 파일: {{total_files}}개 생성
 🧪 테스트: {{total_tests}}개 통과
 🏗️ 빌드: ✅ 성공
+🖥️ 개발서버: ✅ 정상 동작
+
+✅ UX 검증: 모든 라우팅 & CRUD 흐름 확인 완료
 
 🚀 다음 단계:
   1. Blocked 티켓 수동 해결

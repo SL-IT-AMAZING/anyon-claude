@@ -3,7 +3,7 @@ import { WORKFLOW_ENGINE } from '../engine';
 // ===== 서브에이전트 프롬프트 (인라인) =====
 
 // ticket-splitter.ts 프롬프트 (NEW)
-const TICKET_SPLITTER_PROMPT = `# Ticket Splitter - 티켓 분할
+export const TICKET_SPLITTER_PROMPT = `# Ticket Splitter - 티켓 분할
 
 ## 🎯 역할
 
@@ -99,7 +99,7 @@ outputs:
 `;
 
 // subwave-composer.ts 프롬프트 (NEW)
-const SUBWAVE_COMPOSER_PROMPT = `# SubWave Composer - SubWave 구성
+export const SUBWAVE_COMPOSER_PROMPT = `# SubWave Composer - SubWave 구성
 
 ## 🎯 역할
 
@@ -337,8 +337,8 @@ erd_section: |
 3. **UI 명세** (UI 티켓인 경우)
    - 와이어프레임 라인 참조
    - 사용자 플로우 로직
-   - 상태 관리
-   - 조건부 렌더링
+   - 상태 관리, 조건부 렌더링
+   - **🧭 네비게이션 명세 (필수!)**: 아래 템플릿 사용
 
 4. **비즈니스 로직** (Pseudocode)
    - 단계별 처리 과정
@@ -378,6 +378,20 @@ erd_section: |
 4. **WebSearch 가이드**: 어려운 구현은 검색 힌트 제공
 5. **상세한 명세**: API는 Request/Response 명확히, UI는 사용자 플로우 명확히
 6. **문서 라인 참조**: ERD/UX 와이어프레임은 라인 번호로 정확히 참조
+7. **🧭 UI 티켓 네비게이션 필수**: showScreen() → navigate() 매핑 테이블 포함
+
+## 📋 UI 티켓 네비게이션 템플릿
+
+\`\`\`markdown
+### 🧭 네비게이션 명세
+**ui-ux.html 참조**: {section id}
+**진입**: {소스} → {버튼} → 이 화면
+**이동**:
+| 버튼 | 대상 | 구현 |
+|------|------|------|
+| {버튼} | {화면} | navigate('{경로}') |
+**CRUD**: 목록→상세→수정→목록
+\`\`\`
 
 ## 📝 출력 형식
 
