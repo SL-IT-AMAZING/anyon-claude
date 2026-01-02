@@ -138,6 +138,30 @@ export const OWNUUN2_PLANNING_CONFIG: TrackPlanningConfig = {
 };
 
 // ============================================================================
+// Quick Flow Track: Quick Plan (빠른 실행 계획 수립)
+// ============================================================================
+import { QUICK_PLAN_PROMPT } from '@/constants/workflows/quick-flow';
+
+export const QUICK_FLOW_PLANNING_WORKFLOWS: WorkflowStep[] = [
+  {
+    id: 'quick-plan',
+    title: 'Quick Plan',
+    filename: 'execution-plan.md',
+    workflow: '', // prompt 사용
+    prompt: QUICK_PLAN_PROMPT,
+    displayText: 'Quick Plan - 빠른 실행 계획',
+    icon: 'layout-list' as WorkflowIconType,
+    nextId: null, // 단일 워크플로우
+  },
+];
+
+export const QUICK_FLOW_PLANNING_CONFIG: TrackPlanningConfig = {
+  trackId: 'quick-flow',
+  workflows: QUICK_FLOW_PLANNING_WORKFLOWS,
+  postWorkflowHooks: [],
+};
+
+// ============================================================================
 // Registry: 트랙별 설정 조회
 // ============================================================================
 export const TRACK_PLANNING_CONFIGS: Record<TrackId, TrackPlanningConfig> = {
@@ -145,6 +169,7 @@ export const TRACK_PLANNING_CONFIGS: Record<TrackId, TrackPlanningConfig> = {
   ownuun: OWNUUN_PLANNING_CONFIG,
   ownuun2: OWNUUN2_PLANNING_CONFIG,
   bmad: BMAD_PLANNING_CONFIG,
+  'quick-flow': QUICK_FLOW_PLANNING_CONFIG,
 };
 
 /**

@@ -11,6 +11,7 @@ const TRACK_ICONS: Record<TrackId, string> = {
   ownuun: '🎯',
   ownuun2: '⚡',
   bmad: '📋',
+  'quick-flow': '⚡',
 };
 
 interface TrackSelectorProps {
@@ -67,7 +68,7 @@ export const TrackSelector: React.FC<TrackSelectorProps> = ({
       </motion.div>
 
       {/* Track cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-3xl">
         {availableTracks.map((track, index) => (
           <motion.div
             key={track.id}
@@ -89,41 +90,6 @@ export const TrackSelector: React.FC<TrackSelectorProps> = ({
           </motion.div>
         ))}
       </div>
-
-      {/* Track descriptions */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.15, delay: 0.3 }}
-        className="mt-12 max-w-3xl"
-      >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm text-muted-foreground">
-          <div className="text-center">
-            <h4 className="font-medium text-foreground mb-2">MVP (기본)</h4>
-            <ul className="space-y-1">
-              <li>• 기존 워크플로우</li>
-              <li>• 안정적인 개발</li>
-              <li>• 빠른 MVP 제작</li>
-            </ul>
-          </div>
-          <div className="text-center">
-            <h4 className="font-medium text-foreground mb-2">ownuun</h4>
-            <ul className="space-y-1">
-              <li>• 극단적 티켓 세분화</li>
-              <li>• UI 캡쳐 기반 검증</li>
-              <li>• 서브에이전트 극대화</li>
-            </ul>
-          </div>
-          <div className="text-center">
-            <h4 className="font-medium text-foreground mb-2">BMAD</h4>
-            <ul className="space-y-1">
-              <li>• BMAD 방법론</li>
-              <li>• Sprint 기반 개발</li>
-              <li>• 최신 오픈소스 반영</li>
-            </ul>
-          </div>
-        </div>
-      </motion.div>
     </div>
   );
 };

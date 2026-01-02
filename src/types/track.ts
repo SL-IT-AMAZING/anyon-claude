@@ -6,7 +6,7 @@
 import type { WorkflowStep } from '@/constants/planning';
 import type { DevWorkflowStep } from '@/constants/development';
 
-export type TrackId = 'mvp' | 'ownuun' | 'ownuun2' | 'bmad';
+export type TrackId = 'mvp' | 'ownuun' | 'ownuun2' | 'bmad' | 'quick-flow';
 
 export interface Track {
   id: TrackId;
@@ -46,19 +46,26 @@ export const TRACKS: Track[] = [
     name: 'MVP',
     description: '기존 MVP 개발 워크플로우',
     icon: '🚀',
-    available: true,
+    available: false,
   },
   {
     id: 'ownuun',
     name: 'ownuun',
     description: '엄격한 UX/UI 검증 + 서브에이전트 극대화',
     icon: '🎯',
-    available: true,
+    available: false,
   },
   {
     id: 'ownuun2',
     name: 'ownuun2',
     description: '티켓별 플랜→실행 + 서브에이전트 병렬 실행',
+    icon: '⚡',
+    available: false,
+  },
+  {
+    id: 'quick-flow',
+    name: 'Quick Flow',
+    description: '빠른 개발 워크플로우 (간소화된 3단계)',
     icon: '⚡',
     available: true,
   },

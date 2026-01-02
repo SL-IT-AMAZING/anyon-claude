@@ -15,6 +15,8 @@ import {
   getProgress,
   type SprintStatus,
 } from '@/lib/bmad';
+import { watch } from '@tauri-apps/plugin-fs';
+import { join } from '@tauri-apps/api/path';
 
 interface DevDocsPanelProps {
   projectPath: string | undefined;
@@ -343,11 +345,14 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
   const [currentWaveTickets, setCurrentWaveTickets] = useState<TicketProgress[]>([]);
   // BMAD: sprint-status.yaml 상태
   const [bmadStatus, setBmadStatus] = useState<SprintStatus | null>(null);
+  // BMAD: 이전 상태 저장 (상태 변경 감지용)
+  const prevBmadStatusRef = useRef<SprintStatus | null>(null);
+  const bmadWatcherRef = useRef<(() => void) | null>(null);
 
   // ============================================================================
   // 무중단 자동화 상태 (Auto-Recovery System)
   // ============================================================================
-  const WATCHDOG_TIMEOUT = 10 * 60 * 1000; // 10분 타임아웃
+  const WATCHDOG_TIMEOUT = 20 * 60 * 1000; // 20분 타임아웃
   const MAX_RETRIES = 3;
   const retryCountRef = useRef<number>(0);
   const lastActivityRef = useRef<number>(Date.now());
@@ -509,34 +514,162 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
   }, [loadProgressData, currentRunningStep]);
 
   // ============================================================================
-  // BMAD: sprint-status.yaml 폴링
+  // BMAD: sprint-status.yaml 파일 감시 (Tauri watch API)
   // ============================================================================
+
+  /**
+   * BMAD: sprint-status.yaml 변경 시 상태 비교 후 세션 종료 및 다음 워크플로우 시작
+   */
+  const handleBmadStatusChange = useCallback(async () => {
+    if (!isBmadTrack || !projectPath) return;
+
+    const newStatus = await parseSprintStatus(projectPath);
+    const prevStatus = prevBmadStatusRef.current;
+
+    // 첫 로드이거나 이전 상태가 없으면 상태만 저장
+    if (!newStatus || !prevStatus) {
+      prevBmadStatusRef.current = newStatus;
+      setBmadStatus(newStatus);
+      return;
+    }
+
+    // 상태 변경 감지: 완료된 스토리 수 또는 현재 스토리 상태 변경
+    const statusChanged =
+      prevStatus.completedStories !== newStatus.completedStories ||
+      prevStatus.currentStory?.status !== newStatus.currentStory?.status;
+
+    if (statusChanged && currentRunningStep) {
+      // 로그 출력
+      const storyId = newStatus.currentStory?.id || prevStatus.currentStory?.id || 'unknown';
+      const prevStoryStatus = prevStatus.currentStory?.status || 'unknown';
+      const newStoryStatus = newStatus.currentStory?.status || 'done';
+      console.log(`[BMAD] ${storyId}: ${prevStoryStatus} → ${newStoryStatus}`);
+
+      // 현재 세션 즉시 종료
+      try {
+        await api.cancelClaudeExecution();
+      } catch (e) {
+        console.warn('[BMAD] 세션 종료 실패:', e);
+      }
+
+      // 상태 업데이트
+      prevBmadStatusRef.current = newStatus;
+      setBmadStatus(newStatus);
+
+      // 완료 체크
+      if (isAllStoriesComplete(newStatus)) {
+        console.log('[BMAD] 모든 스토리 완료');
+        setIsDevComplete(projectKey, true);
+        setCurrentRunningStep(projectKey, null);
+        return;
+      }
+
+      // 다음 워크플로우 라우팅 및 즉시 시작
+      const routingResult = getNextBmadWorkflow(newStatus, false);
+      if (routingResult && !routingResult.isComplete) {
+        lastActivityRef.current = Date.now();
+        retryCountRef.current = 0;
+        setCurrentRunningStep(projectKey, routingResult.workflow.id);
+        console.log(`[BMAD] 다음 워크플로우: ${routingResult.workflow.id}`);
+        onStartWorkflow?.(
+          getDevWorkflowPrompt(routingResult.workflow),
+          routingResult.workflow.displayText
+        );
+      }
+    } else {
+      // 변경 없음 - 상태만 업데이트
+      prevBmadStatusRef.current = newStatus;
+      setBmadStatus(newStatus);
+    }
+  }, [isBmadTrack, projectPath, currentRunningStep, projectKey, onStartWorkflow, setIsDevComplete, setCurrentRunningStep]);
+
+  // BMAD: sprint-status.yaml 파일 감시 설정
+  useEffect(() => {
+    if (!isBmadTrack || !projectPath) return;
+
+    let isMounted = true;
+
+    const setupBmadWatcher = async () => {
+      try {
+        // sprint-status.yaml 가능한 경로들
+        const watchPaths = [
+          await join(projectPath, 'anyon-docs', 'dev-plan'),
+          await join(projectPath, 'anyon-docs', 'planning'),
+        ];
+
+        // 기존 watcher 정리
+        if (bmadWatcherRef.current) {
+          bmadWatcherRef.current();
+          bmadWatcherRef.current = null;
+        }
+
+        // 각 경로에 watcher 설정 시도
+        for (const watchPath of watchPaths) {
+          try {
+            const unwatch = await watch(
+              watchPath,
+              (event) => {
+                if (!isMounted) return;
+
+                const isSprintStatusFile = event.paths.some(
+                  (p) => p.endsWith('sprint-status.yaml')
+                );
+
+                if (isSprintStatusFile) {
+                  // 100ms debounce 후 상태 변경 처리
+                  setTimeout(() => {
+                    if (isMounted) {
+                      handleBmadStatusChange();
+                    }
+                  }, 100);
+                }
+              },
+              { recursive: false }
+            );
+
+            bmadWatcherRef.current = unwatch;
+            console.log('[BMAD] 파일 감시 설정 완료:', watchPath);
+            break; // 첫 번째 유효한 경로에서 성공하면 중단
+          } catch {
+            // 경로가 없으면 다음 경로 시도
+            continue;
+          }
+        }
+      } catch (e) {
+        console.error('[BMAD] 파일 감시 설정 실패:', e);
+      }
+    };
+
+    // 초기 로드
+    handleBmadStatusChange();
+
+    // watcher 설정
+    setupBmadWatcher();
+
+    return () => {
+      isMounted = false;
+      if (bmadWatcherRef.current) {
+        bmadWatcherRef.current();
+        bmadWatcherRef.current = null;
+      }
+    };
+  }, [isBmadTrack, projectPath, handleBmadStatusChange]);
+
+  // loadBmadStatus는 checkAndContinue 등에서 사용하므로 유지
   const loadBmadStatus = useCallback(async (): Promise<SprintStatus | null> => {
     if (!projectPath || !isBmadTrack) return null;
 
     const status = await parseSprintStatus(projectPath);
     setBmadStatus(status);
+    prevBmadStatusRef.current = status;
 
     // BMAD 완료 체크
     if (status && isAllStoriesComplete(status)) {
       setIsDevComplete(projectKey, true);
     }
 
-    return status; // 반환하여 즉시 사용 가능
+    return status;
   }, [projectPath, isBmadTrack, projectKey, setIsDevComplete]);
-
-  useEffect(() => {
-    if (!isBmadTrack) return;
-
-    loadBmadStatus();
-
-    // 워크플로우 실행 중일 때는 5초마다 업데이트
-    const interval = currentRunningStep ? setInterval(loadBmadStatus, 5000) : null;
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [loadBmadStatus, currentRunningStep, isBmadTrack]);
 
   const addLogEntry = async (
     stepId: string,
