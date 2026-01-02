@@ -154,8 +154,8 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
   // Ref for DevDocsPanel
   const devDocsPanelRef = useRef<DevDocsPanelRef>(null);
 
-  // Check planning docs completion
-  const { progress } = usePlanningDocs(project?.path);
+  // Check planning docs completion (트랙별 워크플로우 사용)
+  const { progress } = usePlanningDocs(project?.path, planningWorkflows, trackId);
   const isPlanningComplete = progress.isAllComplete;
 
   // Workflow preview file detection (e.g., ui-ux.html from startup-ux workflow)

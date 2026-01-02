@@ -8,6 +8,13 @@ import { ANYON_DOCS } from '@/constants/paths';
 import { api } from '@/lib/api';
 import { useDevWorkflowStore, type BlockedTicket, type ExecutionLogEntry } from '@/stores/devWorkflowStore';
 import type { TrackId } from '@/types/track';
+import {
+  parseSprintStatus,
+  getNextBmadWorkflow,
+  isAllStoriesComplete,
+  getProgress,
+  type SprintStatus,
+} from '@/lib/bmad';
 
 interface DevDocsPanelProps {
   projectPath: string | undefined;
@@ -324,9 +331,8 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
 }, ref) => {
   // Use provided workflows or default to MVP workflow
   const workflowSequence = workflows;
-  // Reserved for future BMAD-specific UI customization
-  // const isBmadTrack = trackId === 'bmad';
-  void trackId; // Suppress unused warning - reserved for future UI customization
+  // BMAD 트랙 감지
+  const isBmadTrack = trackId === 'bmad';
   const projectKey = projectPath ?? '__unknown__';
   const prevLoadingRef = useRef(isSessionLoading);
   const isStoppedRef = useRef(false);
@@ -335,6 +341,8 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
   const [, forceUpdate] = useState(0);
   const [progressData, setProgressData] = useState<ProgressData>(DEFAULT_PROGRESS);
   const [currentWaveTickets, setCurrentWaveTickets] = useState<TicketProgress[]>([]);
+  // BMAD: sprint-status.yaml 상태
+  const [bmadStatus, setBmadStatus] = useState<SprintStatus | null>(null);
 
   // ============================================================================
   // 무중단 자동화 상태 (Auto-Recovery System)
@@ -500,6 +508,36 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
     };
   }, [loadProgressData, currentRunningStep]);
 
+  // ============================================================================
+  // BMAD: sprint-status.yaml 폴링
+  // ============================================================================
+  const loadBmadStatus = useCallback(async (): Promise<SprintStatus | null> => {
+    if (!projectPath || !isBmadTrack) return null;
+
+    const status = await parseSprintStatus(projectPath);
+    setBmadStatus(status);
+
+    // BMAD 완료 체크
+    if (status && isAllStoriesComplete(status)) {
+      setIsDevComplete(projectKey, true);
+    }
+
+    return status; // 반환하여 즉시 사용 가능
+  }, [projectPath, isBmadTrack, projectKey, setIsDevComplete]);
+
+  useEffect(() => {
+    if (!isBmadTrack) return;
+
+    loadBmadStatus();
+
+    // 워크플로우 실행 중일 때는 5초마다 업데이트
+    const interval = currentRunningStep ? setInterval(loadBmadStatus, 5000) : null;
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [loadBmadStatus, currentRunningStep, isBmadTrack]);
+
   const addLogEntry = async (
     stepId: string,
     status: ExecutionLogEntry['status'],
@@ -607,7 +645,39 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
           // 🛑 중지 상태 재확인 (async 작업 중 중지 눌렀을 수 있음)
           if (isStoppedRef.current) return;
 
-          // 5. 다음 단계 결정 및 자동 실행
+          // ============================================================================
+          // 5. 다음 단계 결정 및 자동 실행 (BMAD vs MVP/ownuun 분기)
+          // ============================================================================
+
+          if (isBmadTrack) {
+            // BMAD 트랙: sprint-status.yaml 기반 라우팅
+            const currentStatus = await loadBmadStatus();
+            const routingResult = getNextBmadWorkflow(currentStatus, false);
+
+            if (routingResult?.isComplete) {
+              // 모든 스토리 완료 → retrospective 후 완료
+              setIsDevComplete(projectKey, true);
+              setCurrentRunningStep(projectKey, null);
+              return;
+            }
+
+            if (routingResult) {
+              setTimeout(() => {
+                if (!isStoppedRef.current) {
+                  lastActivityRef.current = Date.now();
+                  setCurrentRunningStep(projectKey, routingResult.workflow.id);
+                  const storyInfo = routingResult.targetStory?.title || '';
+                  addLogEntry(routingResult.workflow.id, 'running', storyInfo || undefined);
+                  onStartWorkflow?.(getDevWorkflowPrompt(routingResult.workflow), routingResult.workflow.displayText);
+                }
+              }, 500);
+            } else {
+              setCurrentRunningStep(projectKey, null);
+            }
+            return;
+          }
+
+          // MVP/ownuun 트랙: 기존 로직 유지
           const nextStep = getNextStep(currentRunningStep, workflowSequence);
 
           // ============================================================================
@@ -695,7 +765,7 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
 
       checkAndContinue();
     }
-  }, [isSessionLoading, currentRunningStep, onStartWorkflow, projectPath, loadProgressData, progressData.currentWave, forceNextStep, workflowSequence]);
+  }, [isSessionLoading, currentRunningStep, onStartWorkflow, projectPath, loadProgressData, progressData.currentWave, forceNextStep, workflowSequence, isBmadTrack, loadBmadStatus, bmadStatus]);
 
   const handleStart = (stepId: string, workflowPrompt: string, displayText?: string) => {
     isStoppedRef.current = false;
@@ -818,8 +888,78 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
         }
       />
 
-      {/* Wave 진행률 표시 */}
-      {(progressData.totalWaves > 0 || progressData.currentWave) && (
+      {/* BMAD 진행 상황 표시 */}
+      {isBmadTrack && bmadStatus && (
+        <div className="flex-shrink-0 px-4 py-3 border-b bg-muted/30">
+          <div className="space-y-2">
+            {/* 현재 스토리 정보 */}
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground">현재:</span>
+                <span className="font-medium">
+                  {bmadStatus.currentStory?.title || bmadStatus.currentEpic?.title || '대기 중'}
+                </span>
+                {bmadStatus.currentStory && (
+                  <span className={cn(
+                    "text-xs px-1.5 py-0.5 rounded-full",
+                    bmadStatus.currentStory.status === 'review' && "bg-amber-500/10 text-amber-600",
+                    bmadStatus.currentStory.status === 'in-progress' && "bg-purple-500/10 text-purple-600",
+                    bmadStatus.currentStory.status === 'ready-for-dev' && "bg-blue-500/10 text-blue-600",
+                  )}>
+                    {bmadStatus.currentStory.status}
+                  </span>
+                )}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {bmadStatus.lastUpdated && (
+                  <span>마지막 업데이트: {new Date(bmadStatus.lastUpdated).toLocaleTimeString('ko-KR')}</span>
+                )}
+              </div>
+            </div>
+
+            {/* 스토리 진행률 바 */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">
+                  스토리 진행률
+                </span>
+                <span className="font-medium">
+                  {getProgress(bmadStatus)}%
+                  <span className="text-muted-foreground ml-1">
+                    ({bmadStatus.completedStories}/{bmadStatus.totalStories} 스토리)
+                  </span>
+                </span>
+              </div>
+              <div className="h-2 bg-muted rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary transition-all duration-500 ease-out"
+                  style={{ width: `${getProgress(bmadStatus)}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Epic 목록 */}
+            <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
+              {bmadStatus.epics.map((epic) => (
+                <span
+                  key={epic.id}
+                  className={cn(
+                    "px-1.5 py-0.5 rounded",
+                    epic.status === 'done' && "bg-green-500/10 text-green-600",
+                    epic.status === 'in-progress' && "bg-purple-500/10 text-purple-600",
+                    epic.status === 'backlog' && "bg-muted text-muted-foreground",
+                  )}
+                >
+                  {epic.id}: {epic.stories.filter(s => s.status === 'done').length}/{epic.stories.length}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Wave 진행률 표시 (MVP/ownuun 트랙) */}
+      {!isBmadTrack && (progressData.totalWaves > 0 || progressData.currentWave) && (
         <div className="flex-shrink-0 px-4 py-3 border-b bg-muted/30">
           <div className="space-y-2">
             {/* 현재 Wave 정보 */}
@@ -888,14 +1028,23 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
           {/* 개발 시작하기 버튼 */}
           <button
             onClick={() => {
-              const orchestrator = workflowSequence[0];
-              handleStart(orchestrator.id, getDevWorkflowPrompt(orchestrator), orchestrator.displayText);
+              if (isBmadTrack) {
+                // BMAD: sprint-planning 시작 (첫 실행)
+                const routingResult = getNextBmadWorkflow(null, true);
+                if (routingResult) {
+                  handleStart(routingResult.workflow.id, getDevWorkflowPrompt(routingResult.workflow), routingResult.workflow.displayText);
+                }
+              } else {
+                // MVP/ownuun: orchestrator 시작
+                const orchestrator = workflowSequence[0];
+                handleStart(orchestrator.id, getDevWorkflowPrompt(orchestrator), orchestrator.displayText);
+              }
             }}
-            disabled={!onStartWorkflow || isRunningWorkflow || isOrchestratorComplete}
+            disabled={!onStartWorkflow || isRunningWorkflow || isOrchestratorComplete || (isBmadTrack && bmadStatus !== null)}
             className={cn(
               'flex items-center gap-2 px-6 py-3 rounded-lg transition-all font-medium',
               'border hover:shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed',
-              isDevComplete || isOrchestratorComplete
+              isDevComplete || isOrchestratorComplete || (isBmadTrack && bmadStatus !== null)
                 ? 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700 text-green-700 dark:text-green-300'
                 : 'bg-primary text-primary-foreground border-primary hover:bg-primary/90'
             )}
@@ -904,13 +1053,13 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : isDevComplete ? (
               <CheckCircle2 className="h-4 w-4" />
-            ) : isOrchestratorComplete ? (
+            ) : isOrchestratorComplete || (isBmadTrack && bmadStatus !== null) ? (
               <CheckCircle2 className="h-4 w-4" />
             ) : (
               <PlayCircle className="h-4 w-4" />
             )}
             <span>
-              {isDevComplete ? '개발 완료' : isOrchestratorComplete ? '기획 완료' : isRunningWorkflow ? '개발 중...' : '개발 시작하기'}
+              {isDevComplete ? '개발 완료' : isOrchestratorComplete || (isBmadTrack && bmadStatus !== null) ? 'Sprint 계획 완료' : isRunningWorkflow ? '개발 중...' : '개발 시작하기'}
             </span>
           </button>
 
@@ -919,6 +1068,21 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
             onClick={async () => {
               if (!projectPath) return;
 
+              if (isBmadTrack) {
+                // BMAD: sprint-status.yaml 기반 다음 워크플로우 결정
+                const currentStatus = await loadBmadStatus();
+                const routingResult = getNextBmadWorkflow(currentStatus, false);
+                if (routingResult?.isComplete) {
+                  setIsDevComplete(projectKey, true);
+                  return;
+                }
+                if (routingResult) {
+                  handleStart(routingResult.workflow.id, getDevWorkflowPrompt(routingResult.workflow), routingResult.workflow.displayText);
+                }
+                return;
+              }
+
+              // MVP/ownuun: 기존 로직 유지
               // 1. 개발 완료 상태 체크
               const devCompleteFile = `${projectPath}/${ANYON_DOCS.DEV_PLAN}/${ANYON_DOCS.DEV_FILES.COMPLETE_MARKER}`;
               const isDevCompleteNow = await api.checkFileExists(devCompleteFile);

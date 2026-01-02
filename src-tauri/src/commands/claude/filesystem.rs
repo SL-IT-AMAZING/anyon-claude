@@ -302,27 +302,39 @@ pub async fn get_file_metadata(file_path: String) -> Result<Option<FileMetadata>
 
 #[tauri::command]
 pub async fn list_anyon_docs(project_path: String) -> Result<Vec<String>, String> {
-    let docs_path = PathBuf::from(&project_path)
-        .join("anyon-docs")
-        .join("planning");
+    let base_path = PathBuf::from(&project_path).join("anyon-docs");
+    let mut all_entries = Vec::new();
 
-    if !docs_path.exists() {
-        return Ok(vec![]);
+    // planning 폴더 검색
+    let planning_path = base_path.join("planning");
+    if planning_path.exists() {
+        if let Ok(entries) = fs::read_dir(&planning_path) {
+            for entry in entries.filter_map(|e| e.ok()) {
+                let path = entry.path();
+                if path.is_file() {
+                    if let Some(name) = entry.file_name().to_str() {
+                        all_entries.push(name.to_string());
+                    }
+                }
+            }
+        }
     }
 
-    let entries = fs::read_dir(&docs_path)
-        .map_err(|e| format!("Failed to read directory: {}", e))?
-        .filter_map(|entry| {
-            entry.ok().and_then(|e| {
-                let path = e.path();
+    // dev-plan 폴더 검색 (BMAD epics.md 등)
+    let dev_plan_path = base_path.join("dev-plan");
+    if dev_plan_path.exists() {
+        if let Ok(entries) = fs::read_dir(&dev_plan_path) {
+            for entry in entries.filter_map(|e| e.ok()) {
+                let path = entry.path();
                 if path.is_file() {
-                    e.file_name().to_str().map(|s| s.to_string())
-                } else {
-                    None
+                    if let Some(name) = entry.file_name().to_str() {
+                        // dev-plan/ 접두사 추가하여 구분
+                        all_entries.push(format!("dev-plan/{}", name));
+                    }
                 }
-            })
-        })
-        .collect();
+            }
+        }
+    }
 
-    Ok(entries)
+    Ok(all_entries)
 }

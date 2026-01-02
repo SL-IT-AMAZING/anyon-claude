@@ -155,12 +155,15 @@ const determineBmadWorkflowState = (
   }
 
   // frontmatter가 없거나 stepsCompleted가 빈 배열인 경우
-  // 콘텐츠 길이로 대략 판단
-  if (content) {
-    const contentLength = content.length;
-    // 템플릿 기본 내용(~200자)보다 충분히 긴 경우 작성 중으로 간주
-    if (contentLength > 3000) return 'completed';
-    if (contentLength > 500) return 'in_progress';
+  // Research는 optional이고 외부 문서도 인정 - 파일이 존재하고 내용이 충분하면 완료로 처리
+  if (stepId === 'research' && content && content.length > 1000) {
+    return 'completed';
+  }
+
+  // 그 외 BMAD 문서는 frontmatter 기반으로만 완료 판정
+  // 파일이 존재하고 내용이 있으면 in_progress로 간주
+  if (content && content.length > 500) {
+    return 'in_progress';
   }
 
   return 'not_started';
@@ -256,7 +259,12 @@ export function usePlanningDocs(
 
           if (exists && matchedFilename) {
             try {
-              const filePath = `${docsDir}/${matchedFilename}`;
+              // dev-plan/ 접두사가 있으면 anyon-docs 기준으로 경로 구성
+              const isDevPlan = matchedFilename.startsWith('dev-plan/');
+              const baseDir = projectPath ? `${projectPath}/anyon-docs` : '';
+              const filePath = isDevPlan
+                ? `${baseDir}/${matchedFilename}`
+                : `${docsDir}/${matchedFilename}`;
               console.log('[usePlanningDocs] Reading file:', filePath);
               content = await planningApi.readFileContent(filePath);
               console.log('[usePlanningDocs] Content length:', content?.length);
@@ -313,22 +321,45 @@ export function usePlanningDocs(
 
   // Calculate progress based on workflowState
   const progress = useMemo((): PlanningProgress => {
+    // 필수 단계들 (optional이 아닌 것)
+    const requiredSteps = workflows.filter(step => !step.optional);
+
     // 완료된 스텝: workflowState가 'completed'인 것만
     const completedSteps = workflows.filter(step =>
       documents.some(doc => doc.id === step.id && doc.workflowState === 'completed')
     );
 
-    // 다음 스텝: 완료되지 않은 첫 번째 스텝
-    const nextStep = workflows.find(step =>
-      !documents.some(doc => doc.id === step.id && doc.workflowState === 'completed')
+    // 완료된 필수 단계
+    const completedRequiredSteps = requiredSteps.filter(step =>
+      documents.some(doc => doc.id === step.id && doc.workflowState === 'completed')
     );
+
+    // optional 단계 중 진행 중인 것이 있는지 확인
+    const optionalInProgress = workflows.some(step =>
+      step.optional &&
+      documents.some(doc => doc.id === step.id && doc.workflowState === 'in_progress')
+    );
+
+    // 다음 스텝: 완료되지 않은 첫 번째 필수 스텝 (optional 스텝은 건너뛰기 가능)
+    const nextStep = workflows.find(step => {
+      const doc = documents.find(d => d.id === step.id);
+      // optional이고 시작하지 않았으면 건너뛰기
+      if (step.optional && (!doc || doc.workflowState === 'not_started')) {
+        return false;
+      }
+      // 완료되지 않은 단계
+      return doc?.workflowState !== 'completed';
+    });
+
+    // 모든 필수 단계 완료 + optional 진행중 없음 = 전체 완료
+    const isAllComplete = completedRequiredSteps.length === requiredSteps.length && !optionalInProgress;
 
     return {
       completed: completedSteps.length,
       total: workflows.length,
       completedSteps,
       nextStep,
-      isAllComplete: completedSteps.length === workflows.length,
+      isAllComplete,
     };
   }, [documents, workflows]);
 

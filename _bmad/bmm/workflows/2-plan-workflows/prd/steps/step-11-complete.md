@@ -86,32 +86,13 @@ Update the main workflow status file if there is one:
 - Save file, preserving all comments and structure
 - Mark current timestamp as completion time
 
-### 3. Suggest Next Steps
+### 3. Completion Summary
 
-Provide guidance on logical next workflows:
+PRD 작성이 완료되었습니다.
 
-**Typical Next Workflows:**
-
-**Immediate Next Steps:**
-
-1. `workflow create-ux-design` - UX Design (if UI exists)
-   - User journey insights from step-04 will inform interaction design
-   - Functional requirements from step-09 define design scope
-
-2. `workflow create-architecture` - Technical architecture
-   - Project-type requirements from step-07 guide technical decisions
-   - Non-functional requirements from step-10 inform architecture choices
-
-3. `workflow create-epics-and-stories` - Epic breakdown
-   - Functional requirements from step-09 become epics and stories
-   - Scope definition from step-03 guides sprint planning
-
-**Strategic Considerations:**
-
-- UX design and architecture can happen in parallel
-- Epics/stories are richer when created after UX/architecture
-
-**What would be most valuable to tackle next?**
+**다음 단계:**
+- UI의 기획 워크플로우 패널에서 다음 단계(UX Design 또는 Architecture)를 진행하세요.
+- 워크플로우 순서는 UI에서 관리됩니다.
 
 ### 4. Document Quality Check
 

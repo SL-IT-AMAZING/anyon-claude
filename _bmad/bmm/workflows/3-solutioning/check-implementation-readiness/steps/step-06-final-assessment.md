@@ -100,6 +100,7 @@ This assessment identified [X] issues across [Y] categories. Address the critica
 - Ensure all findings are clearly documented
 - Verify recommendations are actionable
 - Add date and assessor information
+- **Update frontmatter `stepsCompleted` array to include step 6** (e.g., `stepsCompleted: [1, 2, 3, 4, 5, 6]`)
 - Save the final report
 
 ### 5. Present Completion
@@ -113,7 +114,9 @@ The assessment found [number] issues requiring attention. Review the detailed re
 
 ## WORKFLOW COMPLETE
 
-The implementation readiness workflow is now complete. The report contains all findings and recommendations for the user to consider.
+When workflow completes:
+1. Update the output file frontmatter with `stepsCompleted: [1, 2, 3, 4, 5, 6]`
+2. The implementation readiness workflow is now complete. The report contains all findings and recommendations for the user to consider.
 
 ---
 

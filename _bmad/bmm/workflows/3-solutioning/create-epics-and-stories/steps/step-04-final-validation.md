@@ -137,9 +137,12 @@ If all validations pass:
 
 - Update any remaining placeholders in the document
 - Ensure proper formatting
+- **Update frontmatter `stepsCompleted` array to include step 4** (e.g., `stepsCompleted: [1, 2, 3, 4]`)
 - Save the final epics.md
 
 **Present Final Menu:**
 **All validations complete!** [C] Complete Workflow
 
-When C is selected, the workflow is complete and the epics.md is ready for development.
+When C is selected:
+1. Update the output file frontmatter with `stepsCompleted: [1, 2, 3, 4]`
+2. The workflow is complete and the epics.md is ready for development.

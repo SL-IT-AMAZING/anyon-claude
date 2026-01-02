@@ -58,7 +58,7 @@ export const BMAD_PLANNING_WORKFLOWS: WorkflowStep[] = [
     id: 'research',
     title: 'Research',
     filename: 'research.md',
-    filenamePattern: '*research*.md', // BMAD 동적 파일명: research-{topic}-{date}.md 또는 {type}-research-{date}.md
+    filenamePattern: '*research*.md', // research-*.md 또는 research/*-research-*.md 모두 매칭
     workflow: '/bmad:bmm:workflows:research',
     displayText: '리서치 수행',
     icon: 'search' as WorkflowIconType,
@@ -102,7 +102,7 @@ export const BMAD_PLANNING_WORKFLOWS: WorkflowStep[] = [
   {
     id: 'epics-stories',
     title: 'Epics & Stories',
-    filename: 'epics.md', // BMAD 실제 출력 파일명
+    filename: 'dev-plan/epics.md', // BMAD 실제 출력 파일명 (dev-plan 폴더)
     workflow: '/bmad:bmm:workflows:create-epics-and-stories',
     displayText: 'Epics & Stories 생성',
     icon: 'list-checks' as WorkflowIconType,

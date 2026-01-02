@@ -539,12 +539,12 @@ export const PlanningDocsPanel: React.FC<PlanningDocsPanelProps> = ({
             {activeWorkflows.has(activeStep?.id || '') ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                질문 이어서 받는중...
+                질문 다시받는중...
               </>
             ) : (
               <>
                 <Play className="h-4 w-4" />
-                질문 이어서 받기
+                질문 다시받기
               </>
             )}
           </Button>
