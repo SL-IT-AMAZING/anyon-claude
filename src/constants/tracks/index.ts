@@ -31,3 +31,23 @@ export {
   isStrictUxValidation,
   isAutoTestOnSubWave,
 } from './development';
+
+// ============================================================================
+// 트랙별 UI 설정
+// ============================================================================
+import type { TrackId } from '@/types/track';
+
+/** 트랙별 표시할 탭 설정 */
+export const TRACK_VISIBLE_TABS: Record<TrackId, ('planning' | 'development' | 'preview')[]> = {
+  mvp: ['planning', 'development', 'preview'],
+  ownuun: ['planning', 'development', 'preview'],
+  ownuun2: ['planning', 'development', 'preview'],
+  bmad: ['planning', 'development', 'preview'],
+  'quick-flow': ['planning', 'development', 'preview'],
+  'plan-only': ['planning'], // 기획문서 탭만
+};
+
+/** 트랙별 표시할 탭 가져오기 */
+export const getVisibleTabs = (trackId: TrackId): ('planning' | 'development' | 'preview')[] => {
+  return TRACK_VISIBLE_TABS[trackId] || ['planning', 'development', 'preview'];
+};

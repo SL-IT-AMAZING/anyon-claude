@@ -1,13 +1,43 @@
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
-import { X, Code, MessageCircle, Sparkles, Tag, BookOpen } from '@/lib/icons';
+import { X, Code, MessageCircle, Sparkles, Tag, BookOpen, Rocket } from '@/lib/icons';
 import { Button } from '@/components/ui/button';
+import type { TrackId } from '@/types/track';
 
 interface PlanningCompleteModalProps {
   isOpen: boolean;
   onClose: () => void;
   onProceedWithAI: () => void;
   onContactSupport: () => void;
+  trackId?: TrackId;
 }
+
+// 트랙별 모달 텍스트 설정
+const getTrackContent = (trackId?: TrackId) => {
+  if (trackId === 'quick-flow') {
+    return {
+      title: '실행 계획 수립 완료!',
+      description: (
+        <>
+          다음 단계는 <span className="font-medium text-foreground">빠른 개발 실행</span>입니다.<br />
+          AI가 티켓을 순서대로 구현합니다.
+        </>
+      ),
+      buttonText: '개발 시작하기',
+      buttonIcon: Rocket,
+    };
+  }
+  return {
+    title: '기획문서 작성 완료!',
+    description: (
+      <>
+        다음 단계는 <span className="font-medium text-foreground">개발문서 작성</span>입니다.<br />
+        AI가 기획문서를 바탕으로 개발을 진행합니다.
+      </>
+    ),
+    buttonText: '개발문서 작성하기',
+    buttonIcon: Code,
+  };
+};
 
 const overlayVariants: Variants = {
   hidden: { opacity: 0 },
@@ -43,7 +73,11 @@ export function PlanningCompleteModal({
   onClose,
   onProceedWithAI,
   onContactSupport,
+  trackId,
 }: PlanningCompleteModalProps) {
+  const content = getTrackContent(trackId);
+  const ButtonIcon = content.buttonIcon;
+
   const handleProceed = () => {
     onProceedWithAI();
     onClose();
@@ -93,13 +127,12 @@ export function PlanningCompleteModal({
 
               {/* Title */}
               <h2 className="text-center text-xl font-semibold text-foreground mb-2">
-                기획문서 작성 완료!
+                {content.title}
               </h2>
 
               {/* Description */}
               <p className="text-center text-muted-foreground text-sm mb-6">
-                다음 단계는 <span className="font-medium text-foreground">개발문서 작성</span>입니다.<br />
-                AI가 기획문서를 바탕으로 개발을 진행합니다.
+                {content.description}
               </p>
 
               {/* Primary Action */}
@@ -108,8 +141,8 @@ export function PlanningCompleteModal({
                 className="w-full mb-3 h-12 text-base font-medium"
                 size="lg"
               >
-                <Code className="mr-2 h-5 w-5" />
-                개발문서 작성하기
+                <ButtonIcon className="mr-2 h-5 w-5" />
+                {content.buttonText}
               </Button>
 
               {/* Divider */}

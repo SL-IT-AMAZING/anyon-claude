@@ -219,6 +219,18 @@ export const QUICK_FLOW_DEV_CONFIG: TrackDevelopmentConfig = {
 };
 
 // ============================================================================
+// Plan-Only Track: 개발 워크플로우 없음
+// 기획 문서 + 티켓 생성만 하고 개발은 하지 않음
+// ============================================================================
+export const PLAN_ONLY_DEV_CONFIG: TrackDevelopmentConfig = {
+  trackId: 'plan-only',
+  workflows: [], // 개발 워크플로우 없음
+  executionStrategy: 'ticket',
+  autoTestOnSubWaveComplete: false,
+  strictUxValidation: false,
+};
+
+// ============================================================================
 // Registry: 트랙별 설정 조회
 // ============================================================================
 export const TRACK_DEV_CONFIGS: Record<TrackId, TrackDevelopmentConfig> = {
@@ -227,6 +239,7 @@ export const TRACK_DEV_CONFIGS: Record<TrackId, TrackDevelopmentConfig> = {
   ownuun2: OWNUUN2_DEV_CONFIG,
   bmad: BMAD_DEV_CONFIG,
   'quick-flow': QUICK_FLOW_DEV_CONFIG,
+  'plan-only': PLAN_ONLY_DEV_CONFIG,
 };
 
 /**

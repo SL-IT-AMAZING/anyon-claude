@@ -16,7 +16,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Breadcrumb } from '@/components/Breadcrumb';
 import { useProjects, useProjectsNavigation } from '@/components/ProjectRoutes';
-import { PlanningDocsPanel } from '@/components/planning';
+import { PlanningDocsPanel, TicketViewerPanel } from '@/components/planning';
 import { DevDocsPanel, DevDocsPanelRef } from '@/components/development';
 import { EnhancedPreviewPanel } from '@/components/preview';
 import { VersionControlPanel } from '@/components/version-control';
@@ -34,7 +34,7 @@ import { SessionPersistenceService } from '@/services/sessionPersistence';
 import { cn } from '@/lib/utils';
 import { usePreviewStore } from '@/stores/previewStore';
 import { useCurrentTrack } from '@/stores/trackStore';
-import { getPlanningWorkflows, getDevWorkflows } from '@/constants/tracks';
+import { getPlanningWorkflows, getDevWorkflows, getVisibleTabs } from '@/constants/tracks';
 
 // Lazy load components
 const ClaudeCodeSession = lazy(() =>
@@ -120,6 +120,8 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
   // 트랙별 워크플로우 가져오기
   const planningWorkflows = getPlanningWorkflows(trackId);
   const devWorkflows = getDevWorkflows(trackId);
+  // 트랙별 표시할 탭 가져오기
+  const visibleTabs = getVisibleTabs(trackId);
   const [isSessionLoading, setIsSessionLoading] = useState(false);
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
   const [sessionKey, _setSessionKey] = useState(0);
@@ -132,6 +134,9 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
 
   // Session error state for token limit handling
   const [sessionError, setSessionError] = useState<SessionError | null>(null);
+
+  // Auto-start development workflow (Quick Flow 트랙용)
+  const [shouldAutoStartDev, setShouldAutoStartDev] = useState(false);
 
   // Sidebar state - collapsed by default
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
@@ -352,7 +357,13 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
   // Proceed to development after planning complete
   const handleProceedWithAI = useCallback(() => {
     setActiveTab('development');
-  }, []);
+    setShowPlanningCompleteModal(false);
+
+    // Quick Flow 트랙인 경우 자동으로 Quick Execute 시작
+    if (trackId === 'quick-flow') {
+      setShouldAutoStartDev(true);
+    }
+  }, [trackId]);
 
   // Open KakaoTalk channel for support
   const handleContactSupport = useCallback(() => {
@@ -614,79 +625,93 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
               {/* Tabs Header with Status Badges */}
               <div className="flex-shrink-0 border-b border-border bg-card/50">
                 <div className="flex">
-                  {/* 기획문서 탭 */}
-                  <button
-                    onClick={() => setActiveTab('planning')}
-                    className={cn(
-                      "flex-1 flex items-center justify-center gap-2 px-3 py-3 text-sm font-medium transition-colors border-b-2",
-                      activeTab === 'planning'
-                        ? "border-primary text-primary bg-primary/5"
-                        : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                    )}
-                  >
-                    <FileText className="w-4 h-4" />
-                    <span>기획문서</span>
-                    {/* 진행률 배지 */}
-                    <span className={cn(
-                      "text-xs px-1.5 py-0.5 rounded-full",
-                      progress.isAllComplete 
-                        ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
-                        : "bg-muted text-muted-foreground"
-                    )}>
-                      {progress.completed}/{progress.total}
-                    </span>
-                  </button>
+                  {/* 기획문서 탭 - 항상 표시 */}
+                  {visibleTabs.includes('planning') && (
+                    <button
+                      onClick={() => setActiveTab('planning')}
+                      className={cn(
+                        "flex-1 flex items-center justify-center gap-2 px-3 py-3 text-sm font-medium transition-colors border-b-2",
+                        activeTab === 'planning'
+                          ? "border-primary text-primary bg-primary/5"
+                          : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      )}
+                    >
+                      <FileText className="w-4 h-4" />
+                      <span>기획문서</span>
+                      {/* 진행률 배지 */}
+                      <span className={cn(
+                        "text-xs px-1.5 py-0.5 rounded-full",
+                        progress.isAllComplete
+                          ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
+                          : "bg-muted text-muted-foreground"
+                      )}>
+                        {progress.completed}/{progress.total}
+                      </span>
+                    </button>
+                  )}
 
-                  {/* 개발문서 탭 */}
-                  <button
-                    onClick={() => setActiveTab('development')}
-                    className={cn(
-                      "flex-1 flex items-center justify-center gap-2 px-3 py-3 text-sm font-medium transition-colors border-b-2",
-                      activeTab === 'development'
-                        ? "border-primary text-primary bg-primary/5"
-                        : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                    )}
-                  >
-                    <Code className="w-4 h-4" />
-                    <span>개발문서</span>
-                    {/* 상태 배지 */}
-                    {!isPlanningComplete ? (
-                      <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
-                        대기
-                      </span>
-                    ) : isSessionLoading && activeTab === 'development' ? (
-                      <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                        실행중
-                      </span>
-                    ) : (
-                      <span className="text-xs px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
-                        준비
-                      </span>
-                    )}
-                  </button>
+                  {/* 개발문서 탭 - plan-only에서 숨김 */}
+                  {visibleTabs.includes('development') && (
+                    <button
+                      onClick={() => setActiveTab('development')}
+                      className={cn(
+                        "flex-1 flex items-center justify-center gap-2 px-3 py-3 text-sm font-medium transition-colors border-b-2",
+                        activeTab === 'development'
+                          ? "border-primary text-primary bg-primary/5"
+                          : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      )}
+                    >
+                      <Code className="w-4 h-4" />
+                      <span>개발문서</span>
+                      {/* 상태 배지 */}
+                      {!isPlanningComplete ? (
+                        <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
+                          대기
+                        </span>
+                      ) : isSessionLoading && activeTab === 'development' ? (
+                        <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                          실행중
+                        </span>
+                      ) : (
+                        <span className="text-xs px-1.5 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+                          준비
+                        </span>
+                      )}
+                    </button>
+                  )}
 
-                  {/* 프리뷰 탭 */}
-                  <PreviewTabButton
-                    isActive={activeTab === 'preview'}
-                    onClick={handlePreviewTabClick}
-                  />
+                  {/* 프리뷰 탭 - plan-only에서 숨김 */}
+                  {visibleTabs.includes('preview') && (
+                    <PreviewTabButton
+                      isActive={activeTab === 'preview'}
+                      onClick={handlePreviewTabClick}
+                    />
+                  )}
                 </div>
               </div>
 
               {/* Tab Content */}
               <div className="flex-1 overflow-hidden">
                 {activeTab === 'planning' && (
-                  <PlanningDocsPanel
-                    projectPath={project?.path}
-                    onStartWorkflow={handleStartNewWorkflow}
-                    isSessionLoading={isSessionLoading}
-                    onPlanningComplete={handlePlanningComplete}
-                    sessionError={sessionError}
-                    onResumeWorkflow={handleResumeWorkflow}
-                    workflows={planningWorkflows}
-                    trackId={trackId}
-                  />
+                  // plan-only 트랙이고 모든 워크플로우 완료 시 티켓 뷰어 표시
+                  trackId === 'plan-only' && progress.isAllComplete ? (
+                    <TicketViewerPanel
+                      projectPath={project?.path}
+                      devPlanPath={`${project?.path}/anyon-docs/dev-plan`}
+                    />
+                  ) : (
+                    <PlanningDocsPanel
+                      projectPath={project?.path}
+                      onStartWorkflow={handleStartNewWorkflow}
+                      isSessionLoading={isSessionLoading}
+                      onPlanningComplete={handlePlanningComplete}
+                      sessionError={sessionError}
+                      onResumeWorkflow={handleResumeWorkflow}
+                      workflows={planningWorkflows}
+                      trackId={trackId}
+                    />
+                  )
                 )}
                 {activeTab === 'development' && (
                   <DevDocsPanel
@@ -697,6 +722,8 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
                     isSessionLoading={isSessionLoading}
                     workflows={devWorkflows}
                     trackId={trackId}
+                    autoStart={shouldAutoStartDev}
+                    onAutoStartComplete={() => setShouldAutoStartDev(false)}
                   />
                 )}
                 {activeTab === 'preview' && (
@@ -763,6 +790,7 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
         onClose={() => setShowPlanningCompleteModal(false)}
         onProceedWithAI={handleProceedWithAI}
         onContactSupport={handleContactSupport}
+        trackId={trackId}
       />
 
       {/* Preview Welcome Modal */}

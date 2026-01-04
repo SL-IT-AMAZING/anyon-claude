@@ -141,12 +141,13 @@ export const OWNUUN2_PLANNING_CONFIG: TrackPlanningConfig = {
 // Quick Flow Track: Quick Plan (빠른 실행 계획 수립)
 // ============================================================================
 import { QUICK_PLAN_PROMPT } from '@/constants/workflows/quick-flow';
+import { PM_ORCHESTRATOR_PROMPT } from '@/constants/workflows/development/pm-orchestrator';
 
 export const QUICK_FLOW_PLANNING_WORKFLOWS: WorkflowStep[] = [
   {
     id: 'quick-plan',
     title: 'Quick Plan',
-    filename: 'execution-plan.md',
+    filename: 'dev-plan/execution-plan.md',
     workflow: '', // prompt 사용
     prompt: QUICK_PLAN_PROMPT,
     displayText: 'Quick Plan - 빠른 실행 계획',
@@ -162,6 +163,30 @@ export const QUICK_FLOW_PLANNING_CONFIG: TrackPlanningConfig = {
 };
 
 // ============================================================================
+// Plan-Only Track: MVP 6단계 + pm-orchestrator (티켓 생성)
+// 기획 문서만 생성하고 개발은 하지 않음
+// ============================================================================
+export const PLAN_ONLY_PLANNING_WORKFLOWS: WorkflowStep[] = [
+  ...MVP_PLANNING_SEQUENCE, // 기존 MVP 6단계 재사용
+  {
+    id: 'pm-orchestrator',
+    title: '티켓 생성',
+    filename: 'dev-plan/execution-plan.md',
+    workflow: '', // prompt 사용
+    prompt: PM_ORCHESTRATOR_PROMPT,
+    displayText: '티켓 생성 (PM Orchestrator)',
+    icon: 'list-checks' as WorkflowIconType,
+    nextId: null, // 마지막 단계
+  },
+];
+
+export const PLAN_ONLY_PLANNING_CONFIG: TrackPlanningConfig = {
+  trackId: 'plan-only',
+  workflows: PLAN_ONLY_PLANNING_WORKFLOWS,
+  postWorkflowHooks: [],
+};
+
+// ============================================================================
 // Registry: 트랙별 설정 조회
 // ============================================================================
 export const TRACK_PLANNING_CONFIGS: Record<TrackId, TrackPlanningConfig> = {
@@ -170,6 +195,7 @@ export const TRACK_PLANNING_CONFIGS: Record<TrackId, TrackPlanningConfig> = {
   ownuun2: OWNUUN2_PLANNING_CONFIG,
   bmad: BMAD_PLANNING_CONFIG,
   'quick-flow': QUICK_FLOW_PLANNING_CONFIG,
+  'plan-only': PLAN_ONLY_PLANNING_CONFIG,
 };
 
 /**

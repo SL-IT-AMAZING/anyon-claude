@@ -12,6 +12,7 @@ const TRACK_ICONS: Record<TrackId, string> = {
   ownuun2: '⚡',
   bmad: '📋',
   'quick-flow': '⚡',
+  'plan-only': '📋',
 };
 
 interface TrackSelectorProps {

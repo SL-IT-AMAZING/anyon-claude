@@ -6,7 +6,7 @@
 import type { WorkflowStep } from '@/constants/planning';
 import type { DevWorkflowStep } from '@/constants/development';
 
-export type TrackId = 'mvp' | 'ownuun' | 'ownuun2' | 'bmad' | 'quick-flow';
+export type TrackId = 'mvp' | 'ownuun' | 'ownuun2' | 'bmad' | 'quick-flow' | 'plan-only';
 
 export interface Track {
   id: TrackId;
@@ -73,6 +73,13 @@ export const TRACKS: Track[] = [
     id: 'bmad',
     name: 'BMAD',
     description: 'BMAD 방법론 기반 개발',
+    icon: '📋',
+    available: true,
+  },
+  {
+    id: 'plan-only',
+    name: 'Plan Only',
+    description: '기획 문서 + 티켓 생성 (개발 없음)',
     icon: '📋',
     available: true,
   },

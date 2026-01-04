@@ -27,6 +27,10 @@ interface DevDocsPanelProps {
   workflows?: DevWorkflowStep[];
   /** Track ID for UI customization */
   trackId?: TrackId;
+  /** Auto-start development workflow (Quick Flow 트랙용) */
+  autoStart?: boolean;
+  /** Callback when auto-start is complete */
+  onAutoStartComplete?: () => void;
 }
 
 /**
@@ -330,6 +334,8 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
   isSessionLoading = false,
   workflows = DEV_WORKFLOW_SEQUENCE,
   trackId = 'mvp',
+  autoStart = false,
+  onAutoStartComplete,
 }, ref) => {
   // Use provided workflows or default to MVP workflow
   const workflowSequence = workflows;
@@ -514,6 +520,23 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
   }, [loadProgressData, currentRunningStep]);
 
   // ============================================================================
+  // Auto-start: Quick Flow 트랙에서 모달 확인 후 자동 시작
+  // ============================================================================
+  useEffect(() => {
+    if (autoStart && onStartWorkflow && !currentRunningStep && !isDevComplete) {
+      // Quick Execute 워크플로우 찾기 (quick-execute 또는 첫 번째 워크플로우)
+      const executeWorkflow = workflowSequence.find(w => w.id === 'quick-execute') || workflowSequence[0];
+      if (executeWorkflow) {
+        console.log('[DevDocsPanel] Auto-starting workflow:', executeWorkflow.id);
+        const prompt = getDevWorkflowPrompt(executeWorkflow);
+        setCurrentRunningStep(projectKey, executeWorkflow.id);
+        onStartWorkflow(prompt, executeWorkflow.displayText);
+        onAutoStartComplete?.();
+      }
+    }
+  }, [autoStart, onStartWorkflow, currentRunningStep, isDevComplete, workflowSequence, projectKey, setCurrentRunningStep, onAutoStartComplete]);
+
+  // ============================================================================
   // BMAD: sprint-status.yaml 파일 감시 (Tauri watch API)
   // ============================================================================
 
@@ -545,12 +568,8 @@ export const DevDocsPanel = forwardRef<DevDocsPanelRef, DevDocsPanelProps>(({
       const newStoryStatus = newStatus.currentStory?.status || 'done';
       console.log(`[BMAD] ${storyId}: ${prevStoryStatus} → ${newStoryStatus}`);
 
-      // 현재 세션 즉시 종료
-      try {
-        await api.cancelClaudeExecution();
-      } catch (e) {
-        console.warn('[BMAD] 세션 종료 실패:', e);
-      }
+      // 세션 즉시 종료 로직 제거 (사용자가 현재 작업 완료할 수 있도록 함)
+      // 세션이 자연스럽게 완료되면 자동으로 다음 워크플로우로 진행됨
 
       // 상태 업데이트
       prevBmadStatusRef.current = newStatus;
