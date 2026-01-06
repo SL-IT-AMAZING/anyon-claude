@@ -9,6 +9,8 @@ const STORAGE_KEY_PREFIX = 'anyon_session_';
 const SESSION_INDEX_KEY = 'anyon_session_index';
 const TAB_SESSIONS_PREFIX = 'anyon_tab_sessions_';
 const LAST_SESSION_PREFIX = 'anyon_last_session_';
+const LAST_WORKSPACE_PREFIX = 'anyon_last_workspace_';
+const PLANNING_COMPLETE_SHOWN_PREFIX = 'anyon_planning_complete_shown_';
 
 export type TabType = 'mvp' | 'maintenance';
 
@@ -439,6 +441,75 @@ export class SessionPersistenceService {
       localStorage.removeItem(key);
     } catch (error) {
       console.error('Failed to clear display texts:', error);
+    }
+  }
+
+  // ============================================
+  // 프로젝트별 마지막 워크스페이스 저장/조회
+  // ============================================
+
+  /**
+   * 프로젝트 경로를 안전한 키로 변환
+   */
+  private static sanitizePathForKey(projectPath: string): string {
+    return projectPath.replace(/[^a-zA-Z0-9]/g, '-');
+  }
+
+  /**
+   * 프로젝트의 마지막 워크스페이스 타입 저장
+   */
+  static saveLastWorkspace(projectPath: string, workspaceType: TabType): void {
+    try {
+      const key = `${LAST_WORKSPACE_PREFIX}${this.sanitizePathForKey(projectPath)}`;
+      localStorage.setItem(key, workspaceType);
+    } catch (error) {
+      console.error('Failed to save last workspace:', error);
+    }
+  }
+
+  /**
+   * 프로젝트의 마지막 워크스페이스 타입 조회
+   */
+  static getLastWorkspace(projectPath: string): TabType | null {
+    try {
+      const key = `${LAST_WORKSPACE_PREFIX}${this.sanitizePathForKey(projectPath)}`;
+      const value = localStorage.getItem(key);
+      if (value === 'mvp' || value === 'maintenance') {
+        return value;
+      }
+      return null;
+    } catch (error) {
+      console.error('Failed to get last workspace:', error);
+      return null;
+    }
+  }
+
+  // ============================================
+  // 기획완료 모달 표시 여부 (프로젝트당 1회)
+  // ============================================
+
+  /**
+   * 기획완료 모달이 이미 표시되었는지 확인
+   */
+  static hasPlanningCompleteBeenShown(projectPath: string): boolean {
+    try {
+      const key = `${PLANNING_COMPLETE_SHOWN_PREFIX}${this.sanitizePathForKey(projectPath)}`;
+      return localStorage.getItem(key) === 'true';
+    } catch (error) {
+      console.error('Failed to check planning complete shown:', error);
+      return false;
+    }
+  }
+
+  /**
+   * 기획완료 모달 표시 완료 기록
+   */
+  static markPlanningCompleteShown(projectPath: string): void {
+    try {
+      const key = `${PLANNING_COMPLETE_SHOWN_PREFIX}${this.sanitizePathForKey(projectPath)}`;
+      localStorage.setItem(key, 'true');
+    } catch (error) {
+      console.error('Failed to mark planning complete shown:', error);
     }
   }
 }

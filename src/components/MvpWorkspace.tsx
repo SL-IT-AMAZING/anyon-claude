@@ -124,7 +124,7 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
   const visibleTabs = getVisibleTabs(trackId);
   const [isSessionLoading, setIsSessionLoading] = useState(false);
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
-  const [sessionKey, _setSessionKey] = useState(0);
+  const [sessionKey, setSessionKey] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
   const [showAIChat, setShowAIChat] = useState(false);
   const [showPlanningCompleteModal, setShowPlanningCompleteModal] = useState(false);
@@ -200,9 +200,16 @@ export const MvpWorkspace: React.FC<MvpWorkspaceProps> = ({ projectId }) => {
     }
   }, [projectId, loading, getProjectById]);
 
-  // Load last session
+  // Load last session and save workspace type
   useEffect(() => {
     if (project?.path) {
+      // 마지막 워크스페이스 타입 저장 (프로젝트 전환 시 복원용)
+      SessionPersistenceService.saveLastWorkspace(project.path, 'mvp');
+
+      // 프로젝트 전환 시 먼저 초기화 후 새 세션 로드
+      setCurrentSession(null);
+      setSessionKey(prev => prev + 1);
+
       try {
         const lastSessionData = SessionPersistenceService.getLastSessionDataForTab(project.path, 'mvp');
         console.log('[MvpWorkspace] Last session data:', lastSessionData);

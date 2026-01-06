@@ -13,6 +13,7 @@ const TRACK_ICONS: Record<TrackId, string> = {
   bmad: '📋',
   'quick-flow': '⚡',
   'plan-only': '📋',
+  wireframe: '🎨',
 };
 
 interface TrackSelectorProps {

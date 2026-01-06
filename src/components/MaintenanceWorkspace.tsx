@@ -64,7 +64,7 @@ export const MaintenanceWorkspace: React.FC<MaintenanceWorkspaceProps> = ({ proj
   const { t } = useTranslation();
   const [project, setProject] = useState<Project | undefined>(undefined);
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
-  const [sessionKey, _setSessionKey] = useState(0);
+  const [sessionKey, setSessionKey] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
 
   // Tab state - default to development mode
@@ -98,9 +98,16 @@ export const MaintenanceWorkspace: React.FC<MaintenanceWorkspaceProps> = ({ proj
     }
   }, [projectId, projects, getProjectById]);
 
-  // Load last session
+  // Load last session and save workspace type
   useEffect(() => {
     if (project?.path) {
+      // 마지막 워크스페이스 타입 저장 (프로젝트 전환 시 복원용)
+      SessionPersistenceService.saveLastWorkspace(project.path, 'maintenance');
+
+      // 프로젝트 전환 시 먼저 초기화 후 새 세션 로드
+      setCurrentSession(null);
+      setSessionKey(prev => prev + 1);
+
       try {
         const lastSessionData = SessionPersistenceService.getLastSessionDataForTab(project.path, 'maintenance');
         if (lastSessionData) {

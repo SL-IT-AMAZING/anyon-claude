@@ -231,6 +231,18 @@ export const PLAN_ONLY_DEV_CONFIG: TrackDevelopmentConfig = {
 };
 
 // ============================================================================
+// Wireframe Track: 개발 워크플로우 없음
+// 와이어프레임만 생성하고 개발은 하지 않음
+// ============================================================================
+export const WIREFRAME_DEV_CONFIG: TrackDevelopmentConfig = {
+  trackId: 'wireframe',
+  workflows: [],
+  executionStrategy: 'ticket',
+  autoTestOnSubWaveComplete: false,
+  strictUxValidation: false,
+};
+
+// ============================================================================
 // Registry: 트랙별 설정 조회
 // ============================================================================
 export const TRACK_DEV_CONFIGS: Record<TrackId, TrackDevelopmentConfig> = {
@@ -240,6 +252,7 @@ export const TRACK_DEV_CONFIGS: Record<TrackId, TrackDevelopmentConfig> = {
   bmad: BMAD_DEV_CONFIG,
   'quick-flow': QUICK_FLOW_DEV_CONFIG,
   'plan-only': PLAN_ONLY_DEV_CONFIG,
+  wireframe: WIREFRAME_DEV_CONFIG,
 };
 
 /**

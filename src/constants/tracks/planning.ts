@@ -142,6 +142,7 @@ export const OWNUUN2_PLANNING_CONFIG: TrackPlanningConfig = {
 // ============================================================================
 import { QUICK_PLAN_PROMPT } from '@/constants/workflows/quick-flow';
 import { PM_ORCHESTRATOR_PROMPT } from '@/constants/workflows/development/pm-orchestrator';
+import { STARTUP_PRD_PROMPT, STARTUP_UX_PROMPT } from '@/constants/workflows/planning';
 
 export const QUICK_FLOW_PLANNING_WORKFLOWS: WorkflowStep[] = [
   {
@@ -187,6 +188,39 @@ export const PLAN_ONLY_PLANNING_CONFIG: TrackPlanningConfig = {
 };
 
 // ============================================================================
+// Wireframe Track: PRD → UX Design (2단계)
+// 빠른 목업/와이어프레임 생성 (팀원에게 아이디어 전달용)
+// ============================================================================
+export const WIREFRAME_PLANNING_WORKFLOWS: WorkflowStep[] = [
+  {
+    id: 'prd',
+    title: 'PRD',
+    filename: 'prd.md',
+    workflow: '',
+    prompt: STARTUP_PRD_PROMPT,
+    displayText: 'PRD 문서 작성',
+    icon: 'file-text' as WorkflowIconType,
+    nextId: 'ux-design',
+  },
+  {
+    id: 'ux-design',
+    title: 'UX Design',
+    filename: 'ui-ux.html',
+    workflow: '',
+    prompt: STARTUP_UX_PROMPT,
+    displayText: 'UX 와이어프레임 생성',
+    icon: 'palette' as WorkflowIconType,
+    nextId: null, // 마지막 단계
+  },
+];
+
+export const WIREFRAME_PLANNING_CONFIG: TrackPlanningConfig = {
+  trackId: 'wireframe',
+  workflows: WIREFRAME_PLANNING_WORKFLOWS,
+  postWorkflowHooks: [],
+};
+
+// ============================================================================
 // Registry: 트랙별 설정 조회
 // ============================================================================
 export const TRACK_PLANNING_CONFIGS: Record<TrackId, TrackPlanningConfig> = {
@@ -196,6 +230,7 @@ export const TRACK_PLANNING_CONFIGS: Record<TrackId, TrackPlanningConfig> = {
   bmad: BMAD_PLANNING_CONFIG,
   'quick-flow': QUICK_FLOW_PLANNING_CONFIG,
   'plan-only': PLAN_ONLY_PLANNING_CONFIG,
+  wireframe: WIREFRAME_PLANNING_CONFIG,
 };
 
 /**

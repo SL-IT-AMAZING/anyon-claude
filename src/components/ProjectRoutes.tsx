@@ -2,6 +2,7 @@ import React, { Suspense, useEffect, useState, useCallback, createContext, useCo
 import { Loader2 } from "@/lib/icons";
 import { api, type Project } from '@/lib/api';
 import { useTabContext } from '@/contexts/TabContext';
+import { SessionPersistenceService } from '@/services/sessionPersistence';
 
 // Lazy load components
 const ProjectListView = React.lazy(() => import('@/components/ProjectListView'));
@@ -190,17 +191,19 @@ export const ProjectRoutes: React.FC<ProjectRoutesProps> = ({ tabId }) => {
 
     // Check if template is already set
     const template = await api.getProjectTemplate(project.path);
-    
+
     if (!template) {
       // No template set → go to template selector
       navigate({ type: 'template-selector', projectId });
-    } else if (template === 'basic') {
-      // Basic template → go to workspace selector
-      navigate({ type: 'workspace-selector', projectId });
     } else {
-      // Other templates → for now, also go to workspace selector
-      // (will be updated when other templates are implemented)
-      navigate({ type: 'workspace-selector', projectId });
+      // 마지막 사용한 워크스페이스로 바로 이동
+      const lastWorkspace = SessionPersistenceService.getLastWorkspace(project.path);
+      if (lastWorkspace === 'maintenance') {
+        navigate({ type: 'maintenance', projectId });
+      } else {
+        // 기본값은 mvp
+        navigate({ type: 'mvp', projectId });
+      }
     }
   }, [navigate, projects]);
 

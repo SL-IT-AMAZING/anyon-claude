@@ -15,6 +15,7 @@ import { PlanningDocViewer } from './PlanningDocViewer';
 import type { TrackId } from '@/types/track';
 import { UXPreviewPanel } from './UXPreviewPanel';
 import type { SessionError } from '@/components/ClaudeCodeSession';
+import { SessionPersistenceService } from '@/services/sessionPersistence';
 
 /** BMAD 4단계 구조 정의 */
 const BMAD_PHASES: { id: BmadPhase; label: string; color: string }[] = [
@@ -67,13 +68,20 @@ export const PlanningDocsPanel: React.FC<PlanningDocsPanelProps> = ({
   const [activeWorkflows, setActiveWorkflows] = useState<Set<string>>(new Set());
   const hasTriggeredComplete = useRef(false);
 
-  // Trigger completion modal once when all planning is complete
+  // Trigger completion modal once when all planning is complete (프로젝트당 1회만)
   useEffect(() => {
-    if (progress.isAllComplete && onPlanningComplete && !hasTriggeredComplete.current) {
+    if (
+      progress.isAllComplete &&
+      onPlanningComplete &&
+      !hasTriggeredComplete.current &&
+      projectPath &&
+      !SessionPersistenceService.hasPlanningCompleteBeenShown(projectPath)
+    ) {
       hasTriggeredComplete.current = true;
+      SessionPersistenceService.markPlanningCompleteShown(projectPath);
       onPlanningComplete();
     }
-  }, [progress.isAllComplete, onPlanningComplete]);
+  }, [progress.isAllComplete, onPlanningComplete, projectPath]);
 
   // Reset trigger when project changes
   useEffect(() => {

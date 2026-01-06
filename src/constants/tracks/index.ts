@@ -45,6 +45,7 @@ export const TRACK_VISIBLE_TABS: Record<TrackId, ('planning' | 'development' | '
   bmad: ['planning', 'development', 'preview'],
   'quick-flow': ['planning', 'development', 'preview'],
   'plan-only': ['planning'], // 기획문서 탭만
+  wireframe: ['planning'], // 기획문서 탭만 (PRD → UX)
 };
 
 /** 트랙별 표시할 탭 가져오기 */

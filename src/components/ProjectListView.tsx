@@ -182,18 +182,27 @@ export const ProjectListView: React.FC = () => {
         console.log('[ProjectListView] Projects refreshed, count:', updatedProjects.length);
 
         // Find the project in the updated list to verify it exists
-        const foundProject = updatedProjects.find(p => p.id === project.id);
+        // Use both ID and normalized path matching to handle path normalization differences
+        const normalizeProjectPath = (p: string): string =>
+          p.replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase();
+
+        const foundProject = updatedProjects.find(p =>
+          p.id === project.id ||
+          normalizeProjectPath(p.path) === normalizeProjectPath(project.path)
+        );
         console.log('[ProjectListView] Found project in updated list:', foundProject);
 
-        if (foundProject) {
-          // Wait a moment for React state to propagate
-          await new Promise(resolve => setTimeout(resolve, 500));
+        // Wait a moment for React state to propagate
+        await new Promise(resolve => setTimeout(resolve, 500));
 
+        if (foundProject) {
           // Navigate to the project workspace selector
           console.log('[ProjectListView] Navigating to project:', foundProject.id);
           goToProject(foundProject.id);
         } else {
-          console.error('[ProjectListView] Project not found in updated list after registration');
+          // Fallback: use createProject result directly
+          console.warn('[ProjectListView] Project not found in updated list, using createProject result');
+          goToProject(project.id);
         }
 
         // Run git init and anyon installation in the background

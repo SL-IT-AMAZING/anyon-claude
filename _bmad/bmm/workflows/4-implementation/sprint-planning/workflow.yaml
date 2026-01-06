@@ -30,7 +30,7 @@ variables:
   story_location_absolute: "{config_source}:implementation_artifacts" # Absolute path for file operations
 
   # Source files (file-system only)
-  epics_location: "{planning_artifacts}" # Directory containing epic*.md files
+  epics_location: "{implementation_artifacts}" # Directory containing epic*.md files
   epics_pattern: "epic*.md" # Pattern to find epic files
 
   # Output configuration
@@ -42,8 +42,8 @@ variables:
 input_file_patterns:
   epics:
     description: "All epics with user stories"
-    whole: "{output_folder}/*epic*.md"
-    sharded: "{output_folder}/*epic*/*.md"
+    whole: "{implementation_artifacts}/epics/*.md"
+    sharded: "{implementation_artifacts}/epics/**/*.md"
     load_strategy: "FULL_LOAD"
 
 # Output configuration

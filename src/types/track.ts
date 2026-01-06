@@ -6,7 +6,7 @@
 import type { WorkflowStep } from '@/constants/planning';
 import type { DevWorkflowStep } from '@/constants/development';
 
-export type TrackId = 'mvp' | 'ownuun' | 'ownuun2' | 'bmad' | 'quick-flow' | 'plan-only';
+export type TrackId = 'mvp' | 'ownuun' | 'ownuun2' | 'bmad' | 'quick-flow' | 'plan-only' | 'wireframe';
 
 export interface Track {
   id: TrackId;
@@ -81,6 +81,13 @@ export const TRACKS: Track[] = [
     name: 'Plan Only',
     description: '기획 문서 + 티켓 생성 (개발 없음)',
     icon: '📋',
+    available: true,
+  },
+  {
+    id: 'wireframe',
+    name: 'Wireframe',
+    description: '빠른 목업/와이어프레임 생성 (PRD → UX)',
+    icon: '🎨',
     available: true,
   },
 ];
